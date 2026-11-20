@@ -60,6 +60,7 @@ class SincronizacionRealTest {
     @Inject lateinit var sincronizador: Sincronizador
     @Inject lateinit var db: PetcareDb
     @Inject lateinit var cuidados: RepositorioCuidados
+    @Inject lateinit var documentos: com.udenar.petcare.domain.documentos.RepositorioDocumentos
     @Inject lateinit var tiempoReal: com.udenar.petcare.data.sync.TiempoReal
     @Inject lateinit var programador: ProgramadorFalso
     @Inject lateinit var salud: com.udenar.petcare.domain.salud.RepositorioSalud
@@ -108,8 +109,8 @@ class SincronizacionRealTest {
         if (supabase.auth.currentSessionOrNull() == null) return@runBlocking
         // Storage no permite borrar archivos desde SQL: se borra toda la carpeta de la cuenta por la API
         // (aunque la prueba haya fallado a mitad de camino)
-        runCatching {
-            val bucket = supabase.storage.from("mascotas")
+        for (nombre in listOf("mascotas", "documentos")) runCatching {
+            val bucket = supabase.storage.from(nombre)
             val raiz = supabase.auth.currentUserOrNull()!!.id
             val archivos = bucket.list(raiz).flatMap { carpeta -> bucket.list("$raiz/${carpeta.name}").map { "$raiz/${carpeta.name}/${it.name}" } }
             if (archivos.isNotEmpty()) bucket.delete(archivos)
@@ -226,6 +227,39 @@ class SincronizacionRealTest {
         tiempoReal.detener()
         alcance.cancel()
         assertTrue("El cambio no llegó por Realtime", llego)
+    }
+
+    @Test
+    fun documentosSubenBajanYSeBorran(): Unit = runBlocking {
+        val contexto = InstrumentationRegistry.getInstrumentation().targetContext
+        val carpeta = File(contexto.cacheDir, "compartidos").apply { mkdirs() }
+        val pdf = File(carpeta, "examen.pdf").apply { writeText(listOf("%PDF-1.4", "1 0 obj<<>>endobj", "trailer<<>>", "%%EOF").joinToString("\n")) }
+        val uriPdf = androidx.core.content.FileProvider.getUriForFile(contexto, "${contexto.packageName}.archivos", pdf)
+        val uriImagen = androidx.core.content.FileProvider.getUriForFile(contexto, "${contexto.packageName}.archivos", File(fotoDePrueba()).copyTo(File(carpeta, "carne.jpg"), overwrite = true))
+
+        val mascotaId = UUID.randomUUID().toString()
+        mascotas.guardar(Mascota(id = mascotaId, nombre = "Doc", especie = Especie.GATO))
+        documentos.agregar(mascotaId, uriImagen.toString(), "Carné", com.udenar.petcare.domain.documentos.TipoDocumento.CARNE, LocalDate.now(), null)
+        documentos.agregar(mascotaId, uriPdf.toString(), "Examen", com.udenar.petcare.domain.documentos.TipoDocumento.EXAMEN, LocalDate.now(), null)
+        sincronizador.sincronizar()
+
+        val remotos = supabase.from("documentos").select().decodeList<JsonObject>()
+        assertEquals(setOf("image/jpeg", "application/pdf"), remotos.map { it["mime"]!!.jsonPrimitive.content }.toSet())
+        assertTrue(remotos.all { it["ruta"]!!.jsonPrimitive.content.startsWith(supabase.auth.currentUserOrNull()!!.id + "/$mascotaId/") })
+
+        // Teléfono nuevo: se descargan al abrirlos
+        db.clearAllTables()
+        sincronizador.sincronizar()
+        val examen = documentos.observar(mascotaId).first().single { it.nombre == "Examen" }
+        assertEquals(null, examen.archivoLocal)
+        val ruta = documentos.archivo(examen.id)!!
+        assertTrue(File(ruta).readText().startsWith("%PDF"))
+
+        // Eliminar borra la fila (marca) y el archivo en Storage
+        documentos.eliminar(examen.id)
+        sincronizador.sincronizar()
+        val rutaRemota = remotos.single { it["mime"]!!.jsonPrimitive.content == "application/pdf" }["ruta"]!!.jsonPrimitive.content
+        assertTrue(supabase.storage.from("documentos").list("${supabase.auth.currentUserOrNull()!!.id}/$mascotaId").none { rutaRemota.endsWith(it.name) })
     }
 
     @Test

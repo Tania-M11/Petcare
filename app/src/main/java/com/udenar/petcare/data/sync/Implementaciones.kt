@@ -106,6 +106,7 @@ class ProgramadorWorkManager @Inject constructor(
     registros: RegistroDao,
     pesos: com.udenar.petcare.data.salud.PesoDao,
     visitas: com.udenar.petcare.data.salud.VisitaDao,
+    documentos: com.udenar.petcare.data.documentos.DocumentoDao,
     cursores: CursorDao,
 ) : ProgramadorSync {
 
@@ -119,7 +120,10 @@ class ProgramadorWorkManager @Inject constructor(
     }
 
     override val estado: Flow<EstadoSync> = combine(
-        combine(mascotas.contarPendientes(), eventos.contarPendientes(), registros.contarPendientes(), pesos.contarPendientes(), visitas.contarPendientes()) { a -> a.sum() },
+        combine(
+            combine(mascotas.contarPendientes(), eventos.contarPendientes(), registros.contarPendientes()) { a, b, c -> a + b + c },
+            combine(pesos.contarPendientes(), visitas.contarPendientes(), documentos.contarPendientes()) { a, b, c -> a + b + c },
+        ) { a, b -> a + b },
         cursores.ultimaSincronizacion(),
     ) { pendientes, ultima ->
         EstadoSync(porSubir = pendientes, ultima = ultima?.let { Instant.ofEpochMilli(it) })
@@ -145,6 +149,7 @@ class AlmacenLocalRoom @Inject constructor(
         withContext(Dispatchers.IO) {
             db.clearAllTables()
             fotos.borrarTodo()
+            java.io.File(contexto.filesDir, "documentos").deleteRecursively()
         }
     }
 }

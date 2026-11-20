@@ -58,7 +58,30 @@ class DetalleMascotaViewModel @Inject constructor(
     private val compartir: RepositorioCompartir,
     private val preferencias: com.udenar.petcare.data.local.PreferenciaDao,
     private val recordatorios: com.udenar.petcare.domain.cuidados.ProgramadorRecordatorios,
+    private val documentosRepo: com.udenar.petcare.domain.documentos.RepositorioDocumentos,
 ) : ViewModel() {
+
+    val documentos: StateFlow<List<com.udenar.petcare.domain.documentos.Documento>> by lazy {
+        documentosRepo.observar(id).stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
+    }
+
+    fun agregarDocumento(origen: String, nombre: String, tipo: com.udenar.petcare.domain.documentos.TipoDocumento, fecha: LocalDate, visitaId: String?, avisar: (String) -> Unit) =
+        viewModelScope.launch {
+            try {
+                documentosRepo.agregar(id, origen, nombre, tipo, fecha, visitaId)
+            } catch (e: com.udenar.petcare.domain.documentos.DocumentoException) {
+                avisar(e.message ?: "No se pudo guardar")
+            } catch (e: Exception) {
+                avisar("No se pudo leer el archivo")
+            }
+        }
+
+    fun eliminarDocumento(d: com.udenar.petcare.domain.documentos.Documento) = viewModelScope.launch { documentosRepo.eliminar(d.id) }
+
+    fun abrirDocumento(d: com.udenar.petcare.domain.documentos.Documento, abrir: (String) -> Unit, avisar: (String) -> Unit) = viewModelScope.launch {
+        val ruta = documentosRepo.archivo(d.id)
+        if (ruta != null) abrir(ruta) else avisar("Conéctate a internet para descargarlo")
+    }
 
     /** RF-14: si este teléfono recibe los recordatorios de esta mascota (cada miembro decide). */
     val recordatoriosActivos: StateFlow<Boolean> = preferencias.silenciadas()

@@ -51,8 +51,8 @@ interface CursorDao {
  * Cada parte agrega sus tablas subiendo la versión con una migración automática.
  */
 @Database(
-    entities = [MascotaEntidad::class, CursorEntidad::class, EventoEntidad::class, RegistroEntidad::class, AlarmaEntidad::class, PesoEntidad::class, VisitaEntidad::class, PreferenciaMascota::class, ConfigQrEntidad::class],
-    version = 7,
+    entities = [MascotaEntidad::class, CursorEntidad::class, EventoEntidad::class, RegistroEntidad::class, AlarmaEntidad::class, PesoEntidad::class, VisitaEntidad::class, PreferenciaMascota::class, ConfigQrEntidad::class, com.udenar.petcare.data.documentos.DocumentoEntidad::class],
+    version = 8,
     exportSchema = true,
     autoMigrations = [
         AutoMigration(from = 1, to = 2), // 2.2: foto local de la mascota
@@ -61,6 +61,7 @@ interface CursorDao {
         AutoMigration(from = 4, to = 5), // 2.8: pesos y visitas
         AutoMigration(from = 5, to = 6), // 3.2: recordatorios por mascota en este teléfono
         AutoMigration(from = 6, to = 7), // 3.3: configuración del QR y veterinario manual (RF-04)
+        AutoMigration(from = 7, to = 8), // 3.3: documentos
     ],
 )
 abstract class PetcareDb : RoomDatabase() {
@@ -73,4 +74,5 @@ abstract class PetcareDb : RoomDatabase() {
     abstract fun visitas(): VisitaDao
     abstract fun preferencias(): PreferenciaDao
     abstract fun configQr(): ConfigQrDao
+    abstract fun documentos(): com.udenar.petcare.data.documentos.DocumentoDao
 }

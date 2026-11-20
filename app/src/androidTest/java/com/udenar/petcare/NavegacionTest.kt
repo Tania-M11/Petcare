@@ -27,7 +27,7 @@ class NavegacionTest {
     @Test
     fun abreEnHoy() {
         compose.onNodeWithTag("pestana_hoy").assertIsSelected()
-        compose.onNodeWithText("Nada pendiente").assertExists()
+        compose.waitUntil(5_000) { compose.onAllNodesWithTextExists("Nada pendiente") }
         compose.onNodeWithText("Agrega a tu primera mascota").assertExists()
     }
 
@@ -43,7 +43,7 @@ class NavegacionTest {
         compose.onNodeWithText("Trabaja con PetCare").assertExists()
 
         compose.onNodeWithTag("pestana_hoy").performClick()
-        compose.onNodeWithText("Nada pendiente").assertExists()
+        compose.waitUntil(5_000) { compose.onAllNodesWithTextExists("Nada pendiente") }
     }
 
     @Test

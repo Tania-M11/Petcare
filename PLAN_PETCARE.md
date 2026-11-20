@@ -153,7 +153,7 @@ Reglas: una parte por sesión · compila y se prueba en el teléfono antes de se
 | | 2.8 | Ficha con pestañas Resumen · Cuidados · Salud · Historial: estado de cuidado, peso con gráfica, visitas con próxima cita (`supabase/06_pesos_y_visitas.sql`) | ✅ |
 | **3 Compartir** | 3.1 | Cuidar con código, aprobación, sección Personas, regenerar/desactivar código, permisos por rol (`supabase/07_cuidadores.sql`, prueba real con dos cuentas) | ✅ |
 | | 3.2 | Sincronización en vivo entre miembros (Realtime, `supabase/08_tiempo_real.sql`) y recordatorios por mascota en cada teléfono | ✅ |
-| | 3.3 | Carné con QR configurable y escáner ✅; veterinario manual con Llamar (RF-04, `supabase/09_veterinario_manual.sql`) ✅; documentos | |
+| | 3.3 | Carné con QR configurable y escáner; veterinario manual con Llamar (RF-04, `09_veterinario_manual.sql`); documentos imagen/PDF (`10_documentos.sql`) | ✅ |
 | | 3.4 | Paseos manuales y con GPS (mapa) | |
 | **4 Profesionales** | 4.1 | "Trabaja con PetCare", cambio de modo y esqueleto profesional | |
 | | 4.2 | Perfil veterinario + verificación; directorio y mapa | |

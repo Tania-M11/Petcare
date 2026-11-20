@@ -90,6 +90,7 @@ fun DetalleMascotaScreen(
     val historial by viewModel.historial.collectAsStateWithLifecycle()
     val miembros by viewModel.miembros.collectAsStateWithLifecycle()
     val recordatoriosActivos by viewModel.recordatoriosActivos.collectAsStateWithLifecycle()
+    val documentos by viewModel.documentos.collectAsStateWithLifecycle()
     var seccion by rememberSaveable { mutableIntStateOf(0) }
     var elegirClase by remember { mutableStateOf(false) }
     var confirmarEliminar by remember { mutableStateOf(false) }
@@ -170,7 +171,16 @@ fun DetalleMascotaScreen(
                     SaludBasica(mascota)
                     TarjetaPeso(pesos, viewModel.hoy, onRegistrar = viewModel::registrarPeso, onEliminar = { viewModel.eliminarPeso(it) }, editable = mascota.esPropietario)
                     // Las visitas veterinarias no se comparten con los cuidadores (sección 5)
-                    if (mascota.esPropietario) TarjetaVisitas(visitas, onNueva = { onVisita(null) }, onAbrir = { onVisita(it.id) })
+                    if (mascota.esPropietario) {
+                        TarjetaVisitas(visitas, onNueva = { onVisita(null) }, onAbrir = { onVisita(it.id) })
+                        // Documentos: tampoco se comparten con los cuidadores (sección 5)
+                        TarjetaDocumentos(
+                            documentos, visitas, viewModel.hoy,
+                            onAgregar = { o, n, t, f, v -> viewModel.agregarDocumento(o, n, t, f, v, avisar) },
+                            onAbrir = { d -> viewModel.abrirDocumento(d, abrir = { ruta -> abrirDocumento(contexto, ruta, d.mime) }, avisar = avisar) },
+                            onEliminar = viewModel::eliminarDocumento,
+                        )
+                    }
                 }
                 3 -> TarjetaHistorial(historial)
                 else -> {
