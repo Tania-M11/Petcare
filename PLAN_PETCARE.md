@@ -129,13 +129,15 @@ Si alguien es veterinario **y** prestador, al cambiar de modo elige cuál (chip 
 
 ## 7. Plan por partes
 
+Supabase: proyecto `ffqupbshyavmibnmjpqu`; el SQL de `supabase/NN_*.sql` se aplica en el SQL Editor del panel; confirmación de correo apagada durante el desarrollo (revisar antes de entregar).
+
 Reglas: una parte por sesión · compila y se prueba en el teléfono antes de seguir · un commit por parte en `github.com/Tania-M11/Petcare` · pruebas instrumentadas en `app/src/androidTest` que Claude corre en el teléfono conectado.
 
 | Fase | Parte | Contenido | Estado |
 |---|---|---|---|
 | **0 Base** | 0.1 | Proyecto Android, Hilt, Compose, navegación provisional, pruebas instrumentadas | ✅ |
 | | 0.2 | **Identidad visual**: fuentes, paleta, formas, logo, recortes de Chopper, barra de **4 pestañas** con Hoy/Mascotas/Servicios/Perfil vacíos pero con estilo | ✅ |
-| | 0.3 | Supabase `petcare` + tabla de perfiles + cliente en la app | |
+| | 0.3 | Supabase `petcare` + tabla de usuarios (`supabase/01_base.sql`) + cliente en la app | ✅ |
 | **1 Cuenta** | 1.1 | Bienvenida, registro, inicio de sesión, recuperar contraseña | |
 | | 1.2 | **"¿Qué te trae a PetCare?"** + lista Primeros pasos | |
 | **2 Mascotas y agenda** | 2.1 | Room + sincronización con Supabase | |

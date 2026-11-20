@@ -8,7 +8,7 @@ plugins {
     alias(libs.plugins.hilt)
 }
 
-// Claves de Supabase: se leen de local.properties (que NO se sube a GitHub). Se usan desde la parte 0.2.
+// Claves de Supabase: se leen de local.properties (que NO se sube a GitHub).
 val localProperties = Properties().apply {
     val file = rootProject.file("local.properties")
     if (file.exists()) file.inputStream().use { load(it) }
@@ -69,6 +69,12 @@ dependencies {
     implementation(libs.androidx.compose.material.icons.extended)
 
     implementation(libs.kotlinx.serialization.json)
+
+    // Supabase
+    implementation(platform(libs.supabase.bom))
+    implementation(libs.supabase.auth)
+    implementation(libs.supabase.postgrest)
+    implementation(libs.ktor.client.okhttp)
 
     // Inyección de dependencias (Hilt)
     implementation(libs.hilt.android)

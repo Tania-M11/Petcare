@@ -31,17 +31,26 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.ui.unit.dp
 import com.udenar.petcare.R
+import com.udenar.petcare.ui.componentes.Chip
 import com.udenar.petcare.ui.componentes.FilaOpcion
 import com.udenar.petcare.ui.componentes.TarjetaIlustrada
 import com.udenar.petcare.ui.theme.Pc
 
 /** Pestaña Perfil: cuenta, puerta al modo profesional, ajustes y créditos. */
 @Composable
-fun PerfilScreen(avisar: (String) -> Unit, modifier: Modifier = Modifier) {
+fun PerfilScreen(
+    avisar: (String) -> Unit,
+    modifier: Modifier = Modifier,
+    viewModel: PerfilViewModel = hiltViewModel(),
+) {
     var acercaDe by remember { mutableStateOf(false) }
+    val conexion by viewModel.conexion.collectAsStateWithLifecycle()
 
     Column(
         modifier
@@ -101,10 +110,13 @@ fun PerfilScreen(avisar: (String) -> Unit, modifier: Modifier = Modifier) {
             FilaOpcion(
                 icono = Icons.Rounded.Info,
                 titulo = "Acerca de PetCare",
-                subtitulo = "Versión 0.2 · créditos",
+                subtitulo = "Versión 0.3 · créditos",
                 fondoIcono = Pc.LavandaClara,
                 colorIcono = Pc.Lavanda,
-                onClick = { acercaDe = true },
+                onClick = {
+                    acercaDe = true
+                    viewModel.comprobarServidor()
+                },
             )
         }
     }
@@ -128,6 +140,19 @@ fun PerfilScreen(avisar: (String) -> Unit, modifier: Modifier = Modifier) {
                         color = Pc.TintaSuave,
                     )
                     Text("Tipografías Kalnia y Quicksand (SIL Open Font License).", style = MaterialTheme.typography.bodySmall, color = Pc.TintaSuave)
+                    Chip(
+                        when (conexion) {
+                            Conexion.COMPROBANDO -> "Servidor: comprobando…"
+                            Conexion.CONECTADO -> "Servidor conectado ✓"
+                            Conexion.SIN_CONEXION -> "Servidor sin conexión"
+                        },
+                        fondo = when (conexion) {
+                            Conexion.CONECTADO -> Pc.MentaClara
+                            Conexion.SIN_CONEXION -> Pc.Durazno
+                            Conexion.COMPROBANDO -> Pc.Blanco
+                        },
+                        modifier = Modifier.testTag("estado_servidor"),
+                    )
                 }
             },
         )
