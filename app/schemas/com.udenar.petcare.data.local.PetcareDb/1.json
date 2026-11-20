@@ -1,0 +1,177 @@
+{
+  "formatVersion": 1,
+  "database": {
+    "version": 1,
+    "identityHash": "7276c933a39c109a6f4329f244e3e375",
+    "entities": [
+      {
+        "tableName": "mascotas",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `propietarioId` TEXT, `nombre` TEXT NOT NULL, `especie` TEXT NOT NULL, `especieOtro` TEXT, `raza` TEXT, `sexo` TEXT NOT NULL, `fechaNacimiento` TEXT, `nacimientoAproximado` INTEGER NOT NULL, `color` TEXT, `tamano` TEXT, `pesoGramos` INTEGER, `esterilizado` INTEGER, `notas` TEXT, `alergias` TEXT, `condiciones` TEXT, `medicamentosActuales` TEXT, `observaciones` TEXT, `fotoUrl` TEXT, `eliminado` INTEGER NOT NULL, `actualizadoEn` TEXT, `pendiente` INTEGER NOT NULL, `cambioLocal` INTEGER NOT NULL, PRIMARY KEY(`id`))",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "propietarioId",
+            "columnName": "propietarioId",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "nombre",
+            "columnName": "nombre",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "especie",
+            "columnName": "especie",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "especieOtro",
+            "columnName": "especieOtro",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "raza",
+            "columnName": "raza",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "sexo",
+            "columnName": "sexo",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "fechaNacimiento",
+            "columnName": "fechaNacimiento",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "nacimientoAproximado",
+            "columnName": "nacimientoAproximado",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "color",
+            "columnName": "color",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "tamano",
+            "columnName": "tamano",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "pesoGramos",
+            "columnName": "pesoGramos",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "esterilizado",
+            "columnName": "esterilizado",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "notas",
+            "columnName": "notas",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "alergias",
+            "columnName": "alergias",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "condiciones",
+            "columnName": "condiciones",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "medicamentosActuales",
+            "columnName": "medicamentosActuales",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "observaciones",
+            "columnName": "observaciones",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "fotoUrl",
+            "columnName": "fotoUrl",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "eliminado",
+            "columnName": "eliminado",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "actualizadoEn",
+            "columnName": "actualizadoEn",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "pendiente",
+            "columnName": "pendiente",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "cambioLocal",
+            "columnName": "cambioLocal",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "id"
+          ]
+        }
+      },
+      {
+        "tableName": "cursores_sync",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`tabla` TEXT NOT NULL, `cursor` TEXT, `sincronizadoEn` INTEGER NOT NULL, PRIMARY KEY(`tabla`))",
+        "fields": [
+          {
+            "fieldPath": "tabla",
+            "columnName": "tabla",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "cursor",
+            "columnName": "cursor",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "sincronizadoEn",
+            "columnName": "sincronizadoEn",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "tabla"
+          ]
+        }
+      }
+    ],
+    "setupQueries": [
+      "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '7276c933a39c109a6f4329f244e3e375')"
+    ]
+  }
+}

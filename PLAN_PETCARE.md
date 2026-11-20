@@ -117,6 +117,8 @@ Si alguien es veterinario **y** prestador, al cambiar de modo elige cuál (chip 
 
 - **Stack:** Kotlin 2.4 + Compose (Material 3), Hilt, Room, **Supabase** (Auth, Postgres + RLS, Storage, Realtime, Edge Functions), WorkManager, MapLibre + OpenFreeMap, ZXing/ML Kit, Coil. minSdk 26.
 - **Sin conexión:** Supabase no guarda datos en el teléfono → la agenda vive en **Room** y una cola sube los cambios al volver la red. Directorios y solicitudes requieren internet.
+- **Convención de sincronización** (toda tabla offline): `id` uuid creado en el teléfono, `actualizado_en` puesto por trigger del servidor (cursor de descarga, con 2 min de margen), `eliminado` en vez de borrar; en Room `pendiente` + `cambioLocal`. Cada tabla nueva se registra con `@IntoSet TablaSincronizable` en `ModuloSincronizacion`.
+- **SQL en el panel:** los scripts deben poder ejecutarse varias veces (`if not exists`, `drop … if exists`) y terminar con `notify pgrst, 'reload schema'`.
 - **Seguridad en el servidor:** permisos por rol con RLS; cambios de estado de solicitudes con funciones RPC; promedio de reseñas por trigger; verificación veterinaria solo editable desde el panel.
 - **Privacidad:** datos de gestión de la mascota (código, QR) en tabla solo del propietario; el prestador solo ve lo que el dueño comparte en la solicitud y lo pierde al terminar.
 - **Archivos:** Supabase Storage (buckets privados).
@@ -140,7 +142,7 @@ Reglas: una parte por sesión · compila y se prueba en el teléfono antes de se
 | | 0.3 | Supabase `petcare` + tabla de usuarios (`supabase/01_base.sql`) + cliente en la app | ✅ |
 | **1 Cuenta** | 1.1 | Bienvenida, registro (con política de privacidad), inicio y cierre de sesión | ✅ |
 | | 1.2 | **"¿Qué te trae a PetCare?"** + lista Primeros pasos (`supabase/02_guia.sql`) | ✅ |
-| **2 Mascotas y agenda** | 2.1 | Room + sincronización con Supabase | |
+| **2 Mascotas y agenda** | 2.1 | Room + sincronización con Supabase; tabla `mascotas` y `eliminar_mi_cuenta()` (`supabase/03_mascotas_sync.sql`) | ✅ |
 | | 2.2 | Agregar/editar mascota (foto, especie, código) y lista de mascotas | |
 | | 2.3 | Motor de cuidados (frecuencias, próxima fecha) con pruebas | |
 | | 2.4 | Alarmas y notificaciones con acciones Hecho/Posponer/Omitir | |

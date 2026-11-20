@@ -6,6 +6,7 @@ plugins {
     alias(libs.plugins.kotlin.serialization)
     alias(libs.plugins.ksp)
     alias(libs.plugins.hilt)
+    alias(libs.plugins.androidx.room)
 }
 
 // Claves de Supabase: se leen de local.properties (que NO se sube a GitHub).
@@ -51,6 +52,11 @@ android {
     }
 }
 
+room {
+    // Esquemas versionados en git: permiten migraciones automáticas entre versiones
+    schemaDirectory("$projectDir/schemas")
+}
+
 dependencies {
     // AndroidX + ciclo de vida (ViewModel = capa de presentación del MVVM)
     implementation(libs.androidx.core.ktx)
@@ -70,6 +76,14 @@ dependencies {
 
     implementation(libs.kotlinx.serialization.json)
 
+    // Base de datos local y sincronización en segundo plano
+    implementation(libs.androidx.room.runtime)
+    implementation(libs.androidx.room.ktx)
+    ksp(libs.androidx.room.compiler)
+    implementation(libs.androidx.work.runtime.ktx)
+    implementation(libs.androidx.hilt.work)
+    ksp(libs.androidx.hilt.compiler)
+
     // Supabase
     implementation(platform(libs.supabase.bom))
     implementation(libs.supabase.auth)
@@ -82,6 +96,7 @@ dependencies {
     implementation(libs.androidx.hilt.lifecycle.viewmodel.compose)
 
     testImplementation(libs.junit)
+    testImplementation(libs.kotlinx.coroutines.test)
 
     // Pruebas instrumentadas: ./gradlew connectedDebugAndroidTest (o "Run" sobre la clase en Android Studio)
     androidTestImplementation(libs.androidx.test.runner)

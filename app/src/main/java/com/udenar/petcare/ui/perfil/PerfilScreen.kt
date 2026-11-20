@@ -16,6 +16,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.Logout
+import androidx.compose.material.icons.rounded.CloudSync
 import androidx.compose.material.icons.rounded.Explore
 import androidx.compose.material.icons.rounded.Info
 import androidx.compose.material.icons.rounded.NotificationsActive
@@ -42,7 +43,11 @@ import com.udenar.petcare.R
 import com.udenar.petcare.ui.componentes.Chip
 import com.udenar.petcare.ui.componentes.FilaOpcion
 import com.udenar.petcare.ui.componentes.TarjetaIlustrada
+import com.udenar.petcare.domain.sync.EstadoSync
 import com.udenar.petcare.ui.theme.Pc
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
+import java.util.Locale
 
 /** Pestaña Perfil: cuenta, puerta al modo profesional, ajustes y créditos. */
 @Composable
@@ -55,6 +60,7 @@ fun PerfilScreen(
     var acercaDe by remember { mutableStateOf(false) }
     val conexion by viewModel.conexion.collectAsStateWithLifecycle()
     val usuario by viewModel.usuario.collectAsStateWithLifecycle()
+    val estadoSync by viewModel.estadoSync.collectAsStateWithLifecycle()
     var confirmarSalida by remember { mutableStateOf(false) }
 
     Column(
@@ -127,9 +133,21 @@ fun PerfilScreen(
                 onClick = { avisar("Las notificaciones llegan en la parte 2.4") },
             )
             FilaOpcion(
+                icono = Icons.Rounded.CloudSync,
+                titulo = "Sincronización",
+                subtitulo = describirSync(estadoSync),
+                fondoIcono = Pc.CieloClaro,
+                colorIcono = Pc.CieloOscuro,
+                onClick = {
+                    viewModel.sincronizarAhora()
+                    avisar("Sincronizando cuando haya conexión…")
+                },
+                modifier = Modifier.testTag("fila_sync"),
+            )
+            FilaOpcion(
                 icono = Icons.Rounded.Info,
                 titulo = "Acerca de PetCare",
-                subtitulo = "Versión 0.5 · créditos",
+                subtitulo = "Versión 0.6 · créditos",
                 fondoIcono = Pc.LavandaClara,
                 colorIcono = Pc.Lavanda,
                 onClick = {
@@ -200,4 +218,15 @@ fun PerfilScreen(
             },
         )
     }
+}
+
+private val HORA = DateTimeFormatter.ofPattern("d MMM, h:mm a", Locale.forLanguageTag("es-CO"))
+
+/** "Al día · 19 nov, 9:05 p. m." / "2 cambios por subir" / "Aún no sincroniza". */
+internal fun describirSync(e: EstadoSync?): String = when {
+    e == null -> "Revisando…"
+    e.porSubir == 1 -> "1 cambio por subir"
+    e.porSubir > 1 -> "${e.porSubir} cambios por subir"
+    e.ultima == null -> "Aún no sincroniza en este teléfono"
+    else -> "Al día · " + HORA.format(e.ultima.atZone(ZoneId.systemDefault()))
 }

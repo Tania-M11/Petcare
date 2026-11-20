@@ -3,6 +3,7 @@ package com.udenar.petcare.data.cuenta
 import com.udenar.petcare.domain.cuenta.CuentaException
 import com.udenar.petcare.domain.cuenta.RepositorioCuenta
 import com.udenar.petcare.domain.guia.Intencion
+import com.udenar.petcare.domain.sync.AlmacenLocal
 import com.udenar.petcare.domain.modelo.EstadoSesion
 import com.udenar.petcare.domain.modelo.Usuario
 import io.github.jan.supabase.SupabaseClient
@@ -49,6 +50,7 @@ private data class FilaUsuario(
 @Singleton
 class RepositorioCuentaSupabase @Inject constructor(
     private val supabase: SupabaseClient,
+    private val local: AlmacenLocal,
 ) : RepositorioCuenta {
 
     private val _usuario = MutableStateFlow<Usuario?>(null)
@@ -96,6 +98,8 @@ class RepositorioCuentaSupabase @Inject constructor(
             supabase.auth.clearSession()
         }
         _usuario.value = null
+        // RF-01: al cerrar sesión no queda nada del usuario en el teléfono
+        local.borrarTodo()
     }
 
     override suspend fun cargarUsuario() {

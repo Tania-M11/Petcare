@@ -5,6 +5,10 @@ import androidx.lifecycle.viewModelScope
 import com.udenar.petcare.data.remoto.EstadoServidor
 import com.udenar.petcare.domain.cuenta.RepositorioCuenta
 import com.udenar.petcare.domain.modelo.Usuario
+import com.udenar.petcare.domain.sync.EstadoSync
+import com.udenar.petcare.domain.sync.ProgramadorSync
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.stateIn
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -18,7 +22,13 @@ enum class Conexion { COMPROBANDO, CONECTADO, SIN_CONEXION }
 class PerfilViewModel @Inject constructor(
     private val servidor: EstadoServidor,
     private val cuenta: RepositorioCuenta,
+    private val sync: ProgramadorSync,
 ) : ViewModel() {
+
+    val estadoSync: StateFlow<EstadoSync?> = sync.estado
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
+
+    fun sincronizarAhora() = sync.solicitar()
 
     val usuario: StateFlow<Usuario?> = cuenta.usuario
 

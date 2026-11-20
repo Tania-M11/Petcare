@@ -1,0 +1,30 @@
+package com.udenar.petcare.di
+
+import android.content.Context
+import androidx.room.Room
+import com.udenar.petcare.data.local.CursorDao
+import com.udenar.petcare.data.local.PetcareDb
+import com.udenar.petcare.data.mascotas.MascotaDao
+import dagger.Module
+import dagger.Provides
+import dagger.hilt.InstallIn
+import dagger.hilt.android.qualifiers.ApplicationContext
+import dagger.hilt.components.SingletonComponent
+import javax.inject.Singleton
+
+/** Base de datos del teléfono (las pruebas la reemplazan por una en memoria). */
+@Module
+@InstallIn(SingletonComponent::class)
+object ModuloLocal {
+
+    @Provides
+    @Singleton
+    fun db(@ApplicationContext contexto: Context): PetcareDb =
+        Room.databaseBuilder(contexto, PetcareDb::class.java, "petcare.db").build()
+
+    @Provides
+    fun mascotas(db: PetcareDb): MascotaDao = db.mascotas()
+
+    @Provides
+    fun cursores(db: PetcareDb): CursorDao = db.cursores()
+}
