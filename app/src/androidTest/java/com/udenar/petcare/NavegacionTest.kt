@@ -27,7 +27,7 @@ class NavegacionTest {
     @Test
     fun abreEnHoy() {
         compose.onNodeWithTag("pestana_hoy").assertIsSelected()
-        compose.onNodeWithText("Pendientes de hoy").assertExists()
+        compose.onNodeWithText("Nada pendiente").assertExists()
         compose.onNodeWithText("Agrega a tu primera mascota").assertExists()
     }
 
@@ -43,7 +43,7 @@ class NavegacionTest {
         compose.onNodeWithText("Trabaja con PetCare").assertExists()
 
         compose.onNodeWithTag("pestana_hoy").performClick()
-        compose.onNodeWithText("Pendientes de hoy").assertExists()
+        compose.onNodeWithText("Nada pendiente").assertExists()
     }
 
     @Test

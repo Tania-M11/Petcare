@@ -62,6 +62,7 @@ fun PetcareRaiz() {
                 HoyScreen(
                     irAMascotas = { nav.irAPestana(PestanaPersonal.MASCOTAS) },
                     onAbrirMascota = { nav.navigate(RutaDetalleMascota(it)) },
+                    onNuevoCuidado = { mascotaId, clase -> nav.navigate(RutaFormCuidado(mascotaId, clase)) },
                     avisar = avisar,
                 )
             }
