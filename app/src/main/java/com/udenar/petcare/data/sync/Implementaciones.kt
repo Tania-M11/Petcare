@@ -10,6 +10,8 @@ import androidx.work.NetworkType
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkManager
 import androidx.work.WorkerParameters
+import com.udenar.petcare.data.cuidados.EventoDao
+import com.udenar.petcare.data.cuidados.RegistroDao
 import com.udenar.petcare.data.fotos.ArchivosFotos
 import com.udenar.petcare.data.local.CursorDao
 import com.udenar.petcare.data.local.CursorEntidad
@@ -91,6 +93,8 @@ class TrabajoSincronizacion @AssistedInject constructor(
 class ProgramadorWorkManager @Inject constructor(
     @ApplicationContext private val contexto: Context,
     mascotas: MascotaDao,
+    eventos: EventoDao,
+    registros: RegistroDao,
     cursores: CursorDao,
 ) : ProgramadorSync {
 
@@ -103,8 +107,13 @@ class ProgramadorWorkManager @Inject constructor(
         WorkManager.getInstance(contexto).enqueueUniqueWork(NOMBRE, ExistingWorkPolicy.APPEND_OR_REPLACE, pedido)
     }
 
-    override val estado: Flow<EstadoSync> = combine(mascotas.contarPendientes(), cursores.ultimaSincronizacion()) { pendientes, ultima ->
-        EstadoSync(porSubir = pendientes, ultima = ultima?.let { Instant.ofEpochMilli(it) })
+    override val estado: Flow<EstadoSync> = combine(
+        mascotas.contarPendientes(),
+        eventos.contarPendientes(),
+        registros.contarPendientes(),
+        cursores.ultimaSincronizacion(),
+    ) { m, e, r, ultima ->
+        EstadoSync(porSubir = m + e + r, ultima = ultima?.let { Instant.ofEpochMilli(it) })
     }
 
     companion object {

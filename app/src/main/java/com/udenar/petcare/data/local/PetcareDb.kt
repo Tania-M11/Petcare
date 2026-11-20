@@ -8,6 +8,10 @@ import androidx.room.PrimaryKey
 import androidx.room.Query
 import androidx.room.RoomDatabase
 import androidx.room.Upsert
+import com.udenar.petcare.data.cuidados.EventoDao
+import com.udenar.petcare.data.cuidados.EventoEntidad
+import com.udenar.petcare.data.cuidados.RegistroDao
+import com.udenar.petcare.data.cuidados.RegistroEntidad
 import com.udenar.petcare.data.mascotas.MascotaDao
 import com.udenar.petcare.data.mascotas.MascotaEntidad
 import kotlinx.coroutines.flow.Flow
@@ -37,12 +41,17 @@ interface CursorDao {
  * Cada parte agrega sus tablas subiendo la versión con una migración automática.
  */
 @Database(
-    entities = [MascotaEntidad::class, CursorEntidad::class],
-    version = 2,
+    entities = [MascotaEntidad::class, CursorEntidad::class, EventoEntidad::class, RegistroEntidad::class],
+    version = 3,
     exportSchema = true,
-    autoMigrations = [AutoMigration(from = 1, to = 2)], // 2.2: foto local de la mascota
+    autoMigrations = [
+        AutoMigration(from = 1, to = 2), // 2.2: foto local de la mascota
+        AutoMigration(from = 2, to = 3), // 2.3: cuidados y registros
+    ],
 )
 abstract class PetcareDb : RoomDatabase() {
     abstract fun mascotas(): MascotaDao
     abstract fun cursores(): CursorDao
+    abstract fun eventos(): EventoDao
+    abstract fun registros(): RegistroDao
 }

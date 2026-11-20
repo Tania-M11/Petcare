@@ -2,6 +2,8 @@ package com.udenar.petcare
 
 import android.content.Context
 import androidx.room.Room
+import com.udenar.petcare.data.cuidados.EventoDao
+import com.udenar.petcare.data.cuidados.RegistroDao
 import com.udenar.petcare.data.local.CursorDao
 import com.udenar.petcare.data.local.PetcareDb
 import com.udenar.petcare.data.mascotas.MascotaDao
@@ -40,6 +42,12 @@ object ModuloLocalPrueba {
 
     @Provides
     fun cursores(db: PetcareDb): CursorDao = db.cursores()
+
+    @Provides
+    fun eventos(db: PetcareDb): EventoDao = db.eventos()
+
+    @Provides
+    fun registros(db: PetcareDb): RegistroDao = db.registros()
 }
 
 /** Supabase con la sesión solo en memoria: no reemplaza la sesión real guardada en el teléfono. */

@@ -16,6 +16,9 @@ data class Pendiente(val id: String, val cambioLocal: Long, val fila: JsonObject
 interface TablaSincronizable {
     val tabla: String
 
+    /** Orden de subida y bajada: las tablas de las que otras dependen van primero. */
+    val orden: Int get() = 0
+
     /** Trabajo previo a subir filas (p. ej. subir fotos para tener su ruta). */
     suspend fun antesDeSubir() {}
 
@@ -58,7 +61,7 @@ class Sincronizador(
     suspend fun sincronizar(): ResultadoSync = candado.withLock {
         var subidas = 0
         var bajadas = 0
-        for (t in tablas.sortedBy { it.tabla }) {
+        for (t in tablas.sortedWith(compareBy({ it.orden }, { it.tabla }))) {
             subidas += subir(t)
             bajadas += bajar(t)
         }

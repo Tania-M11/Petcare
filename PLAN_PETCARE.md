@@ -131,7 +131,7 @@ Si alguien es veterinario **y** prestador, al cambiar de modo elige cuál (chip 
 
 ## 7. Plan por partes
 
-Supabase: proyecto `ffqupbshyavmibnmjpqu`; el SQL de `supabase/NN_*.sql` se aplica en el SQL Editor del panel; confirmación de correo apagada durante el desarrollo (revisar antes de entregar).
+Supabase: proyecto `ffqupbshyavmibnmjpqu` (Claude tiene acceso directo desde el 19-nov y aplica los `supabase/NN_*.sql`; funciones auxiliares de RLS en el esquema `privado`); confirmación de correo apagada durante el desarrollo (revisar antes de entregar).
 
 Reglas: una parte por sesión · compila y se prueba en el teléfono antes de seguir · un commit por parte en `github.com/Tania-M11/Petcare` · pruebas instrumentadas en `app/src/androidTest` que Claude corre en el teléfono conectado.
 
@@ -144,7 +144,7 @@ Reglas: una parte por sesión · compila y se prueba en el teléfono antes de se
 | | 1.2 | **"¿Qué te trae a PetCare?"** + lista Primeros pasos (`supabase/02_guia.sql`) | ✅ |
 | **2 Mascotas y agenda** | 2.1 | Room + sincronización con Supabase; tabla `mascotas` y `eliminar_mi_cuenta()` (`supabase/03_mascotas_sync.sql`) | ✅ |
 | | 2.2 | Agregar/editar mascota (foto, especie, código) y lista de mascotas; fotos en Storage y códigos (`supabase/04_fotos_y_codigos.sql`) | ✅ |
-| | 2.3 | Motor de cuidados (frecuencias, próxima fecha) con pruebas | |
+| | 2.3 | Motor de cuidados (frecuencias, próxima fecha) con pruebas; cuidados y registros sincronizados (`supabase/05_cuidados.sql`) | ✅ |
 | | 2.4 | Alarmas y notificaciones con acciones Hecho/Posponer/Omitir | |
 | | 2.5 | Comidas, higiene y actividades personalizadas | |
 | | 2.6 | Medicamentos, vacunas y desparasitación | |
@@ -160,4 +160,4 @@ Reglas: una parte por sesión · compila y se prueba en el teléfono antes de se
 | | 4.4 | Perfil de prestador (categorías, servicios, horario, galería); directorio y mapa | |
 | | 4.5 | Cotizaciones y datos compartidos con el prestador | |
 | **5 Cierre** | 5.1 | Notificaciones push y reseñas (+ reportar) | |
-| | 5.2 | Eliminar cuenta, recuperar contraseña (pospuesta por Tania), pulido y pruebas con varias cuentas | |
+| | 5.2 | Eliminar cuenta, recuperar contraseña (pospuesta por Tania), confirmación de correo y protección de contraseñas filtradas, pulido y pruebas con varias cuentas | |

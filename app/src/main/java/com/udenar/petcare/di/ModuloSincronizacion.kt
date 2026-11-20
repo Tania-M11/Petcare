@@ -1,5 +1,8 @@
 package com.udenar.petcare.di
 
+import com.udenar.petcare.data.cuidados.RepositorioCuidadosLocal
+import com.udenar.petcare.data.cuidados.TablaEventos
+import com.udenar.petcare.data.cuidados.TablaRegistros
 import com.udenar.petcare.data.fotos.AlmacenFotos
 import com.udenar.petcare.data.fotos.FotosSupabase
 import com.udenar.petcare.data.mascotas.RepositorioMascotasLocal
@@ -11,6 +14,7 @@ import com.udenar.petcare.data.sync.FuenteRemota
 import com.udenar.petcare.data.sync.RemotaSupabase
 import com.udenar.petcare.data.sync.Sincronizador
 import com.udenar.petcare.data.sync.TablaSincronizable
+import com.udenar.petcare.domain.cuidados.RepositorioCuidados
 import com.udenar.petcare.domain.mascotas.RepositorioMascotas
 import com.udenar.petcare.domain.sync.AlmacenLocal
 import dagger.Binds
@@ -29,6 +33,15 @@ abstract class ModuloSincronizacion {
 
     @Binds @IntoSet
     abstract fun tablaMascotas(t: TablaMascotas): TablaSincronizable
+
+    @Binds @IntoSet
+    abstract fun tablaEventos(t: TablaEventos): TablaSincronizable
+
+    @Binds @IntoSet
+    abstract fun tablaRegistros(t: TablaRegistros): TablaSincronizable
+
+    @Binds
+    abstract fun cuidados(r: RepositorioCuidadosLocal): RepositorioCuidados
 
     @Binds
     abstract fun remota(r: RemotaSupabase): FuenteRemota

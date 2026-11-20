@@ -5,6 +5,12 @@ import android.graphics.Color
 import androidx.test.platform.app.InstrumentationRegistry
 import com.udenar.petcare.data.local.PetcareDb
 import com.udenar.petcare.data.sync.Sincronizador
+import com.udenar.petcare.domain.cuidados.EstadoRegistro
+import com.udenar.petcare.domain.cuidados.EventoCuidado
+import com.udenar.petcare.domain.cuidados.Frecuencia
+import com.udenar.petcare.domain.cuidados.RepositorioCuidados
+import com.udenar.petcare.domain.cuidados.TipoCuidado
+import com.udenar.petcare.domain.cuidados.TipoFrecuencia
 import com.udenar.petcare.domain.mascotas.RepositorioMascotas
 import com.udenar.petcare.domain.modelo.Especie
 import com.udenar.petcare.domain.modelo.Mascota
@@ -32,6 +38,8 @@ import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import java.io.File
+import java.time.LocalDate
+import java.time.LocalTime
 import java.util.UUID
 import javax.inject.Inject
 
@@ -50,6 +58,7 @@ class SincronizacionRealTest {
     @Inject lateinit var mascotas: RepositorioMascotas
     @Inject lateinit var sincronizador: Sincronizador
     @Inject lateinit var db: PetcareDb
+    @Inject lateinit var cuidados: RepositorioCuidados
 
     private val correo = "sync.${System.currentTimeMillis()}@petcare.test"
     private val clave = "Prueba-${UUID.randomUUID()}"
@@ -72,6 +81,13 @@ class SincronizacionRealTest {
             e.code != "PGRST205" // tabla inexistente
         }
         assumeTrue("Falta aplicar supabase/04_fotos_y_codigos.sql", codigosAplicado)
+        val cuidadosAplicado = try {
+            supabase.from("registros_cuidado").select { limit(0) }
+            true
+        } catch (e: PostgrestRestException) {
+            e.code != "PGRST205"
+        }
+        assumeTrue("Falta aplicar supabase/05_cuidados.sql", cuidadosAplicado)
         supabase.auth.signUpWith(Email) {
             email = correo
             password = clave
@@ -115,6 +131,55 @@ class SincronizacionRealTest {
         val archivo = File(InstrumentationRegistry.getInstrumentation().targetContext.cacheDir, "prueba_${UUID.randomUUID()}.jpg")
         archivo.outputStream().use { bmp.compress(Bitmap.CompressFormat.JPEG, 80, it) }
         return archivo.absolutePath
+    }
+
+    @Test
+    fun cuidadosYRegistrosLleganConSuAutor() = runBlocking {
+        val hoy = LocalDate.now()
+        // Mascota, cuidado y registro creados sin sincronizar entre medio: el orden de subida evita errores
+        val mascotaId = UUID.randomUUID().toString()
+        val eventoId = UUID.randomUUID().toString()
+        mascotas.guardar(Mascota(id = mascotaId, nombre = "Kira", especie = Especie.PERRO))
+        cuidados.guardarEvento(
+            EventoCuidado(
+                eventoId, mascotaId, TipoCuidado.MEDICAMENTO, "Gotas",
+                Frecuencia(TipoFrecuencia.DIARIO, horas = listOf(LocalTime.of(9, 0))), fechaInicio = hoy,
+                detalle = mapOf("dosis" to "2 gotas"),
+            ),
+        )
+        val toma = cuidados.agenda(hoy).first().single()
+        cuidados.registrar(toma, EstadoRegistro.ADMINISTRADA)
+        sincronizador.sincronizar()
+
+        val yo = supabase.auth.currentUserOrNull()!!.id
+        val evento = supabase.from("eventos_cuidado").select().decodeList<JsonObject>().single()
+        assertEquals(yo, evento["creado_por"]!!.jsonPrimitive.content)
+        assertEquals("Prueba sincronización", evento["creado_por_nombre"]!!.jsonPrimitive.content)
+        assertEquals("PROPIETARIO", evento["creado_por_rol"]!!.jsonPrimitive.content)
+        val registro = supabase.from("registros_cuidado").select().decodeList<JsonObject>().single()
+        assertEquals("Prueba sincronización", registro["registrado_por_nombre"]!!.jsonPrimitive.content)
+
+        // Otro teléfono marca la misma toma: mismo id, un solo registro (gana la última escritura)
+        db.clearAllTables()
+        sincronizador.sincronizar()
+        val tomaOtroTelefono = cuidados.agenda(hoy).first().single()
+        assertEquals("Prueba sincronización", tomaOtroTelefono.registro!!.registradoPor!!.nombre)
+        cuidados.registrar(tomaOtroTelefono, EstadoRegistro.OMITIDA)
+        sincronizador.sincronizar()
+        val registros = supabase.from("registros_cuidado").select().decodeList<JsonObject>()
+        assertEquals(1, registros.size)
+        assertEquals("OMITIDA", registros.single()["estado"]!!.jsonPrimitive.content)
+
+        // Nadie puede firmar por otro: el autor no se puede enviar desde la app
+        try {
+            supabase.from("registros_cuidado").update(buildJsonObject { put("registrado_por", UUID.randomUUID().toString()) }) {
+                filter { eq("id", registros.single()["id"]!!.jsonPrimitive.content) }
+            }
+            fail("No debería poder cambiar el autor de un registro")
+        } catch (_: PostgrestRestException) {
+            // Esperado: sin permiso sobre esa columna
+        }
+        assertEquals(yo, supabase.from("registros_cuidado").select().decodeList<JsonObject>().single()["registrado_por"]!!.jsonPrimitive.content)
     }
 
     @Test
