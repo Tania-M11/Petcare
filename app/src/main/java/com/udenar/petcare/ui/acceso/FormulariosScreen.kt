@@ -1,0 +1,205 @@
+package com.udenar.petcare.ui.acceso
+
+import androidx.annotation.DrawableRes
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.rounded.ArrowBack
+import androidx.compose.material.icons.rounded.Lock
+import androidx.compose.material.icons.rounded.Mail
+import androidx.compose.material.icons.rounded.Person
+import androidx.compose.material3.Checkbox
+import androidx.compose.material3.CheckboxDefaults
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextDecoration
+import androidx.compose.ui.text.withStyle
+import androidx.compose.ui.unit.dp
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.udenar.petcare.R
+import com.udenar.petcare.domain.cuenta.Campo
+import com.udenar.petcare.ui.componentes.BlobDecorativo
+import com.udenar.petcare.ui.componentes.BotonCircular
+import com.udenar.petcare.ui.componentes.BotonPrincipal
+import com.udenar.petcare.ui.componentes.CampoTexto
+import com.udenar.petcare.ui.theme.Pc
+
+/** Marco común: volver, título con Chopper y contenido desplazable sobre el teclado. */
+@Composable
+private fun MarcoFormulario(
+    titulo: String,
+    subtitulo: String,
+    @DrawableRes ilustracion: Int,
+    onVolver: () -> Unit,
+    contenido: @Composable ColumnScope.() -> Unit,
+) {
+    Column(
+        Modifier
+            .fillMaxSize()
+            .background(Pc.Crema)
+            .statusBarsPadding()
+            .navigationBarsPadding()
+            .imePadding()
+            .verticalScroll(rememberScrollState())
+            .padding(horizontal = 24.dp, vertical = 12.dp),
+        verticalArrangement = Arrangement.spacedBy(14.dp),
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            BotonCircular(Icons.AutoMirrored.Rounded.ArrowBack, "Volver", onClick = onVolver)
+            Column(
+                Modifier
+                    .weight(1f)
+                    .padding(start = 16.dp),
+            ) {
+                Text(titulo, style = MaterialTheme.typography.headlineLarge)
+                Text(subtitulo, style = MaterialTheme.typography.bodyMedium, color = Pc.TintaSuave)
+            }
+            Box(Modifier.size(96.dp), contentAlignment = Alignment.Center) {
+                BlobDecorativo(listOf(Pc.Durazno, Pc.LavandaClara), semilla = titulo.length, modifier = Modifier.fillMaxSize())
+                Image(painterResource(ilustracion), contentDescription = null, modifier = Modifier.height(88.dp))
+            }
+        }
+        contenido()
+    }
+}
+
+@Composable
+private fun ErrorGeneral(texto: String?) {
+    if (texto != null) {
+        Text(
+            texto,
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.error,
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(MaterialTheme.shapes.small)
+                .background(Pc.Durazno)
+                .padding(14.dp)
+                .testTag("error_general"),
+        )
+    }
+}
+
+@Composable
+fun RegistroScreen(
+    onVolver: () -> Unit,
+    onIrAEntrar: () -> Unit,
+    viewModel: RegistroViewModel = hiltViewModel(),
+) {
+    val f by viewModel.form.collectAsStateWithLifecycle()
+    var verPolitica by remember { mutableStateOf(false) }
+
+    MarcoFormulario("Crea tu cuenta", "Una sola cuenta para todo", R.drawable.chopper_organizador, onVolver) {
+        CampoTexto(f.nombre, viewModel::nombre, "Nombre", icono = Icons.Rounded.Person, error = f.errores[Campo.NOMBRE], habilitado = !f.cargando)
+        CampoTexto(
+            f.correo, viewModel::correo, "Correo", icono = Icons.Rounded.Mail, error = f.errores[Campo.CORREO],
+            teclado = KeyboardType.Email, habilitado = !f.cargando,
+        )
+        CampoTexto(
+            f.clave, viewModel::clave, "Contraseña (mínimo 8)", icono = Icons.Rounded.Lock, error = f.errores[Campo.CLAVE],
+            teclado = KeyboardType.Password, accion = ImeAction.Done, esClave = true, habilitado = !f.cargando,
+        )
+
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Checkbox(
+                checked = f.aceptoPrivacidad,
+                onCheckedChange = viewModel::privacidad,
+                colors = CheckboxDefaults.colors(checkedColor = Pc.Naranja, uncheckedColor = Pc.TintaSuave),
+                modifier = Modifier.testTag("casilla_privacidad"),
+            )
+            Text(
+                buildAnnotatedString {
+                    append("Acepto la ")
+                    withStyle(SpanStyle(color = Pc.Naranja, fontWeight = FontWeight.Bold, textDecoration = TextDecoration.Underline)) {
+                        append("política de privacidad")
+                    }
+                },
+                style = MaterialTheme.typography.bodyMedium,
+                modifier = Modifier.clickable { verPolitica = true },
+            )
+        }
+        f.errores[Campo.PRIVACIDAD]?.let {
+            Text(it, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error, modifier = Modifier.padding(start = 14.dp))
+        }
+
+        ErrorGeneral(f.errorGeneral)
+        BotonPrincipal("Crear cuenta", onClick = viewModel::registrar, cargando = f.cargando)
+        Text(
+            "¿Ya tienes cuenta? Inicia sesión",
+            style = MaterialTheme.typography.labelLarge,
+            color = Pc.Naranja,
+            modifier = Modifier
+                .align(Alignment.CenterHorizontally)
+                .clip(MaterialTheme.shapes.small)
+                .clickable(onClick = onIrAEntrar)
+                .padding(10.dp),
+        )
+    }
+
+    if (verPolitica) DialogoPrivacidad(onCerrar = { verPolitica = false })
+}
+
+@Composable
+fun InicioSesionScreen(
+    onVolver: () -> Unit,
+    onIrARegistro: () -> Unit,
+    viewModel: InicioSesionViewModel = hiltViewModel(),
+) {
+    val f by viewModel.form.collectAsStateWithLifecycle()
+
+    MarcoFormulario("Hola de nuevo", "Tus mascotas te esperan", R.drawable.chopper_saludo, onVolver) {
+        CampoTexto(
+            f.correo, viewModel::correo, "Correo", icono = Icons.Rounded.Mail, error = f.errores[Campo.CORREO],
+            teclado = KeyboardType.Email, habilitado = !f.cargando,
+        )
+        CampoTexto(
+            f.clave, viewModel::clave, "Contraseña", icono = Icons.Rounded.Lock, error = f.errores[Campo.CLAVE],
+            teclado = KeyboardType.Password, accion = ImeAction.Done, onAccion = viewModel::entrar, esClave = true,
+            habilitado = !f.cargando,
+        )
+        ErrorGeneral(f.errorGeneral)
+        BotonPrincipal("Entrar", onClick = viewModel::entrar, cargando = f.cargando)
+        Text(
+            "¿No tienes cuenta? Crea una",
+            style = MaterialTheme.typography.labelLarge,
+            color = Pc.Naranja,
+            modifier = Modifier
+                .align(Alignment.CenterHorizontally)
+                .clip(MaterialTheme.shapes.small)
+                .clickable(onClick = onIrARegistro)
+                .padding(10.dp),
+        )
+    }
+}

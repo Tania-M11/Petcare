@@ -42,6 +42,7 @@ fun HoyScreen(
     viewModel: HoyViewModel = hiltViewModel(),
 ) {
     val estado by viewModel.estado.collectAsStateWithLifecycle()
+    val nombre by viewModel.nombre.collectAsStateWithLifecycle()
 
     Column(
         modifier
@@ -63,7 +64,7 @@ fun HoyScreen(
                     color = Pc.TintaSuave,
                     modifier = Modifier.padding(top = 14.dp),
                 )
-                Text("¡Bienvenida!", style = MaterialTheme.typography.headlineLarge)
+                Text(nombre.ifBlank { "¡Hola!" }, style = MaterialTheme.typography.headlineLarge)
             }
             BotonCircular(
                 icono = Icons.Rounded.CalendarMonth,

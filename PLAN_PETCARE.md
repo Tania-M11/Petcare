@@ -138,7 +138,7 @@ Reglas: una parte por sesión · compila y se prueba en el teléfono antes de se
 | **0 Base** | 0.1 | Proyecto Android, Hilt, Compose, navegación provisional, pruebas instrumentadas | ✅ |
 | | 0.2 | **Identidad visual**: fuentes, paleta, formas, logo, recortes de Chopper, barra de **4 pestañas** con Hoy/Mascotas/Servicios/Perfil vacíos pero con estilo | ✅ |
 | | 0.3 | Supabase `petcare` + tabla de usuarios (`supabase/01_base.sql`) + cliente en la app | ✅ |
-| **1 Cuenta** | 1.1 | Bienvenida, registro, inicio de sesión, recuperar contraseña | |
+| **1 Cuenta** | 1.1 | Bienvenida, registro (con política de privacidad), inicio y cierre de sesión | ✅ |
 | | 1.2 | **"¿Qué te trae a PetCare?"** + lista Primeros pasos | |
 | **2 Mascotas y agenda** | 2.1 | Room + sincronización con Supabase | |
 | | 2.2 | Agregar/editar mascota (foto, especie, código) y lista de mascotas | |
@@ -158,4 +158,4 @@ Reglas: una parte por sesión · compila y se prueba en el teléfono antes de se
 | | 4.4 | Perfil de prestador (categorías, servicios, horario, galería); directorio y mapa | |
 | | 4.5 | Cotizaciones y datos compartidos con el prestador | |
 | **5 Cierre** | 5.1 | Notificaciones push y reseñas (+ reportar) | |
-| | 5.2 | Eliminar cuenta, Acerca de, pulido y pruebas con varias cuentas | |
+| | 5.2 | Eliminar cuenta, recuperar contraseña (pospuesta por Tania), pulido y pruebas con varias cuentas | |

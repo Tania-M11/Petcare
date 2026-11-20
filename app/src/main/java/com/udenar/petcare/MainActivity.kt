@@ -4,7 +4,7 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import com.udenar.petcare.ui.navegacion.PetcareRaiz
+import com.udenar.petcare.ui.raiz.PetcareApp
 import com.udenar.petcare.ui.theme.PetcareTheme
 import dagger.hilt.android.AndroidEntryPoint
 
@@ -15,7 +15,7 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             PetcareTheme {
-                PetcareRaiz()
+                PetcareApp()
             }
         }
     }

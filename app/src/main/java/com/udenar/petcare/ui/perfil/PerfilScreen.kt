@@ -15,6 +15,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.rounded.Logout
 import androidx.compose.material.icons.rounded.Info
 import androidx.compose.material.icons.rounded.NotificationsActive
 import androidx.compose.material.icons.rounded.Person
@@ -51,6 +52,8 @@ fun PerfilScreen(
 ) {
     var acercaDe by remember { mutableStateOf(false) }
     val conexion by viewModel.conexion.collectAsStateWithLifecycle()
+    val usuario by viewModel.usuario.collectAsStateWithLifecycle()
+    var confirmarSalida by remember { mutableStateOf(false) }
 
     Column(
         modifier
@@ -76,11 +79,16 @@ fun PerfilScreen(
                     .background(Pc.Durazno),
                 contentAlignment = Alignment.Center,
             ) {
-                Icon(Icons.Rounded.Person, contentDescription = null, tint = Pc.Naranja, modifier = Modifier.size(30.dp))
+                val inicial = usuario?.nombre?.trim()?.firstOrNull()?.uppercase()
+                if (inicial != null) {
+                    Text(inicial, style = MaterialTheme.typography.headlineMedium, color = Pc.Naranja)
+                } else {
+                    Icon(Icons.Rounded.Person, contentDescription = null, tint = Pc.Naranja, modifier = Modifier.size(30.dp))
+                }
             }
             Column(Modifier.padding(start = 14.dp)) {
-                Text("Aún sin cuenta", style = MaterialTheme.typography.titleMedium)
-                Text("El registro llega en la parte 1.1", style = MaterialTheme.typography.bodySmall, color = Pc.TintaSuave)
+                Text(usuario?.nombre.orEmpty(), style = MaterialTheme.typography.titleMedium)
+                Text(usuario?.correo.orEmpty(), style = MaterialTheme.typography.bodySmall, color = Pc.TintaSuave)
             }
         }
 
@@ -110,7 +118,7 @@ fun PerfilScreen(
             FilaOpcion(
                 icono = Icons.Rounded.Info,
                 titulo = "Acerca de PetCare",
-                subtitulo = "Versión 0.3 · créditos",
+                subtitulo = "Versión 0.4 · créditos",
                 fondoIcono = Pc.LavandaClara,
                 colorIcono = Pc.Lavanda,
                 onClick = {
@@ -118,7 +126,31 @@ fun PerfilScreen(
                     viewModel.comprobarServidor()
                 },
             )
+            FilaOpcion(
+                icono = Icons.AutoMirrored.Rounded.Logout,
+                titulo = "Cerrar sesión",
+                subtitulo = null,
+                fondoIcono = Pc.Durazno,
+                colorIcono = Pc.Naranja,
+                onClick = { confirmarSalida = true },
+            )
         }
+    }
+
+    if (confirmarSalida) {
+        AlertDialog(
+            onDismissRequest = { confirmarSalida = false },
+            containerColor = Pc.Crema,
+            title = { Text("¿Cerrar sesión?", style = MaterialTheme.typography.headlineSmall) },
+            text = { Text("Tus datos quedan guardados en tu cuenta. Puedes volver a entrar cuando quieras.") },
+            confirmButton = {
+                TextButton(onClick = {
+                    confirmarSalida = false
+                    viewModel.cerrarSesion()
+                }) { Text("Cerrar sesión") }
+            },
+            dismissButton = { TextButton(onClick = { confirmarSalida = false }) { Text("Cancelar") } },
+        )
     }
 
     if (acercaDe) {
