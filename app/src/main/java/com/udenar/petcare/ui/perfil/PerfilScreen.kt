@@ -16,6 +16,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.Logout
+import androidx.compose.material.icons.rounded.Explore
 import androidx.compose.material.icons.rounded.Info
 import androidx.compose.material.icons.rounded.NotificationsActive
 import androidx.compose.material.icons.rounded.Person
@@ -47,6 +48,7 @@ import com.udenar.petcare.ui.theme.Pc
 @Composable
 fun PerfilScreen(
     avisar: (String) -> Unit,
+    irAIntenciones: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: PerfilViewModel = hiltViewModel(),
 ) {
@@ -108,6 +110,15 @@ fun PerfilScreen(
                 .padding(6.dp),
         ) {
             FilaOpcion(
+                icono = Icons.Rounded.Explore,
+                titulo = "¿Qué te trae a PetCare?",
+                subtitulo = usuario?.intenciones?.takeIf { it.isNotEmpty() }?.joinToString(" · ") { it.titulo }
+                    ?: "Personaliza tus primeros pasos",
+                fondoIcono = Pc.SolClaro,
+                colorIcono = Pc.Naranja,
+                onClick = irAIntenciones,
+            )
+            FilaOpcion(
                 icono = Icons.Rounded.NotificationsActive,
                 titulo = "Notificaciones",
                 subtitulo = "Elige de qué mascotas recibes avisos",
@@ -118,7 +129,7 @@ fun PerfilScreen(
             FilaOpcion(
                 icono = Icons.Rounded.Info,
                 titulo = "Acerca de PetCare",
-                subtitulo = "Versión 0.4 · créditos",
+                subtitulo = "Versión 0.5 · créditos",
                 fondoIcono = Pc.LavandaClara,
                 colorIcono = Pc.Lavanda,
                 onClick = {

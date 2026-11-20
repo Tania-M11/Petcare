@@ -3,6 +3,8 @@
 
     <!-- Supabase (desde la parte 0.2) -->
     <uses-permission android:name="android.permission.INTERNET" />
+    <!-- Recordatorios (Android 13+ pide permiso; se solicita desde Primeros pasos) -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
     <application
         android:name=".PetcareApp"

@@ -51,6 +51,9 @@ class AccesoTest {
 
         compose.onNodeWithTag("casilla_privacidad").performClick()
         compose.onNodeWithText("Crear cuenta").performClick()
+        // Recién registrada: primero "¿Qué te trae a PetCare?"
+        compose.waitUntil(5_000) { compose.onAllNodesWithTextExists("¿Qué te trae a PetCare?") }
+        compose.onNodeWithText("Ahora no").performClick()
         compose.waitUntil(5_000) { compose.onAllNodesWithTagExists("pestana_hoy") }
         compose.onNodeWithText("Tania").assertExists() // saludo en Hoy
     }

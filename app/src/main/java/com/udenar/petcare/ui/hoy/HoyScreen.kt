@@ -1,5 +1,10 @@
 package com.udenar.petcare.ui.hoy
 
+import android.Manifest
+import android.content.pm.PackageManager
+import android.os.Build
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -18,7 +23,13 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.core.content.ContextCompat
+import androidx.lifecycle.compose.LifecycleResumeEffect
+import com.udenar.petcare.domain.guia.DestinoPaso
+import com.udenar.petcare.domain.guia.Guia
+import com.udenar.petcare.ui.guia.TarjetaPrimerosPasos
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -43,6 +54,20 @@ fun HoyScreen(
 ) {
     val estado by viewModel.estado.collectAsStateWithLifecycle()
     val nombre by viewModel.nombre.collectAsStateWithLifecycle()
+    val guia by viewModel.guia.collectAsStateWithLifecycle()
+
+    // Permiso de notificaciones (Android 13+): se revisa al volver a la app
+    val contexto = LocalContext.current
+    fun notificacionesActivas() = Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU ||
+        ContextCompat.checkSelfPermission(contexto, Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED
+    LifecycleResumeEffect(Unit) {
+        viewModel.notificaciones(notificacionesActivas())
+        onPauseOrDispose { }
+    }
+    val pedirPermiso = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { ok ->
+        viewModel.notificaciones(ok)
+        if (!ok) avisar("Puedes activarlas luego en los ajustes del teléfono")
+    }
 
     Column(
         modifier
@@ -80,14 +105,39 @@ fun HoyScreen(
             onElegir = viewModel::elegirDia,
         )
 
-        TarjetaIlustrada(
-            titulo = "Agrega a tu primera mascota",
-            texto = "Chopper te ayuda a no olvidar ningún cuidado.",
-            chip = "Primeros pasos",
-            ilustracion = R.drawable.chopper_saludo,
-            degradado = listOf(Pc.NaranjaClaro, Pc.Naranja),
-            onClick = irAMascotas,
-        )
+        val progreso = guia
+        when {
+            progreso != null && progreso.completa -> TarjetaIlustrada(
+                titulo = "¡Todo listo!",
+                texto = "Ya conoces lo básico. Toca para cerrar esta guía.",
+                chip = "Primeros pasos",
+                ilustracion = R.drawable.chopper_amigos,
+                degradado = listOf(Pc.Menta, Pc.Cielo),
+                onClick = { viewModel.omitir(Guia.CERRADA, avisar) },
+            )
+            progreso != null -> TarjetaPrimerosPasos(
+                progreso = progreso,
+                onPaso = { paso ->
+                    when (paso.destino) {
+                        DestinoPaso.NOTIFICACIONES -> pedirPermiso.launch(Manifest.permission.POST_NOTIFICATIONS)
+                        DestinoPaso.MASCOTAS -> {
+                            irAMascotas()
+                            paso.disponibleEn?.let { avisar("\"${paso.titulo}\" llega en $it") }
+                        }
+                        else -> avisar("\"${paso.titulo}\" llega en ${paso.disponibleEn}")
+                    }
+                },
+                onOmitir = { paso -> viewModel.omitir(paso.id, avisar) },
+            )
+            else -> TarjetaIlustrada(
+                titulo = "Agrega a tu primera mascota",
+                texto = "Chopper te ayuda a no olvidar ningún cuidado.",
+                chip = "Empieza aquí",
+                ilustracion = R.drawable.chopper_saludo,
+                degradado = listOf(Pc.NaranjaClaro, Pc.Naranja),
+                onClick = irAMascotas,
+            )
+        }
 
         Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
             TituloSeccion(

@@ -1,5 +1,6 @@
 package com.udenar.petcare.domain.cuenta
 
+import com.udenar.petcare.domain.guia.Intencion
 import com.udenar.petcare.domain.modelo.EstadoSesion
 import com.udenar.petcare.domain.modelo.Usuario
 import kotlinx.coroutines.flow.Flow
@@ -17,6 +18,12 @@ interface RepositorioCuenta {
     suspend fun registrar(nombre: String, correo: String, clave: String)
     suspend fun iniciarSesion(correo: String, clave: String)
     suspend fun cerrarSesion()
+
+    /** Guarda la respuesta a "¿Qué te trae a PetCare?" (vacía = "Ahora no"). */
+    suspend fun guardarIntenciones(intenciones: Set<Intencion>)
+
+    /** Agrega un paso de la guía a los omitidos (o Guia.CERRADA para ocultarla). */
+    suspend fun omitirPaso(id: String)
 
     /** Refresca los datos del usuario desde el servidor (si no hay red, conserva los de la sesión). */
     suspend fun cargarUsuario()

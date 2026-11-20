@@ -1,5 +1,6 @@
 package com.udenar.petcare.ui.navegacion
 
+import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
@@ -16,6 +17,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import com.udenar.petcare.ui.guia.IntencionesScreen
 import com.udenar.petcare.ui.hoy.HoyScreen
 import com.udenar.petcare.ui.mascotas.MascotasScreen
 import com.udenar.petcare.ui.perfil.PerfilScreen
@@ -42,17 +44,23 @@ fun PetcareRaiz() {
     Scaffold(
         containerColor = Pc.Crema,
         snackbarHost = { SnackbarHost(avisos) },
-        bottomBar = { BarraInferior(actual = actual, onElegir = { nav.irAPestana(it) }) },
+        // La barra solo se ve en las 4 pestañas (no en pantallas completas como Intenciones)
+        bottomBar = { if (actual != null) BarraInferior(actual = actual, onElegir = { nav.irAPestana(it) }) },
     ) { relleno ->
         NavHost(
             navController = nav,
             startDestination = RutaHoy,
-            modifier = Modifier.padding(relleno),
+            modifier = Modifier
+                .padding(relleno)
+                .consumeWindowInsets(relleno),
         ) {
             composable<RutaHoy> { HoyScreen(irAMascotas = { nav.irAPestana(PestanaPersonal.MASCOTAS) }, avisar = avisar) }
             composable<RutaMascotas> { MascotasScreen(avisar = avisar) }
             composable<RutaServicios> { ServiciosScreen(avisar = avisar) }
-            composable<RutaPerfil> { PerfilScreen(avisar = avisar) }
+            composable<RutaPerfil> { PerfilScreen(avisar = avisar, irAIntenciones = { nav.navigate(RutaIntenciones) }) }
+            composable<RutaIntenciones> {
+                IntencionesScreen(onListo = { nav.popBackStack() }, onVolver = { nav.popBackStack() })
+            }
         }
     }
 }

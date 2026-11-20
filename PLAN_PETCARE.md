@@ -94,20 +94,20 @@ Si alguien es veterinario **y** prestador, al cambiar de modo elige cuál (chip 
 ## 5. Identidad visual
 
 - **Tipografía:** **Kalnia** (títulos) · **Quicksand** (textos, botones y etiquetas). Ambas de Google Fonts, incluidas en `res/font`.
-- **Paleta** (cálida y natural, de la referencia de bienestar + el azul y amarillo del logo; tokens en `ui/theme/Color.kt`):
+- **Paleta** (cálida y natural, de la referencia de bienestar y del logo lavanda/durazno; tokens en `ui/theme/Color.kt`):
 
 | Rol | Color |
 |---|---|
 | Fondo | Crema `#FBF6F1` · tarjetas blancas |
 | Acción principal | Naranja `#F08A4B` (degradado desde `#F7B183`) · Durazno `#FCDCC6` para fondos activos |
-| Secundario | Lavanda `#B9A5EA` → `#8F78D6` |
-| Del logo | Cielo `#7BA7CF` → `#5B89BA` · Sol `#F5D565` |
+| Del logo | Lavanda `#A98EE0` → `#8F78D6` · Durazno `#FCB484` |
+| Acentos | Cielo `#7BA7CF` → `#5B89BA` (veterinarios) · Sol `#F5D565` (cuidar, prestadores) |
 | Apoyo | Menta `#9FD3B6` |
 | Texto | Tinta `#2D2433` · secundario `#8C8394` |
 
 - **Formas** (de la referencia de bienestar): tarjetas muy redondeadas (24–32 dp), botones en píldora, fondos con degradados suaves crema→durazno o lavanda, "blobs" orgánicos detrás de Chopper, tira de días como selector grande, barra inferior flotante redondeada.
 - **Íconos de sección:** cuadrados redondeados de color pastel con ícono (Vacunas lavanda, Medicamentos menta, Comida durazno, Baño agua, Paseos amarillo), como en la hoja de estilo.
-- **Logo:** `petcare_logo_sin_fondo.png` (azul y amarillo). La hoja de estilo de `icons/` hecha con IA **no** se usa como guía.
+- **Logo:** `petcare_logo_sin_fondo.png`, versión lavanda y durazno (actualizada el 19-nov). La hoja de estilo de `icons/` hecha con IA **no** se usa como guía.
 - **Acabado:** grano sutil sobre degradados y formas orgánicas (blobs) detrás de Chopper, como la referencia.
 - **Créditos:** Tony Tony Chopper © Eiichiro Oda / Shueisha / Toei Animation; uso académico sin ánimo de lucro, con créditos en "Acerca de" y en el README. No se publica en tiendas con el personaje.
 
@@ -139,7 +139,7 @@ Reglas: una parte por sesión · compila y se prueba en el teléfono antes de se
 | | 0.2 | **Identidad visual**: fuentes, paleta, formas, logo, recortes de Chopper, barra de **4 pestañas** con Hoy/Mascotas/Servicios/Perfil vacíos pero con estilo | ✅ |
 | | 0.3 | Supabase `petcare` + tabla de usuarios (`supabase/01_base.sql`) + cliente en la app | ✅ |
 | **1 Cuenta** | 1.1 | Bienvenida, registro (con política de privacidad), inicio y cierre de sesión | ✅ |
-| | 1.2 | **"¿Qué te trae a PetCare?"** + lista Primeros pasos | |
+| | 1.2 | **"¿Qué te trae a PetCare?"** + lista Primeros pasos (`supabase/02_guia.sql`) | ✅ |
 | **2 Mascotas y agenda** | 2.1 | Room + sincronización con Supabase | |
 | | 2.2 | Agregar/editar mascota (foto, especie, código) y lista de mascotas | |
 | | 2.3 | Motor de cuidados (frecuencias, próxima fecha) con pruebas | |

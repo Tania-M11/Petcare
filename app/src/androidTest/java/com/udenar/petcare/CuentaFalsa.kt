@@ -3,6 +3,7 @@ package com.udenar.petcare
 import com.udenar.petcare.di.ModuloDatos
 import com.udenar.petcare.domain.cuenta.CuentaException
 import com.udenar.petcare.domain.cuenta.RepositorioCuenta
+import com.udenar.petcare.domain.guia.Intencion
 import com.udenar.petcare.domain.modelo.EstadoSesion
 import com.udenar.petcare.domain.modelo.Usuario
 import dagger.Binds
@@ -29,7 +30,7 @@ class CuentaFalsa @Inject constructor() : RepositorioCuenta {
 
     override suspend fun registrar(nombre: String, correo: String, clave: String) {
         if (correo.trim().lowercase() in existentes) throw CuentaException("Ya existe una cuenta con ese correo.")
-        usuario.value = Usuario("2", nombre.trim(), correo.trim().lowercase())
+        usuario.value = Usuario("2", nombre.trim(), correo.trim().lowercase(), guiaRespondida = false)
         sesion.value = EstadoSesion.CON_SESION
     }
 
@@ -46,13 +47,27 @@ class CuentaFalsa @Inject constructor() : RepositorioCuenta {
 
     override suspend fun cargarUsuario() = Unit
 
+    override suspend fun guardarIntenciones(intenciones: Set<Intencion>) {
+        usuario.value = usuario.value?.copy(intenciones = intenciones, guiaRespondida = true)
+    }
+
+    override suspend fun omitirPaso(id: String) {
+        usuario.value = usuario.value?.copy(pasosOmitidos = usuario.value!!.pasosOmitidos + id)
+    }
+
+    /** Ana con sesión y la guía de dueña de mascotas por responder o respondida. */
+    fun conAna(intenciones: Set<Intencion> = emptySet(), respondida: Boolean = true) {
+        usuario.value = ANA.copy(intenciones = intenciones, guiaRespondida = respondida)
+        sesion.value = EstadoSesion.CON_SESION
+    }
+
     fun sinSesion() {
         usuario.value = null
         sesion.value = EstadoSesion.SIN_SESION
     }
 
     companion object {
-        val ANA = Usuario("1", "Ana María", "ana@petcare.test")
+        val ANA = Usuario("1", "Ana María", "ana@petcare.test", guiaRespondida = true)
     }
 }
 

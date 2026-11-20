@@ -17,14 +17,19 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.udenar.petcare.R
 import com.udenar.petcare.domain.modelo.EstadoSesion
 import com.udenar.petcare.ui.acceso.NavegacionAcceso
+import com.udenar.petcare.ui.guia.IntencionesScreen
 import com.udenar.petcare.ui.navegacion.PetcareRaiz
 import com.udenar.petcare.ui.theme.Pc
 
 @Composable
 fun PetcareApp(viewModel: RaizViewModel = hiltViewModel()) {
     val sesion by viewModel.sesion.collectAsStateWithLifecycle()
-    Crossfade(sesion, label = "sesion") { estado ->
+    val usuario by viewModel.usuario.collectAsStateWithLifecycle()
+    // Recién registrado: primero la pregunta, luego las pestañas
+    val preguntar = sesion == EstadoSesion.CON_SESION && usuario?.guiaRespondida == false
+    Crossfade(if (preguntar) null else sesion, label = "sesion") { estado ->
         when (estado) {
+            null -> IntencionesScreen(onListo = {})
             EstadoSesion.CARGANDO -> Box(
                 Modifier
                     .fillMaxSize()

@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.udenar.petcare.domain.cuenta.RepositorioCuenta
 import com.udenar.petcare.domain.modelo.EstadoSesion
+import com.udenar.petcare.domain.modelo.Usuario
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -19,4 +20,7 @@ class RaizViewModel @Inject constructor(private val cuenta: RepositorioCuenta) :
     val sesion: StateFlow<EstadoSesion> = cuenta.estadoSesion
         .onEach { if (it == EstadoSesion.CON_SESION) viewModelScope.launch { cuenta.cargarUsuario() } }
         .stateIn(viewModelScope, SharingStarted.Eagerly, EstadoSesion.CARGANDO)
+
+    /** Para saber si hay que preguntar "¿Qué te trae a PetCare?" (guiaRespondida == false). */
+    val usuario: StateFlow<Usuario?> = cuenta.usuario
 }
