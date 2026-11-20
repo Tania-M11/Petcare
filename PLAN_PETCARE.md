@@ -1,178 +1,158 @@
-# PETCARE — Análisis, mejoras y plan de desarrollo (v2: Supabase)
+# PETCARE — Plan de producto y desarrollo
 
-> Basado en `docs/petcare_spec_v4.md`. Actualizado el 19-nov-2026: **el backend pasa de Firebase a Supabase**.
-> Cuando este plan y la especificación no coincidan, **vale este plan** (sección 3 = cambios a la spec).
+> Único documento de guía del proyecto. Parte de la idea en `Downloads\petcare_spec (1).md` (v4) y la reorganiza pensando en quien usa la app.
+> Si algo de aquí contradice la spec, vale este plan.
 
 ---
 
-## 1. Qué se quiere construir
+## 1. Para quién es y qué necesita cada uno
 
-Una app Android (Kotlin + Compose) con **tres productos dentro de uno**:
-
-| Bloque | Qué es | RF | Peso aprox. |
+| Usuario | Qué quiere lograr | Qué lo frustra hoy | Qué le da PetCare |
 |---|---|---|---|
-| **A. Agenda de cuidados** | Mascotas, salud, recordatorios offline, Hoy/calendario/historial, peso, paseos GPS, documentos, QR | RF-01 a RF-19 | ~45 % |
-| **B. Cuidado compartido** | Cuidadores por código, permisos por rol, sincronización multi-dispositivo | RF-20, RF-21 | ~15 % |
-| **C. Marketplace de profesionales** | Veterinarios verificados + prestadores, directorios con mapa, solicitudes/cotizaciones, reseñas, push | RF-22 a RF-36 | ~40 % |
+| **Dueño/a** | Que a su mascota no le falte nada: comida, medicina, vacunas, baño | Olvidos, papeles perdidos, no saber si alguien ya le dio la pastilla | Recordatorios que suenan sin internet, "Hoy" con 1 toque para marcar, carné digital con QR |
+| **Cuidador/a** (familiar, vecino, roomie) | Ayudar sin equivocarse | No saber horarios ni qué ya se hizo | Ve el plan de la mascota y registra lo que hace; el dueño ve "Dado por Ana, 8:05" |
+| **Veterinario/a** | Conseguir pacientes y tener su historia a mano | Dueños que llegan sin carné ni historial | Perfil verificado, solicitudes, ficha clínica de sus pacientes vinculados |
+| **Prestador/a** (paseo, baño, cuidado temporal) | Clientes cerca y agenda ordenada | Depender de redes sociales y WhatsApp sueltos | Perfil con servicios y precios, mapa, cotizaciones y reseñas |
 
-El valor central está en **A** (que el recordatorio suene y quede registrado quién lo hizo). El plan construye A → B → C y cada fase deja una app usable.
-
----
-
-## 2. Stack definitivo
-
-| Capa | Tecnología |
-|---|---|
-| Lenguaje/UI | Kotlin 2.4 + Jetpack Compose (Material 3), minSdk 26, compileSdk 37 |
-| Arquitectura | Clean Architecture + MVVM (ui / domain / data), un solo módulo `:app` con paquetes |
-| DI | Dagger Hilt 2.60 + `hilt-lifecycle-viewmodel-compose` |
-| BD local | Room (fuente de verdad offline de la agenda y de las alarmas) |
-| Backend | **Supabase** (plan gratuito): Auth, Postgres + RLS, Storage, Realtime, Edge Functions |
-| Cliente | `supabase-kt` 3.8 (auth, postgrest, storage, realtime) + Ktor OkHttp |
-| Sincronización | Cola de cambios en Room + WorkManager (con red), Realtime para recibir cambios |
-| Alarmas | AlarmManager (exactas con respaldo) + receptor `BOOT_COMPLETED` / cambio de hora |
-| Push | Firebase Cloud Messaging **solo como transporte** + Edge Function de Supabase disparada por la base de datos |
-| Archivos | **Supabase Storage** (buckets privados con políticas); se elimina el esquema de Blobs en chunks |
-| Mapas | MapLibre Native 13.7 + OpenFreeMap (sin clave); distancias con **PostGIS** |
-| Ubicación | Fused Location Provider (Play Services) |
-| QR | ZXing core (generar) + ML Kit Code Scanner (leer) |
-| Imágenes | Coil 3 + compresión previa |
-| Gráficas | Canvas de Compose |
+**Prioridad:** el dueño es el usuario principal (sin dueños no hay clientes para los profesionales). Todo el diseño parte de su día a día.
 
 ---
 
-## 3. Cambios a la especificación
+## 2. Qué hacen bien las apps del mercado y qué tomamos
 
-### 3.1 Por el paso a Supabase
-
-| Spec v4 (Firebase) | Ahora (Supabase) | Ganancia |
+| Referente | Lo que hace bien | Lo que adopta PetCare |
 |---|---|---|
-| Sección 2.3: migración de cuentas v3 | **Se elimina.** Proyecto nuevo, sin datos previos | Un módulo menos |
-| Firestore + reglas | Postgres con **RLS**; las transiciones de estado se hacen con **funciones RPC** (`security definer`) | Reglas verificables en SQL, transacciones reales |
-| Cuidador no debe ver campos de gestión (imposible en Firestore) | Tabla aparte `mascota_gestion` (código, config QR) solo del propietario | Resuelto |
-| `petCodes` con solo `get` | RPC `buscar_mascota_por_codigo(codigo)` que devuelve nombre, miniatura y especie | Imposible listar códigos |
-| Límite "5 solicitudes pendientes" y "24 h tras rechazo" | Validado dentro de la RPC `solicitar_cuidado` | Anti-abuso real, no solo en el cliente |
-| Agregados de reseñas por transacción del cliente | **Trigger** en la tabla de reseñas | El cliente no puede falsearlos |
-| Verificación veterinaria protegida por reglas | Columna `verificacion` sin permiso de UPDATE para `authenticated`; se cambia en el panel de Supabase | Igual de simple, más seguro |
-| Archivos Blob en chunks (Firestore) | Supabase Storage, buckets privados: `mascotas`, `documentos`, `certificados`, `galeria`, `solicitudes` | Sin límite de 1 MiB, URLs firmadas |
-| Cloudflare Worker para push | **Edge Function** `notificar` disparada por *Database Webhook* al insertar/actualizar solicitudes | Un servicio menos; el cliente no decide a quién notifica |
-| Orden por distancia en el cliente | PostGIS: `ST_DWithin` / `<->` en la RPC del directorio | Consultas por cercanía reales |
-| Persistencia offline de Firestore | **Supabase no trabaja sin conexión** → Room es la fuente local de la agenda y una cola sube los cambios | RNF-03 se cumple de forma explícita |
-| Conflictos "última escritura" | Columna `actualizado_en` + upsert solo si es más reciente | Igual a la spec |
-
-### 3.2 Problemas técnicos que siguen vigentes
-
-| # | Problema | Solución |
-|---|---|---|
-| T2 | La cita veterinaria (`CITA_VET`) es un evento que el cuidador ve; la visita no | El evento guarda solo fecha, hora y "Cita veterinaria"; el detalle clínico va en `visitas` |
-| T4 | Alarmas exactas denegadas por defecto en Android 14+ | Pedir `SCHEDULE_EXACT_ALARM` con explicación; si se niega, `setAndAllowWhileIdle`. Guía de batería para Xiaomi/Samsung |
-| T6 | Varios dispositivos suenan por la misma toma | Al llegar el registro por Realtime/sync, se cancela la notificación de esa toma |
-| T8 | Peso obligatorio vs. opcional para peces | Peso opcional para todas las especies |
-| T9 | Frecuencia `PERSONALIZADO` sin definir | = días de la semana + horas |
-| T10 | "Registros compartidos" del cuidador sin definir | Todo registro de cuidado, paseo y peso; nunca visitas ni documentos |
-| T11 | Plan gratuito: máximo 2 proyectos activos y pausa tras 7 días sin uso | Pausar un proyecto terminado al crear `petcare` y abrir la app al menos una vez por semana durante el desarrollo |
-
-### 3.3 Simplificaciones
-
-- **S2** Un solo **shell profesional** (Solicitudes · Agenda · Clientes/Pacientes · Mi perfil) para los modos veterinario y prestador.
-- **S3** Un solo **motor de estados** (tabla de transiciones) para solicitudes a veterinarios y a prestadores; tablas separadas.
-- **S4** Ciudades de una **lista cerrada** (municipios de Colombia, DANE).
-
-### 3.4 Agregados
-
-| # | Qué | Por qué |
-|---|---|---|
-| F1 | Eliminar cuenta (RPC que borra datos propios + Edge Function que borra el usuario de Auth) | Requisito de Google Play |
-| F2 | Política de privacidad y aceptación al registrarse | Ley 1581 de 2012 |
-| F3 | Recuperar contraseña (correo de Supabase Auth + enlace profundo) | Evita cuentas bloqueadas |
-| F4 | Reportar perfil o reseña (tabla `reportes`, revisión en el panel) | Mínimo contra abuso en un directorio público |
-| F5 | Bienvenida: crear primera mascota → primer recordatorio → permiso de notificaciones explicado | Sin recordatorios la app no aporta |
-| F6 | Plantillas de **nombres** de cuidados (Baño, Desayuno…), sin frecuencias ni cantidades | Pocos toques sin violar la restricción ética |
-
-### 3.5 Identidad visual
-
-Se usa al reno Chopper (*One Piece*, © Eiichiro Oda / Shueisha / Toei Animation) como mascota de la app, **solo con fines académicos y no comerciales**, con los créditos en el README y en la pantalla "Acerca de". El crédito no equivale a una licencia: la app no se publica en tiendas con el personaje. La identidad completa entra en la parte 0.4.
+| **11pets / Pawtrack** (registro de salud) | Todo por mascota: vacunas, medicinas, peso, documentos | Detalle de mascota organizado en secciones; "carné" digital |
+| **PetDesk** (dueño ↔ veterinaria) | Recordatorios y citas en un mismo lugar | Las citas aceptadas caen solas en la agenda del dueño |
+| **Rover / Wag / DogHero** (marketplace) | Buscar por servicio y zona, perfiles con reseñas, solicitud → aceptación | Directorio con filtros, tarjeta resumida, flujo de cotización |
+| **Airbnb** (huésped/anfitrión) | **Una sola cuenta** con botón "Cambiar a modo anfitrión" | Modos personal/profesional desde Perfil, sin cerrar sesión |
+| **Finch / apps de bienestar** (como la referencia visual) | Un personaje que acompaña, celebra y guía; tono cálido | **Chopper como guía**: bienvenida, estados vacíos, celebraciones |
+| **Google Calendar / Structured** | Tira de días de la semana arriba; el mes completo solo si lo pides | El calendario deja de ser pestaña y vive dentro de "Hoy" |
 
 ---
 
-## 4. Plan por fases y partes
+## 3. Navegación: 4 pestañas
 
-Reglas de trabajo:
-- **Una parte por sesión**; compila antes de pasar a la siguiente; **un commit por parte** en `github.com/Tania-M11/Petcare`.
-- Cada parte termina con: RF cubiertos + cómo probarla. Las pruebas en el teléfono las hace Tania.
-- El SQL vive en `supabase/NN_nombre.sql` y se aplica como migración.
+La spec pedía 5 (Inicio · Mascotas · Calendario · Explorar · Perfil). **Calendario se integra en Hoy** porque el dueño casi siempre pregunta "¿qué toca hoy?" y solo a veces "¿qué toca el 12?".
 
-### Fase 0 — Base
-| Parte | Contenido | Estado |
-|---|---|---|
-| 0.1 | Proyecto Android: Gradle con catálogo, Hilt, Compose, Navigation, paquetes Clean, pantalla provisional | ✅ |
-| 0.2 | Proyecto Supabase `petcare`, `01_base.sql` (perfiles de usuario + RLS), cliente `supabase-kt` con URL/clave en `local.properties` | |
-| 0.3 | Componentes base: estados carga/vacío/error, selector de especie, fecha/hora, compresión de imágenes | |
-| 0.4 | Tema y design system con la identidad visual de Tania | |
+### Modo personal (dueño y cuidador)
 
-### Fase 1 — Agenda personal
-| Parte | Contenido | RF |
-|---|---|---|
-| 1.1 | Registro, inicio/cierre de sesión, recuperar contraseña, aceptación de privacidad | RF-01, F2, F3 |
-| 1.2 | Room + **motor de sincronización** (cola + WorkManager + descarga inicial) | RF-21 (base) |
-| 1.3 | CRUD de mascotas con foto (Storage) y código único | RF-02 |
-| 1.4 | Salud básica y veterinario manual con Llamar | RF-03, RF-04 |
-| 1.5 | **Motor `CareEvent`/`CareLog`** con pruebas unitarias de frecuencias | 9.1 |
-| 1.6 | **Alarmas** locales, reinicio, cambio de hora, canales, acciones en la notificación | RF-14 |
-| 1.7 | Comidas recordatorio e higiene | RF-11, RF-08 |
-| 1.8 | Medicamentos con dosis del día | RF-07 |
-| 1.9 | Vacunas y desparasitación | RF-05, RF-06 |
-| 1.10 | Actividades personalizadas y visitas veterinarias | RF-13, RF-09 |
-| 1.11 | **Hoy** + bienvenida | RF-15, F5 |
-| 1.12 | Calendario e historial | RF-15 |
-| 1.13 | Estado de cuidado y peso con gráfica | RF-16, RF-10 |
-
-### Fase 2 — Cuidado compartido, documentos y QR
-| Parte | Contenido | RF |
-|---|---|---|
-| 2.1 | RLS completa de mascotas + **pruebas SQL de acceso denegado** por rol | 9.4 |
-| 2.2 | Cuidar por código (RPC), solicitudes, aprobación, "Cuidas a…" | RF-20 |
-| 2.3 | Miembros: revocar, salir, regenerar/invalidar código; UI limitada del cuidador; notificaciones por mascota | RF-20, RF-14 |
-| 2.4 | Realtime entre miembros y cancelación de alarmas ya resueltas | RF-21, T6 |
-| 2.5 | Documentos en Storage con caché local | RF-17 |
-| 2.6 | Ficha resumen, QR con privacidad y escáner | RF-18, RF-19 |
-| 2.7 | Eliminar cuenta | F1 |
-
-### Fase 3 — Mapas y paseos
-| 3.1 | MapLibre + OpenFreeMap y componente de mapa reutilizable |
+| Pestaña | Contenido |
 |---|---|
-| 3.2 | Paseos manuales (RF-12) |
-| 3.3 | Paseo GPS con servicio en primer plano y polilínea (RF-12) |
+| **Hoy** | Saludo + Chopper · **tira de la semana** (toca un día → su agenda; "Ver mes" abre el calendario completo) · fila de avatares de mascotas para filtrar · tarjetas de pendientes con botón **Hecho** (1 toque) · alertas (vacuna vencida, solicitud de cuidador) · botón flotante **+ Registrar** (comida, dosis, paseo, baño, peso) |
+| **Mascotas** | Tarjetas de mis mascotas y "Cuidas a…" · botón **+** con: Agregar mascota · Cuidar con código · Escanear QR · Detalle por mascota en secciones: Resumen (carné + QR) · Salud · Cuidados · Historial · Documentos · Personas (cuidadores y veterinarios) |
+| **Servicios** | Veterinarios y Prestadores (lista ↔ mapa) · **Mis solicitudes** arriba cuando hay alguna activa |
+| **Perfil** | Mis datos · **Tarjeta "Trabaja con PetCare"** para activar perfil veterinario o prestador · **Cambiar a modo profesional** · Notificaciones por mascota · Acerca de (créditos) · Cerrar sesión / Eliminar cuenta |
 
-### Fase 4 — Veterinarios
-| Parte | Contenido | RF |
-|---|---|---|
-| 4.1 | Activación de perfiles, selector de modo y shell profesional | RF-30, S2 |
-| 4.2 | Componentes compartidos de directorio, perfil y selector de ubicación | sección 7 |
-| 4.3 | Perfil de veterinario y verificación con certificado | RF-22, RF-23 |
-| 4.4 | Directorio y mapa (PostGIS) | RF-24 |
-| 4.5 | Motor de estados + solicitud a veterinario | RF-25, S3 |
-| 4.6 | Vínculo veterinario–mascota, panel y registros clínicos | RF-26, RF-27 |
+### Modo profesional (veterinario o prestador; mismo esqueleto)
 
-### Fase 5 — Prestadores
-| Parte | Contenido | RF |
-|---|---|---|
-| 5.1 | Categorías y perfil de prestador con servicios y precios | RF-31, RF-32 |
-| 5.2 | Horarios, disponibilidad y galería | RF-31 |
-| 5.3 | Directorio y mapa con tarjeta resumida | RF-33 |
-| 5.4 | Solicitud de cotización con datos compartidos y fotos | RF-34, RF-36 |
-| 5.5 | Bandeja del prestador: cotizar, proponer fecha, aceptar, completar | RF-35 |
-| 5.6 | RLS de solicitudes y pruebas de acceso que expira | RF-36 |
-
-### Fase 6 — Push y reseñas
-| 6.1 | Firebase (solo FCM) + tabla de tokens + Edge Function `notificar` + webhooks (RF-29) |
+| Pestaña | Contenido |
 |---|---|
-| 6.2 | Canales y apertura en el modo correcto (RF-29, RF-30) |
-| 6.3 | Reseñas con trigger de agregados + reportar (RF-28, F4) |
+| **Solicitudes** | Bandeja por estado (Nuevas · Cotizadas · Aceptadas) |
+| **Agenda** | Tira semanal + citas/servicios aceptados |
+| **Pacientes** / **Clientes** | Vet: fichas clínicas vinculadas. Prestador: historial de servicios |
+| **Perfil** | Mi perfil público, servicios/precios u horarios, verificación (vet), reseñas · **Volver a modo personal** |
 
-### Fase 7 — Cierre
-| 7.1 | Pruebas con cuatro cuentas + una con todos los roles; modo avión; reinicio; acceso denegado |
+Si alguien es veterinario **y** prestador, al cambiar de modo elige cuál (chip en la barra superior).
+
+---
+
+## 4. Registro y componente novedoso: "Primeros pasos con Chopper"
+
+**Problema:** la app tiene cuatro tipos de usuario, pero la spec no deja elegir "tipo de cuenta" (y está bien: los roles se acumulan). Si el registro no pregunta nada, el veterinario o el paseador no saben por dónde empezar; si pregunta demasiado, el dueño se va antes de crear su mascota.
+
+**Solución: registro corto + intención + camino guiado.**
+
+1. **Cuenta (1 pantalla):** nombre, correo, contraseña, aceptar privacidad. Nada más.
+2. **"¿Qué te trae a PetCare?"** — Chopper pregunta y muestra 4 tarjetas ilustradas, **se pueden marcar varias**:
+   - 🐾 Tengo mascotas
+   - 🤝 Ayudo a cuidar la mascota de alguien
+   - 🩺 Soy veterinario/a
+   - ✂️ Ofrezco servicios (paseo, baño, cuidado temporal)
+3. **Camino personalizado:** según lo marcado se arma una lista **"Primeros pasos"** en Hoy, con progreso y la pose de Chopper que corresponde:
+   - Mascotas → crear primera mascota → primer recordatorio → permitir notificaciones
+   - Cuidar → escribir el código de la mascota → esperar aprobación
+   - Veterinario → completar perfil → ubicar consultorio en el mapa → subir certificado (estado "En revisión")
+   - Servicios → elegir categorías → agregar servicios y precios → horario → aparecer en el mapa
+4. Cada paso se puede **saltar** y retomar desde la lista o desde Perfil. Al completar un camino, Chopper celebra (pose "¡Éxito!") y la lista desaparece.
+
+**Por qué es novedoso:** ninguna de las apps de referencia combina en una sola cuenta dueño + cuidador + profesional; aquí el registro **descubre la intención** sin encasillar y convierte la configuración en un recorrido corto y acompañado. La intención solo personaliza la guía: no otorga permisos (los perfiles profesionales se activan al completar su formulario).
+
+**Chopper como sistema de estados** (con las poses de `icons/`):
+
+| Situación | Pose |
 |---|---|
-| 7.2 | Pulido visual, accesibilidad y revisión de textos contra la restricción ética |
+| Bienvenida / registro | Saludando · Organizadora (portapapeles) |
+| Lista vacía (sin mascotas, sin solicitudes) | Con mochila, invitando a agregar |
+| Todo lo de hoy hecho | ¡Éxito! |
+| Recordatorio / notificación | Con calendario · con cuenco de comida |
+| Sección veterinaria y verificación | Doctor con bolso médico |
+| Cuidadores / compartir | Abrazando a sus amigos |
 
-**Total:** 38 partes en 8 fases.
+---
+
+## 5. Identidad visual
+
+- **Tipografía:** **Kalnia** (títulos) · **Quicksand** (textos, botones y etiquetas). Ambas de Google Fonts, incluidas en `res/font`.
+- **Paleta** (de la hoja de estilo en `icons/`):
+
+| Rol | Color |
+|---|---|
+| Primario (botones principales) | Naranja `#FFB547` |
+| Acento suave | Amarillo `#FFD686` · Durazno `#F7CFC0` |
+| Secundario (estados, chips "Completado") | Lavanda `#DCC6E8` |
+| Categorías | Agua `#BCE4E5` · Menta `#B9DCC2` |
+| Fondos | Crema `#FFF6E9` · Blanco `#FFFFFF` · Lavanda claro `#F3E7FF` · Menta claro `#E9F8F2` |
+| Texto | Café oscuro `#292521` |
+
+- **Formas** (de la referencia de bienestar): tarjetas muy redondeadas (24–32 dp), botones en píldora, fondos con degradados suaves crema→durazno o lavanda, "blobs" orgánicos detrás de Chopper, tira de días como selector grande, barra inferior flotante redondeada.
+- **Íconos de sección:** cuadrados redondeados de color pastel con ícono (Vacunas lavanda, Medicamentos menta, Comida durazno, Baño agua, Paseos amarillo), como en la hoja de estilo.
+- **Logo:** `petcare_logo_sin_fondo.png`.
+- **Créditos:** Tony Tony Chopper © Eiichiro Oda / Shueisha / Toei Animation; uso académico sin ánimo de lucro, con créditos en "Acerca de" y en el README. No se publica en tiendas con el personaje.
+
+---
+
+## 6. Decisiones técnicas
+
+- **Stack:** Kotlin 2.4 + Compose (Material 3), Hilt, Room, **Supabase** (Auth, Postgres + RLS, Storage, Realtime, Edge Functions), WorkManager, MapLibre + OpenFreeMap, ZXing/ML Kit, Coil. minSdk 26.
+- **Sin conexión:** Supabase no guarda datos en el teléfono → la agenda vive en **Room** y una cola sube los cambios al volver la red. Directorios y solicitudes requieren internet.
+- **Seguridad en el servidor:** permisos por rol con RLS; cambios de estado de solicitudes con funciones RPC; promedio de reseñas por trigger; verificación veterinaria solo editable desde el panel.
+- **Privacidad:** datos de gestión de la mascota (código, QR) en tabla solo del propietario; el prestador solo ve lo que el dueño comparte en la solicitud y lo pierde al terminar.
+- **Archivos:** Supabase Storage (buckets privados).
+- **Push:** Edge Function disparada por la base de datos + FCM solo como transporte.
+- **Alarmas:** AlarmManager exactas con respaldo si Android niega el permiso; se reprograman al reiniciar.
+- **Ética:** la app nunca sugiere dosis, porciones, alimentos ni frecuencias; solo guarda lo que escribe el usuario o el veterinario.
+- **Ajustes a la spec:** sin migración v3; peso opcional; frecuencia "personalizada" = días + horas; el cuidador no ve visitas ni documentos y la cita veterinaria en su agenda solo dice fecha y hora; se agregan recuperar contraseña, eliminar cuenta, política de privacidad y reportar perfil/reseña.
+
+---
+
+## 7. Plan por partes
+
+Reglas: una parte por sesión · compila y se prueba en el teléfono antes de seguir · un commit por parte en `github.com/Tania-M11/Petcare` · pruebas instrumentadas en `app/src/androidTest` que Claude corre en el teléfono conectado.
+
+| Fase | Parte | Contenido | Estado |
+|---|---|---|---|
+| **0 Base** | 0.1 | Proyecto Android, Hilt, Compose, navegación provisional, pruebas instrumentadas | ✅ |
+| | 0.2 | **Identidad visual**: fuentes, paleta, formas, logo, recortes de Chopper, barra de **4 pestañas** con Hoy/Mascotas/Servicios/Perfil vacíos pero con estilo | |
+| | 0.3 | Supabase `petcare` + tabla de perfiles + cliente en la app | |
+| **1 Cuenta** | 1.1 | Bienvenida, registro, inicio de sesión, recuperar contraseña | |
+| | 1.2 | **"¿Qué te trae a PetCare?"** + lista Primeros pasos | |
+| **2 Mascotas y agenda** | 2.1 | Room + sincronización con Supabase | |
+| | 2.2 | Agregar/editar mascota (foto, especie, código) y lista de mascotas | |
+| | 2.3 | Motor de cuidados (frecuencias, próxima fecha) con pruebas | |
+| | 2.4 | Alarmas y notificaciones con acciones Hecho/Posponer/Omitir | |
+| | 2.5 | Comidas, higiene y actividades personalizadas | |
+| | 2.6 | Medicamentos, vacunas y desparasitación | |
+| | 2.7 | **Hoy** completo: tira semanal, pendientes, + Registrar, calendario mensual | |
+| | 2.8 | Detalle de mascota: Salud, Historial, peso con gráfica, estado de cuidado, visitas | |
+| **3 Compartir** | 3.1 | Cuidar con código, aprobación, sección Personas, permisos (RLS + pruebas) | |
+| | 3.2 | Sincronización en vivo entre miembros | |
+| | 3.3 | Documentos, carné con QR y escáner | |
+| | 3.4 | Paseos manuales y con GPS (mapa) | |
+| **4 Profesionales** | 4.1 | "Trabaja con PetCare", cambio de modo y esqueleto profesional | |
+| | 4.2 | Perfil veterinario + verificación; directorio y mapa | |
+| | 4.3 | Solicitudes a veterinario, vínculo y registros clínicos | |
+| | 4.4 | Perfil de prestador (categorías, servicios, horario, galería); directorio y mapa | |
+| | 4.5 | Cotizaciones y datos compartidos con el prestador | |
+| **5 Cierre** | 5.1 | Notificaciones push y reseñas (+ reportar) | |
+| | 5.2 | Eliminar cuenta, Acerca de, pulido y pruebas con varias cuentas | |

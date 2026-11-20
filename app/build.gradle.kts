@@ -27,6 +27,9 @@ android {
         versionCode = 1
         versionName = "0.1"
 
+        // Ejecutor propio: arranca la app de pruebas de Hilt en el teléfono
+        testInstrumentationRunner = "com.udenar.petcare.HiltTestRunner"
+
         buildConfigField("String", "SUPABASE_URL", "\"${localProperties.getProperty("SUPABASE_URL", "")}\"")
         buildConfigField("String", "SUPABASE_PUBLISHABLE_KEY", "\"${localProperties.getProperty("SUPABASE_PUBLISHABLE_KEY", "")}\"")
     }
@@ -73,5 +76,14 @@ dependencies {
     implementation(libs.androidx.hilt.lifecycle.viewmodel.compose)
 
     testImplementation(libs.junit)
+
+    // Pruebas instrumentadas: ./gradlew connectedDebugAndroidTest (o "Run" sobre la clase en Android Studio)
+    androidTestImplementation(libs.androidx.test.runner)
+    androidTestImplementation(libs.androidx.test.ext.junit)
+    androidTestImplementation(platform(libs.androidx.compose.bom))
+    androidTestImplementation(libs.androidx.compose.ui.test.junit4)
+    androidTestImplementation(libs.hilt.android.testing)
+    kspAndroidTest(libs.hilt.compiler)
+    debugImplementation(libs.androidx.compose.ui.test.manifest)
     debugImplementation(libs.androidx.compose.ui.tooling)
 }
