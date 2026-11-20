@@ -119,6 +119,7 @@ Si alguien es veterinario **y** prestador, al cambiar de modo elige cuál (chip 
 - **Sin conexión:** Supabase no guarda datos en el teléfono → la agenda vive en **Room** y una cola sube los cambios al volver la red. Directorios y solicitudes requieren internet.
 - **Convención de sincronización** (toda tabla offline): `id` uuid creado en el teléfono, `actualizado_en` puesto por trigger del servidor (cursor de descarga, con 2 min de margen), `eliminado` en vez de borrar; en Room `pendiente` + `cambioLocal`. Cada tabla nueva se registra con `@IntoSet TablaSincronizable` en `ModuloSincronizacion`.
 - **SQL en el panel:** los scripts deben poder ejecutarse varias veces (`if not exists`, `drop … if exists`) y terminar con `notify pgrst, 'reload schema'`.
+- **Funciones públicas (RPC) con `security definer`:** el revisor de Supabase las marca como aviso; son intencionales porque cada una verifica por dentro quién la llama (dueño, solicitante o la propia persona).
 - **Seguridad en el servidor:** permisos por rol con RLS; cambios de estado de solicitudes con funciones RPC; promedio de reseñas por trigger; verificación veterinaria solo editable desde el panel.
 - **Privacidad:** datos de gestión de la mascota (código, QR) en tabla solo del propietario; el prestador solo ve lo que el dueño comparte en la solicitud y lo pierde al terminar.
 - **Archivos:** Supabase Storage (buckets privados).
@@ -150,7 +151,7 @@ Reglas: una parte por sesión · compila y se prueba en el teléfono antes de se
 | | 2.6 | Medicamentos, vacunas y desparasitación (mismo formulario por clase de cuidado) | ✅ |
 | | 2.7 | **Hoy** completo: tira semanal, pendientes con un toque, filtro por mascota, alertas, calendario mensual, + Nuevo cuidado | ✅ |
 | | 2.8 | Ficha con pestañas Resumen · Cuidados · Salud · Historial: estado de cuidado, peso con gráfica, visitas con próxima cita (`supabase/06_pesos_y_visitas.sql`) | ✅ |
-| **3 Compartir** | 3.1 | Cuidar con código, aprobación, sección Personas, permisos (RLS + pruebas) | |
+| **3 Compartir** | 3.1 | Cuidar con código, aprobación, sección Personas, regenerar/desactivar código, permisos por rol (`supabase/07_cuidadores.sql`, prueba real con dos cuentas) | ✅ |
 | | 3.2 | Sincronización en vivo entre miembros | |
 | | 3.3 | Documentos, carné con QR y escáner | |
 | | 3.4 | Paseos manuales y con GPS (mapa) | |

@@ -90,6 +90,7 @@ fun HoyScreen(
     val filtro by viewModel.filtro.collectAsStateWithLifecycle()
     val mes by viewModel.mes.collectAsStateWithLifecycle()
     val resumenMes by viewModel.resumenMes.collectAsStateWithLifecycle()
+    val solicitudes by viewModel.solicitudes.collectAsStateWithLifecycle()
     var verMes by remember { mutableStateOf(false) }
     var nuevo by remember { mutableStateOf(false) }
 
@@ -99,6 +100,7 @@ fun HoyScreen(
         ContextCompat.checkSelfPermission(contexto, Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED
     LifecycleResumeEffect(Unit) {
         viewModel.notificaciones(notificacionesActivas())
+        viewModel.cargarSolicitudes()
         onPauseOrDispose { }
     }
     val pedirPermiso = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { ok ->
@@ -168,6 +170,14 @@ fun HoyScreen(
                 )
             }
 
+            if (solicitudes.isNotEmpty()) {
+                TarjetaSolicitudes(
+                    solicitudes = solicitudes,
+                    nombreMascota = { id -> mascotas.firstOrNull { it.id == id }?.nombre ?: "tu mascota" },
+                    onResolver = { s, aprobar -> viewModel.resolver(s, aprobar, avisar) },
+                )
+            }
+
             if (alertas.isNotEmpty() && estado.seleccionado == estado.hoy) TarjetaAlertas(alertas, onAbrir = onAbrirMascota)
 
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -209,7 +219,7 @@ fun HoyScreen(
             Spacer(Modifier.height(72.dp))
         }
 
-        if (mascotas.isNotEmpty()) {
+        if (mascotas.any { it.esPropietario }) {
             Row(
                 Modifier
                     .align(Alignment.BottomEnd)
@@ -241,13 +251,14 @@ fun HoyScreen(
     }
 
     if (nuevo) {
-        var mascotaElegida by remember { mutableStateOf(if (mascotas.size == 1) mascotas.first().id else filtro) }
+        val propias = mascotas.filter { it.esPropietario }
+        var mascotaElegida by remember { mutableStateOf(if (propias.size == 1) propias.first().id else filtro?.takeIf { f -> propias.any { it.id == f } }) }
         ModalBottomSheet(onDismissRequest = { nuevo = false }, containerColor = Pc.Crema) {
             Column(Modifier.padding(horizontal = 16.dp).padding(bottom = 16.dp).navigationBarsPadding()) {
                 val elegida = mascotaElegida
                 if (elegida == null) {
                     Text("¿Para quién?", style = MaterialTheme.typography.headlineSmall, modifier = Modifier.padding(start = 12.dp, bottom = 8.dp))
-                    mascotas.forEach { m ->
+                    propias.forEach { m ->
                         Row(
                             Modifier
                                 .fillMaxWidth()

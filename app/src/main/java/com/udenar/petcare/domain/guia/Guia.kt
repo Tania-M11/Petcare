@@ -44,13 +44,15 @@ object Guia {
     const val NOTIFICACIONES = "notificaciones"
     const val CREAR_MASCOTA = "crear_mascota"
     const val PRIMER_RECORDATORIO = "primer_recordatorio"
+    const val CODIGO_CUIDAR = "codigo_cuidar"
+    const val APROBACION = "aprobacion"
 
     private val PASOS = listOf(
         PasoGuia(CREAR_MASCOTA, Intencion.MASCOTAS, "Agrega a tu primera mascota", "Su ficha, foto y especie", DestinoPaso.MASCOTAS, null),
         PasoGuia(PRIMER_RECORDATORIO, Intencion.MASCOTAS, "Crea su primer recordatorio", "Comida, medicina o baño (desde su ficha)", DestinoPaso.MASCOTAS, null),
         PasoGuia(NOTIFICACIONES, Intencion.MASCOTAS, "Activa las notificaciones", "Para que los recordatorios suenen", DestinoPaso.NOTIFICACIONES, null),
-        PasoGuia("codigo_cuidar", Intencion.CUIDAR, "Escribe el código de la mascota", "Pídeselo a su dueño", DestinoPaso.MASCOTAS, "la parte 3.1"),
-        PasoGuia("aprobacion", Intencion.CUIDAR, "Espera la aprobación", "El dueño confirma que la cuidas", DestinoPaso.MASCOTAS, "la parte 3.1"),
+        PasoGuia(CODIGO_CUIDAR, Intencion.CUIDAR, "Escribe el código de la mascota", "Mascotas → + → Cuidar con código", DestinoPaso.MASCOTAS, null),
+        PasoGuia(APROBACION, Intencion.CUIDAR, "Espera la aprobación", "El dueño confirma que la cuidas", DestinoPaso.MASCOTAS, null),
         PasoGuia("perfil_vet", Intencion.VETERINARIO, "Completa tu perfil profesional", "Especies, servicios y horario", DestinoPaso.PERFIL, "la parte 4.2"),
         PasoGuia("consultorio", Intencion.VETERINARIO, "Ubica tu consultorio en el mapa", "Para que te encuentren cerca", DestinoPaso.PERFIL, "la parte 4.2"),
         PasoGuia("certificado", Intencion.VETERINARIO, "Sube tu certificado", "Así obtienes la insignia Verificado", DestinoPaso.PERFIL, "la parte 4.2"),

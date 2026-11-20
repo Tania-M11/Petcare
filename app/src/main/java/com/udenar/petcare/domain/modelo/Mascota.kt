@@ -32,4 +32,6 @@ data class Mascota(
     val propietarioId: String? = null,
     /** true mientras el cambio no ha llegado al servidor. */
     val porSubir: Boolean = false,
+    /** Si el usuario actual es el dueño o la cuida (sección 5 de la spec). */
+    val esPropietario: Boolean = true,
 )

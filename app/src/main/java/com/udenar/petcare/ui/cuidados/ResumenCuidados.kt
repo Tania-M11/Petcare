@@ -74,7 +74,7 @@ fun GrupoCuidado.color(): Pair<Color, Color> = when (this) {
 @Composable
 fun SeccionCuidados(
     resumenes: List<ResumenCuidado>,
-    onAgregar: () -> Unit,
+    onAgregar: (() -> Unit)?,
     onAbrir: (EventoCuidado) -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -88,7 +88,7 @@ fun SeccionCuidados(
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Text("Cuidados", style = MaterialTheme.typography.titleMedium, modifier = Modifier.weight(1f))
-            Row(
+            if (onAgregar != null) Row(
                 Modifier
                     .clip(RoundedCornerShape(50))
                     .background(Pc.Durazno)

@@ -125,9 +125,9 @@ fun TarjetaEstadoCuidado(estado: Map<AreaCuidado, NivelCuidado>) {
 
 /** Peso con su gráfica de evolución (RF-10). */
 @Composable
-fun TarjetaPeso(pesos: List<RegistroPeso>, hoy: LocalDate, onRegistrar: (LocalDate, Int) -> Unit, onEliminar: (String) -> Unit) {
+fun TarjetaPeso(pesos: List<RegistroPeso>, hoy: LocalDate, onRegistrar: (LocalDate, Int) -> Unit, onEliminar: (String) -> Unit, editable: Boolean = true) {
     var abierto by remember { mutableStateOf(false) }
-    Tarjeta("Peso", accion = { BotonAgregar("Registrar", "registrar_peso") { abierto = true } }) {
+    Tarjeta("Peso", accion = if (editable) ({ BotonAgregar("Registrar", "registrar_peso") { abierto = true } }) else null) {
         val ultimo = pesos.firstOrNull()
         if (ultimo == null) {
             Text("Sin pesajes todavía.", style = MaterialTheme.typography.bodyMedium, color = Pc.TintaSuave)
@@ -141,7 +141,7 @@ fun TarjetaPeso(pesos: List<RegistroPeso>, hoy: LocalDate, onRegistrar: (LocalDa
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Text(p.fecha.format(CORTA), style = MaterialTheme.typography.bodyMedium, modifier = Modifier.weight(1f))
                     Text(FichaMascota.peso(p.gramos), style = MaterialTheme.typography.titleSmall)
-                    TextButton(onClick = { onEliminar(p.id) }) { Text("Quitar", style = MaterialTheme.typography.labelMedium, color = Pc.TintaSuave) }
+                    if (editable) TextButton(onClick = { onEliminar(p.id) }) { Text("Quitar", style = MaterialTheme.typography.labelMedium, color = Pc.TintaSuave) }
                 }
             }
         }

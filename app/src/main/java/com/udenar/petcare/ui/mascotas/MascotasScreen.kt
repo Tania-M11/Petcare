@@ -53,6 +53,7 @@ import com.udenar.petcare.ui.theme.Pc
 fun MascotasScreen(
     avisar: (String) -> Unit,
     onAgregar: () -> Unit,
+    onCuidar: () -> Unit,
     onAbrir: (String) -> Unit,
     modifier: Modifier = Modifier,
     viewModel: MascotasViewModel = hiltViewModel(),
@@ -98,9 +99,21 @@ fun MascotasScreen(
                     onClick = { menuAbierto = true },
                 )
             }
-            else -> items(lista, key = { it.id }) { m ->
-                LaunchedEffect(m.id, m.fotoUrl) { viewModel.asegurarFoto(m) }
-                TarjetaMascota(m, viewModel.descripcion(m), onClick = { onAbrir(m.id) })
+            else -> {
+                val (mias, cuidadas) = lista.partition { it.esPropietario }
+                items(mias, key = { it.id }) { m ->
+                    LaunchedEffect(m.id, m.fotoUrl) { viewModel.asegurarFoto(m) }
+                    TarjetaMascota(m, viewModel.descripcion(m), onClick = { onAbrir(m.id) })
+                }
+                if (cuidadas.isNotEmpty()) {
+                    item {
+                        Text("Cuidas a…", style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(top = 8.dp))
+                    }
+                    items(cuidadas, key = { it.id }) { m ->
+                        LaunchedEffect(m.id, m.fotoUrl) { viewModel.asegurarFoto(m) }
+                        TarjetaMascota(m, viewModel.descripcion(m), onClick = { onAbrir(m.id) })
+                    }
+                }
             }
         }
     }
@@ -124,7 +137,7 @@ fun MascotasScreen(
                 })
                 FilaOpcion(Icons.Rounded.Key, "Cuidar con código", "Escribe el código que te compartió el dueño", Pc.LavandaClara, Pc.Lavanda, onClick = {
                     menuAbierto = false
-                    avisar("\"Cuidar con código\" llega en la parte 3.1")
+                    onCuidar()
                 })
                 FilaOpcion(Icons.Rounded.QrCodeScanner, "Escanear QR", "Lee el carné de una mascota", Pc.CieloClaro, Pc.Cielo, onClick = {
                     menuAbierto = false

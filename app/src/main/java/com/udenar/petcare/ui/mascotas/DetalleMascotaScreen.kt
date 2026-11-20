@@ -87,9 +87,11 @@ fun DetalleMascotaScreen(
     val visitas by viewModel.visitas.collectAsStateWithLifecycle()
     val estadoCuidado by viewModel.estadoCuidado.collectAsStateWithLifecycle()
     val historial by viewModel.historial.collectAsStateWithLifecycle()
+    val miembros by viewModel.miembros.collectAsStateWithLifecycle()
     var seccion by rememberSaveable { mutableIntStateOf(0) }
     var elegirClase by remember { mutableStateOf(false) }
     var confirmarEliminar by remember { mutableStateOf(false) }
+    var confirmarSalir by remember { mutableStateOf(false) }
     val contexto = LocalContext.current
 
     val mascota = m
@@ -99,7 +101,12 @@ fun DetalleMascotaScreen(
         }
         return
     }
-    LaunchedEffect(mascota.porSubir) { if (!mascota.porSubir) viewModel.cargarCodigo() }
+    LaunchedEffect(mascota.porSubir, mascota.esPropietario) {
+        if (!mascota.porSubir && mascota.esPropietario) {
+            viewModel.cargarCodigo()
+            viewModel.cargarMiembros()
+        }
+    }
 
     Column(
         Modifier
@@ -121,7 +128,7 @@ fun DetalleMascotaScreen(
             Row(Modifier.fillMaxWidth()) {
                 BotonCircular(Icons.AutoMirrored.Rounded.ArrowBack, "Volver", onClick = onVolver)
                 Box(Modifier.weight(1f))
-                BotonCircular(Icons.Rounded.Edit, "Editar", onClick = { onEditar(mascota.id) })
+                if (mascota.esPropietario) BotonCircular(Icons.Rounded.Edit, "Editar", onClick = { onEditar(mascota.id) })
             }
             AvatarMascota(mascota.especie, mascota.fotoLocal, tam = 132.dp, forma = RoundedCornerShape(40.dp))
             Text(mascota.nombre, style = MaterialTheme.typography.displaySmall, modifier = Modifier.padding(top = 12.dp))
@@ -153,18 +160,31 @@ fun DetalleMascotaScreen(
             when (seccion) {
                 1 -> SeccionCuidados(
                     cuidados,
-                    onAgregar = { elegirClase = true },
-                    onAbrir = { e -> onCuidado(ClaseCuidado.de(e.tipo).name, e.id) },
+                    // Solo el dueño crea o cambia cuidados; quien cuida los ve y registra desde Hoy
+                    onAgregar = if (mascota.esPropietario) ({ elegirClase = true }) else null,
+                    onAbrir = { e -> if (mascota.esPropietario) onCuidado(ClaseCuidado.de(e.tipo).name, e.id) },
                 )
                 2 -> {
                     SaludBasica(mascota)
-                    TarjetaPeso(pesos, viewModel.hoy, onRegistrar = viewModel::registrarPeso, onEliminar = { viewModel.eliminarPeso(it) })
-                    TarjetaVisitas(visitas, onNueva = { onVisita(null) }, onAbrir = { onVisita(it.id) })
+                    TarjetaPeso(pesos, viewModel.hoy, onRegistrar = viewModel::registrarPeso, onEliminar = { viewModel.eliminarPeso(it) }, editable = mascota.esPropietario)
+                    // Las visitas veterinarias no se comparten con los cuidadores (sección 5)
+                    if (mascota.esPropietario) TarjetaVisitas(visitas, onNueva = { onVisita(null) }, onAbrir = { onVisita(it.id) })
                 }
                 3 -> TarjetaHistorial(historial)
                 else -> {
                     TarjetaEstadoCuidado(estadoCuidado)
-                    FichaYCodigo(mascota, codigo, contexto, avisar, viewModel, onEditar, onEliminar = { confirmarEliminar = true })
+                    if (mascota.esPropietario) {
+                        FichaYCodigo(
+                            mascota, codigo, contexto, avisar, viewModel, onEditar, onEliminar = { confirmarEliminar = true },
+                            onRegenerar = { viewModel.regenerarCodigo(avisar) }, onDesactivar = { viewModel.desactivarCodigo(avisar) },
+                        )
+                        TarjetaPersonas(miembros, onQuitar = { viewModel.quitar(it, avisar) })
+                    } else {
+                        FichaSoloLectura(mascota)
+                        TextButton(onClick = { confirmarSalir = true }, modifier = Modifier.fillMaxWidth().testTag("dejar_de_cuidar")) {
+                            Text("Dejar de cuidar a ${mascota.nombre}", color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.labelLarge)
+                        }
+                    }
                 }
             }
         }
@@ -200,6 +220,22 @@ fun DetalleMascotaScreen(
         }
     }
 
+    if (confirmarSalir) {
+        AlertDialog(
+            onDismissRequest = { confirmarSalir = false },
+            containerColor = Pc.Crema,
+            title = { Text("¿Dejar de cuidar a ${mascota.nombre}?", style = MaterialTheme.typography.headlineSmall) },
+            text = { Text("Dejarás de verla y de recibir sus recordatorios. Para volver necesitarás un código y la aprobación del dueño.") },
+            confirmButton = {
+                TextButton(onClick = {
+                    confirmarSalir = false
+                    viewModel.salir(onVolver, avisar)
+                }) { Text("Dejar de cuidar", color = MaterialTheme.colorScheme.error) }
+            },
+            dismissButton = { TextButton(onClick = { confirmarSalir = false }) { Text("Cancelar") } },
+        )
+    }
+
     if (confirmarEliminar) {
         AlertDialog(
             onDismissRequest = { confirmarEliminar = false },
@@ -233,6 +269,8 @@ private fun TarjetaCodigo(
     contexto: Context,
     avisar: (String) -> Unit,
     onReintentar: () -> Unit,
+    onRegenerar: () -> Unit,
+    onDesactivar: () -> Unit,
 ) {
     Seccion("Código para cuidadores") {
         when (estado) {
@@ -280,8 +318,13 @@ private fun TarjetaCodigo(
                     }, fondo = Pc.Durazno, tinte = Pc.Naranja)
                 }
                 if (!estado.codigo.activo) {
-                    Text("Este código está desactivado.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error)
+                    Text("Este código está desactivado: nadie puede usarlo para pedir cuidar.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error)
                 }
+                Row(horizontalArrangement = Arrangement.Center, modifier = Modifier.fillMaxWidth()) {
+                    TextButton(onClick = onRegenerar) { Text(if (estado.codigo.activo) "Generar otro" else "Activar con código nuevo", style = MaterialTheme.typography.labelLarge) }
+                    if (estado.codigo.activo) TextButton(onClick = onDesactivar) { Text("Desactivar", style = MaterialTheme.typography.labelLarge, color = Pc.TintaSuave) }
+                }
+                Text("Cambiar o desactivar el código no quita a quienes ya cuidan a ${mascota.nombre}.", style = MaterialTheme.typography.bodySmall, color = Pc.TintaSuave)
             }
         }
     }
@@ -296,6 +339,8 @@ private fun FichaYCodigo(
     viewModel: DetalleMascotaViewModel,
     onEditar: (String) -> Unit,
     onEliminar: () -> Unit,
+    onRegenerar: () -> Unit,
+    onDesactivar: () -> Unit,
 ) {
     Seccion("Ficha") {
         Dato("Especie", mascota.especieOtro ?: mascota.especie.etiqueta)
@@ -307,7 +352,7 @@ private fun FichaYCodigo(
         mascota.color?.let { Dato("Color", it) }
         mascota.notas?.let { Dato("Notas", it) }
     }
-    TarjetaCodigo(mascota, codigo, contexto, avisar, onReintentar = viewModel::cargarCodigo)
+    TarjetaCodigo(mascota, codigo, contexto, avisar, onReintentar = viewModel::cargarCodigo, onRegenerar = onRegenerar, onDesactivar = onDesactivar)
     BotonPrincipal("Editar ficha", onClick = { onEditar(mascota.id) })
     TextButton(onClick = onEliminar, modifier = Modifier.fillMaxWidth()) {
         Text("Eliminar mascota", color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.labelLarge)
@@ -329,5 +374,50 @@ private fun SaludBasica(mascota: com.udenar.petcare.domain.modelo.Mascota) {
             salud.forEach { (t, v) -> Dato(t, v) }
         }
         Text("Esto no constituye un diagnóstico médico.", style = MaterialTheme.typography.bodySmall, color = Pc.TintaSuave)
+    }
+}
+
+@Composable
+private fun FichaSoloLectura(mascota: Mascota) {
+    Seccion("Ficha") {
+        Dato("Especie", mascota.especieOtro ?: mascota.especie.etiqueta)
+        mascota.raza?.let { Dato("Raza", it) }
+        mascota.pesoGramos?.let { Dato("Peso", FichaMascota.peso(it)) }
+        mascota.notas?.let { Dato("Notas", it) }
+        Text("La cuidas: puedes registrar comidas, dosis y paseos, pero solo el dueño edita su ficha.", style = MaterialTheme.typography.bodySmall, color = Pc.TintaSuave)
+    }
+}
+
+/** Personas que cuidan a la mascota (solo la ve el dueño). */
+@Composable
+private fun TarjetaPersonas(miembros: List<com.udenar.petcare.domain.compartir.Miembro>?, onQuitar: (com.udenar.petcare.domain.compartir.Miembro) -> Unit) {
+    var quitar by remember { mutableStateOf<com.udenar.petcare.domain.compartir.Miembro?>(null) }
+    Seccion("Personas") {
+        when {
+            miembros == null -> Text("Conéctate a internet para ver quién la cuida.", style = MaterialTheme.typography.bodyMedium, color = Pc.TintaSuave)
+            miembros.none { it.rol == com.udenar.petcare.domain.compartir.RolMascota.CUIDADOR } ->
+                Text("Solo tú. Comparte su código para que alguien más te ayude.", style = MaterialTheme.typography.bodyMedium, color = Pc.TintaSuave)
+        }
+        miembros.orEmpty().forEach { m ->
+            Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.testTag("miembro_${m.nombre}")) {
+                Column(Modifier.weight(1f)) {
+                    Text(m.nombre, style = MaterialTheme.typography.titleSmall)
+                    Text(if (m.rol == com.udenar.petcare.domain.compartir.RolMascota.PROPIETARIO) "Dueño/a" else "Cuidador/a", style = MaterialTheme.typography.bodySmall, color = Pc.TintaSuave)
+                }
+                if (m.rol == com.udenar.petcare.domain.compartir.RolMascota.CUIDADOR) {
+                    TextButton(onClick = { quitar = m }) { Text("Quitar", color = MaterialTheme.colorScheme.error) }
+                }
+            }
+        }
+    }
+    quitar?.let { m ->
+        AlertDialog(
+            onDismissRequest = { quitar = null },
+            containerColor = Pc.Crema,
+            title = { Text("¿Quitar a ${m.nombre}?", style = MaterialTheme.typography.headlineSmall) },
+            text = { Text("Dejará de ver la mascota y de recibir sus recordatorios.") },
+            confirmButton = { TextButton(onClick = { onQuitar(m); quitar = null }) { Text("Quitar", color = MaterialTheme.colorScheme.error) } },
+            dismissButton = { TextButton(onClick = { quitar = null }) { Text("Cancelar") } },
+        )
     }
 }

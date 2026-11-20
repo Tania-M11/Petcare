@@ -14,6 +14,7 @@ import kotlinx.serialization.Serializable
 @Serializable data object RutaServicios
 @Serializable data object RutaPerfil
 @Serializable data object RutaIntenciones
+@Serializable data object RutaCuidarCodigo
 @Serializable data class RutaFormMascota(val id: String? = null)
 @Serializable data class RutaDetalleMascota(val id: String)
 

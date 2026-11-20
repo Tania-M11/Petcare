@@ -3,6 +3,9 @@ package com.udenar.petcare.ui.hoy
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.udenar.petcare.domain.cuenta.CuentaException
+import com.udenar.petcare.domain.compartir.CompartirException
+import com.udenar.petcare.domain.compartir.RepositorioCompartir
+import com.udenar.petcare.domain.compartir.SolicitudCuidado
 import com.udenar.petcare.domain.cuenta.RepositorioCuenta
 import com.udenar.petcare.domain.cuidados.EstadoRegistro
 import com.udenar.petcare.domain.cuidados.MotorCuidados
@@ -56,7 +59,29 @@ class HoyViewModel @Inject constructor(
     private val cuenta: RepositorioCuenta,
     mascotasRepo: RepositorioMascotas,
     private val cuidados: RepositorioCuidados,
+    private val compartir: RepositorioCompartir,
 ) : ViewModel() {
+
+    /** Solicitudes para cuidar mis mascotas (el dueño aprueba o rechaza, RF-20). */
+    private val _solicitudes = MutableStateFlow<List<SolicitudCuidado>>(emptyList())
+    val solicitudes: StateFlow<List<SolicitudCuidado>> = _solicitudes.asStateFlow()
+    private val envieSolicitud = MutableStateFlow(false)
+
+    /** Se llama al volver a la pantalla (necesita internet; sin red se ignora). */
+    fun cargarSolicitudes() = viewModelScope.launch {
+        runCatching { compartir.solicitudesRecibidas() }.onSuccess { _solicitudes.value = it }
+        runCatching { compartir.misSolicitudes() }.onSuccess { l -> envieSolicitud.value = l.isNotEmpty() }
+    }
+
+    fun resolver(s: SolicitudCuidado, aprobar: Boolean, avisar: (String) -> Unit) = viewModelScope.launch {
+        try {
+            compartir.resolver(s.id, aprobar)
+            _solicitudes.update { l -> l.filterNot { it.id == s.id } }
+            avisar(if (aprobar) "${s.solicitanteNombre.substringBefore(' ')} ya puede cuidar a tu mascota" else "Solicitud rechazada")
+        } catch (e: CompartirException) {
+            avisar(e.message ?: "No se pudo completar")
+        }
+    }
 
     private val hoy get() = LocalDate.now(reloj)
 
@@ -124,15 +149,18 @@ class HoyViewModel @Inject constructor(
     private val notificacionesActivas = MutableStateFlow(false)
 
     /** Guía de Primeros pasos; null si no aplica (sin intenciones o ya cerrada). */
-    val guia: StateFlow<ProgresoGuia?> = combine(cuenta.usuario, notificacionesActivas, mascotas, cuidados.observarEventos()) { u, notif, lista, eventos ->
+    val guia: StateFlow<ProgresoGuia?> = combine(cuenta.usuario, notificacionesActivas, mascotas, cuidados.observarEventos(), envieSolicitud) { u, notif, lista, eventos, envie ->
         if (u == null || u.guiaRespondida != true || u.intenciones.isEmpty() || Guia.CERRADA in u.pasosOmitidos) {
             null
         } else {
             // Se marcan solos los pasos cuya función ya existe
             val hechos = buildSet {
                 if (notif) add(Guia.NOTIFICACIONES)
-                if (lista.isNotEmpty()) add(Guia.CREAR_MASCOTA)
+                if (lista.any { it.esPropietario }) add(Guia.CREAR_MASCOTA)
                 if (eventos.isNotEmpty()) add(Guia.PRIMER_RECORDATORIO)
+                val cuido = lista.any { !it.esPropietario }
+                if (cuido || envie) add(Guia.CODIGO_CUIDAR)
+                if (cuido) add(Guia.APROBACION)
             }
             Guia.progreso(u.intenciones, hechos, u.pasosOmitidos)
         }

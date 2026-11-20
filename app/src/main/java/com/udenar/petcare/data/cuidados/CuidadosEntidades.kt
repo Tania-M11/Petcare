@@ -91,6 +91,9 @@ interface EventoDao {
     @Query("DELETE FROM eventos_cuidado WHERE id = :id")
     suspend fun borrar(id: String)
 
+    @Query("DELETE FROM eventos_cuidado WHERE mascotaId = :mascotaId")
+    suspend fun borrarDeMascota(mascotaId: String)
+
     @Transaction
     suspend fun aplicarRemotos(filas: List<EventoEntidad>) {
         for (r in filas) {
@@ -125,6 +128,9 @@ interface RegistroDao {
 
     @Query("DELETE FROM registros_cuidado WHERE id = :id")
     suspend fun borrar(id: String)
+
+    @Query("DELETE FROM registros_cuidado WHERE mascotaId = :mascotaId")
+    suspend fun borrarDeMascota(mascotaId: String)
 
     @Transaction
     suspend fun aplicarRemotos(filas: List<RegistroEntidad>) {

@@ -277,3 +277,49 @@ fun TarjetaAlertas(alertas: List<Alerta>, onAbrir: (String) -> Unit) {
         Text("Esto no constituye un diagnóstico médico.", style = MaterialTheme.typography.bodySmall, color = Pc.TintaSuave)
     }
 }
+
+/** Solicitudes "Quiero cuidar a…" que el dueño aprueba o rechaza (RF-20). */
+@Composable
+fun TarjetaSolicitudes(
+    solicitudes: List<com.udenar.petcare.domain.compartir.SolicitudCuidado>,
+    nombreMascota: (String) -> String,
+    onResolver: (com.udenar.petcare.domain.compartir.SolicitudCuidado, Boolean) -> Unit,
+) {
+    Column(
+        Modifier
+            .fillMaxWidth()
+            .clip(MaterialTheme.shapes.large)
+            .background(Pc.LavandaClara)
+            .padding(16.dp),
+        verticalArrangement = Arrangement.spacedBy(10.dp),
+    ) {
+        Text("Quieren ayudarte a cuidar", style = MaterialTheme.typography.titleMedium)
+        solicitudes.forEach { s ->
+            Column(
+                Modifier
+                    .fillMaxWidth()
+                    .clip(MaterialTheme.shapes.medium)
+                    .background(Pc.Blanco)
+                    .padding(12.dp)
+                    .testTag("solicitud_${s.solicitanteNombre}"),
+            ) {
+                Text("${s.solicitanteNombre} quiere cuidar a ${nombreMascota(s.mascotaId)}", style = MaterialTheme.typography.bodyLarge)
+                Text("Podrá ver su ficha y registrar comidas, dosis y paseos; no podrá editarla.", style = MaterialTheme.typography.bodySmall, color = Pc.TintaSuave)
+                Row(Modifier.fillMaxWidth().padding(top = 6.dp), horizontalArrangement = Arrangement.End) {
+                    TextButton(onClick = { onResolver(s, false) }) { Text("Rechazar", color = Pc.TintaSuave) }
+                    Text(
+                        "Aprobar",
+                        style = MaterialTheme.typography.labelLarge,
+                        color = Pc.Blanco,
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(50))
+                            .background(Pc.Naranja)
+                            .clickable { onResolver(s, true) }
+                            .padding(horizontal = 18.dp, vertical = 9.dp)
+                            .testTag("aprobar_${s.solicitanteNombre}"),
+                    )
+                }
+            }
+        }
+    }
+}

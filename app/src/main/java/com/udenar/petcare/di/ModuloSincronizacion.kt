@@ -50,6 +50,9 @@ abstract class ModuloSincronizacion {
     abstract fun salud(r: com.udenar.petcare.data.salud.RepositorioSaludLocal): com.udenar.petcare.domain.salud.RepositorioSalud
 
     @Binds
+    abstract fun compartir(r: com.udenar.petcare.data.compartir.RepositorioCompartirSupabase): com.udenar.petcare.domain.compartir.RepositorioCompartir
+
+    @Binds
     abstract fun cuidados(r: RepositorioCuidadosLocal): RepositorioCuidados
 
     @Binds

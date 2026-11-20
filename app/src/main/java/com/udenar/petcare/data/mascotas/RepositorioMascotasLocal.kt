@@ -39,13 +39,17 @@ class RepositorioMascotasLocal @Inject constructor(
     private val recordatorios: ProgramadorRecordatorios,
     private val pesos: com.udenar.petcare.data.salud.PesoDao,
     private val cuenta: com.udenar.petcare.domain.cuenta.RepositorioCuenta,
+    private val propiedad: com.udenar.petcare.data.compartir.Propiedad,
 ) : RepositorioMascotas {
 
-    override fun observar(): Flow<List<Mascota>> = dao.observarActivas().map { lista -> lista.map { it.comoDominio() } }
+    override fun observar(): Flow<List<Mascota>> = kotlinx.coroutines.flow.combine(dao.observarActivas(), cuenta.usuario) { lista, u ->
+        lista.map { it.comoDominio(u?.id) }
+    }
 
-    override suspend fun obtener(id: String): Mascota? = dao.porId(id)?.takeIf { !it.eliminado }?.comoDominio()
+    override suspend fun obtener(id: String): Mascota? = dao.porId(id)?.takeIf { !it.eliminado }?.comoDominio(cuenta.usuario.value?.id)
 
     override suspend fun guardar(mascota: Mascota, fotoNueva: String?) {
+        propiedad.exigir(mascota.id)
         val anterior = dao.porId(mascota.id)
         var entidad = mascota.comoEntidad(anterior, reloj.millis())
         if (fotoNueva != null) {
@@ -90,6 +94,7 @@ class RepositorioMascotasLocal @Inject constructor(
             ?.let { CodigoMascota(it.codigo, it.activo) }
 
     override suspend fun eliminar(id: String) {
+        propiedad.exigir(id)
         val actual = dao.porId(id) ?: return
         dao.guardar(actual.copy(eliminado = true, pendiente = true, cambioLocal = maxOf(reloj.millis(), actual.cambioLocal + 1)))
         actual.fotoLocal?.let { File(it).delete() }
@@ -128,7 +133,7 @@ private fun Mascota.comoEntidad(anterior: MascotaEntidad?, ahora: Long) = Mascot
     cambioLocal = maxOf(ahora, (anterior?.cambioLocal ?: 0) + 1),
 )
 
-internal fun MascotaEntidad.comoDominio() = Mascota(
+internal fun MascotaEntidad.comoDominio(yo: String? = null) = Mascota(
     id = id,
     nombre = nombre,
     especie = Especie.desdeCodigo(especie),
@@ -150,4 +155,5 @@ internal fun MascotaEntidad.comoDominio() = Mascota(
     fotoLocal = fotoLocal?.takeIf { File(it).exists() },
     propietarioId = propietarioId,
     porSubir = pendiente,
+    esPropietario = propietarioId == null || yo == null || propietarioId == yo,
 )

@@ -77,12 +77,15 @@ class TrabajoSincronizacion @AssistedInject constructor(
     private val sincronizador: Sincronizador,
     private val supabase: SupabaseClient,
     private val recordatorios: ProgramadorRecordatorios,
+    private val compartir: com.udenar.petcare.domain.compartir.RepositorioCompartir,
 ) : CoroutineWorker(contexto, params) {
 
     override suspend fun doWork(): Result {
         // Sin sesión no hay nada que sincronizar (las reglas del servidor rechazarían todo)
         if (supabase.auth.currentSessionOrNull() == null) return Result.success()
         return try {
+            // Primero: ¿empecé o dejé de cuidar alguna mascota? (RF-20)
+            compartir.actualizarMembresias()
             sincronizador.sincronizar()
             // Lo que llegó de otros teléfonos también suena aquí (y se retira lo ya resuelto)
             recordatorios.reprogramar()

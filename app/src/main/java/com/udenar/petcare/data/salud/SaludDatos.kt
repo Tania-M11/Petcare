@@ -84,6 +84,8 @@ interface PesoDao {
 
     @Query("DELETE FROM pesos WHERE id = :id") suspend fun borrar(id: String)
 
+    @Query("DELETE FROM pesos WHERE mascotaId = :m") suspend fun borrarDeMascota(m: String)
+
     @Transaction
     suspend fun aplicarRemotos(filas: List<PesoEntidad>) {
         for (r in filas) {
@@ -113,6 +115,8 @@ interface VisitaDao {
     @Query("DELETE FROM visitas WHERE eliminado = 1 AND pendiente = 0") suspend fun purgarEliminados()
 
     @Query("DELETE FROM visitas WHERE id = :id") suspend fun borrar(id: String)
+
+    @Query("DELETE FROM visitas WHERE mascotaId = :m") suspend fun borrarDeMascota(m: String)
 
     @Transaction
     suspend fun aplicarRemotos(filas: List<VisitaEntidad>) {
@@ -166,10 +170,13 @@ private data class VisitaRemota(
 }
 
 /** Depende de mascotas (orden 1, junto con los cuidados). */
-class TablaPesos @Inject constructor(private val dao: PesoDao) : TablaSincronizable {
+class TablaPesos @Inject constructor(
+    private val dao: PesoDao,
+    private val propiedad: com.udenar.petcare.data.compartir.Propiedad,
+) : TablaSincronizable {
     override val tabla = "pesos"
     override val orden = 1
-    override suspend fun pendientes() = dao.pendientes().map {
+    override suspend fun pendientes() = dao.pendientes().filter { propiedad.esMia(it.mascotaId) }.map {
         Pendiente(it.id, it.cambioLocal, buildJsonObject {
             put("id", it.id); put("mascota_id", it.mascotaId); put("fecha", it.fecha); put("gramos", it.gramos)
             put("notas", it.notas); put("registrado_en", it.registradoEn); put("eliminado", it.eliminado)
@@ -184,10 +191,13 @@ class TablaPesos @Inject constructor(private val dao: PesoDao) : TablaSincroniza
 }
 
 /** Va después de los cuidados porque puede apuntar a la próxima cita (orden 2). */
-class TablaVisitas @Inject constructor(private val dao: VisitaDao) : TablaSincronizable {
+class TablaVisitas @Inject constructor(
+    private val dao: VisitaDao,
+    private val propiedad: com.udenar.petcare.data.compartir.Propiedad,
+) : TablaSincronizable {
     override val tabla = "visitas"
     override val orden = 2
-    override suspend fun pendientes() = dao.pendientes().map {
+    override suspend fun pendientes() = dao.pendientes().filter { propiedad.esMia(it.mascotaId) }.map {
         Pendiente(it.id, it.cambioLocal, buildJsonObject {
             put("id", it.id); put("mascota_id", it.mascotaId); put("fecha", it.fecha); put("motivo", it.motivo)
             put("veterinario", it.veterinario); put("clinica", it.clinica); put("tratamiento", it.tratamiento)

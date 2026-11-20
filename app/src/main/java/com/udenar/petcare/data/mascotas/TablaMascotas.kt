@@ -71,6 +71,7 @@ fun MascotaEntidad.comoFilaRemota(): JsonObject = buildJsonObject {
 class TablaMascotas @Inject constructor(
     private val dao: MascotaDao,
     private val fotos: AlmacenFotos,
+    private val propiedad: com.udenar.petcare.data.compartir.Propiedad,
 ) : TablaSincronizable {
     override val tabla = "mascotas"
     private val json = Json { ignoreUnknownKeys = true }
@@ -88,7 +89,7 @@ class TablaMascotas @Inject constructor(
         }
     }
 
-    override suspend fun pendientes() = dao.pendientes().map { Pendiente(it.id, it.cambioLocal, it.comoFilaRemota()) }
+    override suspend fun pendientes() = dao.pendientes().filter { propiedad.esMia(it.id) }.map { Pendiente(it.id, it.cambioLocal, it.comoFilaRemota()) }
 
     override suspend fun confirmar(id: String, cambioLocal: Long, actualizadoEn: String) {
         dao.confirmar(id, cambioLocal, actualizadoEn)

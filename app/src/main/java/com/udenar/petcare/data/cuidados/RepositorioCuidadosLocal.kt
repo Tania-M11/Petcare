@@ -40,6 +40,7 @@ class RepositorioCuidadosLocal @Inject constructor(
     private val cuenta: RepositorioCuenta,
     private val reloj: Clock,
     private val recordatorios: ProgramadorRecordatorios,
+    private val propiedad: com.udenar.petcare.data.compartir.Propiedad,
 ) : RepositorioCuidados {
 
     override fun observarEventos(): Flow<List<EventoCuidado>> = eventos.observarActivos().map { l -> l.map { it.comoDominio() } }
@@ -51,6 +52,8 @@ class RepositorioCuidadosLocal @Inject constructor(
     }
 
     override suspend fun guardarEvento(evento: EventoCuidado) {
+        // Crear o cambiar cuidados es del propietario (los cuidadores solo registran cumplimiento)
+        propiedad.exigir(evento.mascotaId)
         val anterior = eventos.porId(evento.id)
         eventos.guardar(evento.comoEntidad(anterior, siguienteCambio(anterior?.cambioLocal)))
         recordatorios.reprogramar()
@@ -59,6 +62,7 @@ class RepositorioCuidadosLocal @Inject constructor(
 
     override suspend fun eliminarEvento(id: String) {
         val actual = eventos.porId(id) ?: return
+        propiedad.exigir(actual.mascotaId)
         eventos.guardar(actual.copy(eliminado = true, pendiente = true, cambioLocal = siguienteCambio(actual.cambioLocal)))
         recordatorios.reprogramar()
         sync.solicitar()

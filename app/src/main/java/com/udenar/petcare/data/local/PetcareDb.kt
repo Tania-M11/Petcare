@@ -38,6 +38,10 @@ interface CursorDao {
     @Upsert
     suspend fun guardar(c: CursorEntidad)
 
+    /** Al empezar a cuidar una mascota nueva: la próxima sincronización descarga todo. */
+    @Query("DELETE FROM cursores_sync")
+    suspend fun reiniciar()
+
     @Query("SELECT MAX(sincronizadoEn) FROM cursores_sync")
     fun ultimaSincronizacion(): Flow<Long?>
 }

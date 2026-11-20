@@ -70,6 +70,7 @@ fun PetcareRaiz() {
                 MascotasScreen(
                     avisar = avisar,
                     onAgregar = { nav.navigate(RutaFormMascota()) },
+                    onCuidar = { nav.navigate(RutaCuidarCodigo) },
                     onAbrir = { nav.navigate(RutaDetalleMascota(it)) },
                 )
             }
@@ -99,6 +100,7 @@ fun PetcareRaiz() {
                 )
             }
             composable<RutaFormCuidado> { FormCuidadoScreen(onListo = { nav.popBackStack() }) }
+            composable<RutaCuidarCodigo> { com.udenar.petcare.ui.compartir.CuidarConCodigoScreen(onVolver = { nav.popBackStack() }) }
             composable<RutaFormVisita> { com.udenar.petcare.ui.mascotas.FormVisitaScreen(onListo = { nav.popBackStack() }) }
             composable<RutaServicios> { ServiciosScreen(avisar = avisar) }
             composable<RutaPerfil> { PerfilScreen(avisar = avisar, irAIntenciones = { nav.navigate(RutaIntenciones) }) }

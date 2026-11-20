@@ -4,6 +4,9 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.toRoute
+import com.udenar.petcare.domain.compartir.CompartirException
+import com.udenar.petcare.domain.compartir.Miembro
+import com.udenar.petcare.domain.compartir.RepositorioCompartir
 import com.udenar.petcare.domain.cuidados.AreaCuidado
 import com.udenar.petcare.domain.cuidados.DescripcionCuidados
 import com.udenar.petcare.domain.cuidados.EstadoCuidado
@@ -52,7 +55,55 @@ class DetalleMascotaViewModel @Inject constructor(
     private val reloj: Clock,
     cuidados: RepositorioCuidados,
     private val salud: RepositorioSalud,
+    private val compartir: RepositorioCompartir,
 ) : ViewModel() {
+
+    /** Personas que cuidan esta mascota (solo la ve el dueño; requiere internet). */
+    private val _miembros = MutableStateFlow<List<Miembro>?>(null)
+    val miembros: StateFlow<List<Miembro>?> = _miembros.asStateFlow()
+
+    fun cargarMiembros() = viewModelScope.launch {
+        _miembros.value = runCatching { compartir.miembros(id) }.getOrNull()
+    }
+
+    fun quitar(m: Miembro, avisar: (String) -> Unit) = viewModelScope.launch {
+        try {
+            compartir.quitar(id, m.usuarioId)
+            avisar("${m.nombre.substringBefore(' ')} ya no cuida a esta mascota")
+            cargarMiembros()
+        } catch (e: CompartirException) {
+            avisar(e.message ?: "No se pudo completar")
+        }
+    }
+
+    fun salir(onListo: () -> Unit, avisar: (String) -> Unit) = viewModelScope.launch {
+        try {
+            compartir.salir(id)
+            onListo()
+        } catch (e: CompartirException) {
+            avisar(e.message ?: "No se pudo completar")
+        }
+    }
+
+    fun regenerarCodigo(avisar: (String) -> Unit) = viewModelScope.launch {
+        try {
+            compartir.regenerarCodigo(id)
+            avisar("Código nuevo: el anterior ya no sirve")
+            cargarCodigo()
+        } catch (e: CompartirException) {
+            avisar(e.message ?: "No se pudo completar")
+        }
+    }
+
+    fun desactivarCodigo(avisar: (String) -> Unit) = viewModelScope.launch {
+        try {
+            compartir.desactivarCodigo(id)
+            avisar("Código desactivado. Nadie podrá pedir cuidarla hasta que generes uno nuevo.")
+            cargarCodigo()
+        } catch (e: CompartirException) {
+            avisar(e.message ?: "No se pudo completar")
+        }
+    }
 
     val id = estado.toRoute<RutaDetalleMascota>().id
 

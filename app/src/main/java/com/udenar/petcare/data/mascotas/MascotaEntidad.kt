@@ -80,6 +80,13 @@ interface MascotaDao {
     @Query("DELETE FROM mascotas WHERE id = :id")
     suspend fun borrar(id: String)
 
+    /** Mascotas de otra persona guardadas en el teléfono (las que cuido). */
+    @Query("SELECT id FROM mascotas")
+    suspend fun ids(): List<String>
+
+    @Query("SELECT id FROM mascotas WHERE propietarioId IS NOT NULL AND propietarioId != :yo")
+    suspend fun ajenas(yo: String): List<String>
+
     /** Aplica filas del servidor sin pisar cambios locales pendientes. */
     @Transaction
     suspend fun aplicarRemotas(filas: List<MascotaEntidad>) {

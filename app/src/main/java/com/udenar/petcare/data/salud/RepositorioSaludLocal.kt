@@ -31,6 +31,7 @@ class RepositorioSaludLocal @Inject constructor(
     private val cuenta: RepositorioCuenta,
     private val sync: ProgramadorSync,
     private val reloj: Clock,
+    private val propiedad: com.udenar.petcare.data.compartir.Propiedad,
 ) : RepositorioSalud {
 
     override fun observarPesos(mascotaId: String): Flow<List<RegistroPeso>> = pesos.observarDe(mascotaId).map { l ->
@@ -48,6 +49,7 @@ class RepositorioSaludLocal @Inject constructor(
     }
 
     override suspend fun registrarPeso(mascotaId: String, fecha: LocalDate, gramos: Int, notas: String?) {
+        propiedad.exigir(mascotaId)
         val yo = cuenta.usuario.value
         val ultima = pesos.ultimaFecha(mascotaId)?.let { LocalDate.parse(it) }
         pesos.guardar(
@@ -69,11 +71,13 @@ class RepositorioSaludLocal @Inject constructor(
 
     override suspend fun eliminarPeso(id: String) {
         val p = pesos.porId(id) ?: return
+        propiedad.exigir(p.mascotaId)
         pesos.guardar(p.copy(eliminado = true, pendiente = true, cambioLocal = maxOf(reloj.millis(), p.cambioLocal + 1)))
         sync.solicitar()
     }
 
     override suspend fun guardarVisita(visita: Visita, proximaCita: LocalDateTime?) {
+        propiedad.exigir(visita.mascotaId)
         val anterior = visitas.porId(visita.id)
         // Recordatorio de la próxima cita: un cuidado CITA_VET de una sola vez, con aviso un día antes
         var citaId = anterior?.proximaCitaId
@@ -110,6 +114,7 @@ class RepositorioSaludLocal @Inject constructor(
 
     override suspend fun eliminarVisita(id: String) {
         val v = visitas.porId(id) ?: return
+        propiedad.exigir(v.mascotaId)
         v.proximaCitaId?.let { cuidados.eliminarEvento(it) }
         visitas.guardar(v.copy(eliminado = true, pendiente = true, cambioLocal = maxOf(reloj.millis(), v.cambioLocal + 1)))
         sync.solicitar()

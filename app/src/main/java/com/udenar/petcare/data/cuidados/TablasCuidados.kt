@@ -106,10 +106,13 @@ fun RegistroEntidad.comoFilaRemota(): JsonObject = buildJsonObject {
 }
 
 /** Va después de mascotas (la mascota debe existir en el servidor antes que sus cuidados). */
-class TablaEventos @Inject constructor(private val dao: EventoDao) : TablaSincronizable {
+class TablaEventos @Inject constructor(
+    private val dao: EventoDao,
+    private val propiedad: com.udenar.petcare.data.compartir.Propiedad,
+) : TablaSincronizable {
     override val tabla = "eventos_cuidado"
     override val orden = 1
-    override suspend fun pendientes() = dao.pendientes().map { Pendiente(it.id, it.cambioLocal, it.comoFilaRemota()) }
+    override suspend fun pendientes() = dao.pendientes().filter { propiedad.esMia(it.mascotaId) }.map { Pendiente(it.id, it.cambioLocal, it.comoFilaRemota()) }
     override suspend fun confirmar(id: String, cambioLocal: Long, actualizadoEn: String) {
         dao.confirmar(id, cambioLocal, actualizadoEn)
         dao.purgarEliminados()
