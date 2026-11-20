@@ -60,7 +60,13 @@ class HoyViewModel @Inject constructor(
     mascotasRepo: RepositorioMascotas,
     private val cuidados: RepositorioCuidados,
     private val compartir: RepositorioCompartir,
+    tiempoReal: com.udenar.petcare.data.sync.TiempoReal,
 ) : ViewModel() {
+
+    init {
+        // Una solicitud nueva aparece sin tener que salir y volver a Hoy
+        viewModelScope.launch { tiempoReal.cambiosSolicitudes.collect { cargarSolicitudes() } }
+    }
 
     /** Solicitudes para cuidar mis mascotas (el dueño aprueba o rechaza, RF-20). */
     private val _solicitudes = MutableStateFlow<List<SolicitudCuidado>>(emptyList())

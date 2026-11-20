@@ -51,14 +51,15 @@ interface CursorDao {
  * Cada parte agrega sus tablas subiendo la versión con una migración automática.
  */
 @Database(
-    entities = [MascotaEntidad::class, CursorEntidad::class, EventoEntidad::class, RegistroEntidad::class, AlarmaEntidad::class, PesoEntidad::class, VisitaEntidad::class],
-    version = 5,
+    entities = [MascotaEntidad::class, CursorEntidad::class, EventoEntidad::class, RegistroEntidad::class, AlarmaEntidad::class, PesoEntidad::class, VisitaEntidad::class, PreferenciaMascota::class],
+    version = 6,
     exportSchema = true,
     autoMigrations = [
         AutoMigration(from = 1, to = 2), // 2.2: foto local de la mascota
         AutoMigration(from = 2, to = 3), // 2.3: cuidados y registros
         AutoMigration(from = 3, to = 4), // 2.4: alarmas programadas
         AutoMigration(from = 4, to = 5), // 2.8: pesos y visitas
+        AutoMigration(from = 5, to = 6), // 3.2: recordatorios por mascota en este teléfono
     ],
 )
 abstract class PetcareDb : RoomDatabase() {
@@ -69,4 +70,5 @@ abstract class PetcareDb : RoomDatabase() {
     abstract fun alarmas(): AlarmaDao
     abstract fun pesos(): PesoDao
     abstract fun visitas(): VisitaDao
+    abstract fun preferencias(): PreferenciaDao
 }

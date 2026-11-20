@@ -58,6 +58,9 @@ object ModuloLocalPrueba {
 
     @Provides
     fun visitas(db: PetcareDb): com.udenar.petcare.data.salud.VisitaDao = db.visitas()
+
+    @Provides
+    fun preferencias(db: PetcareDb): com.udenar.petcare.data.local.PreferenciaDao = db.preferencias()
 }
 
 /** Supabase con la sesión solo en memoria: no reemplaza la sesión real guardada en el teléfono. */
@@ -74,6 +77,7 @@ object ModuloSupabasePrueba {
         }
         install(Postgrest)
         install(Storage)
+        install(io.github.jan.supabase.realtime.Realtime)
     }
 }
 

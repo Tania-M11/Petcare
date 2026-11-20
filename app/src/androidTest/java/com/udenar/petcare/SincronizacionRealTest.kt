@@ -22,6 +22,7 @@ import io.github.jan.supabase.auth.providers.builtin.Email
 import io.github.jan.supabase.postgrest.from
 import io.github.jan.supabase.postgrest.postgrest
 import io.github.jan.supabase.storage.storage
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.JsonObject
@@ -59,6 +60,8 @@ class SincronizacionRealTest {
     @Inject lateinit var sincronizador: Sincronizador
     @Inject lateinit var db: PetcareDb
     @Inject lateinit var cuidados: RepositorioCuidados
+    @Inject lateinit var tiempoReal: com.udenar.petcare.data.sync.TiempoReal
+    @Inject lateinit var programador: ProgramadorFalso
     @Inject lateinit var salud: com.udenar.petcare.domain.salud.RepositorioSalud
 
     private val correo = "sync.${System.currentTimeMillis()}@petcare.test"
@@ -205,6 +208,24 @@ class SincronizacionRealTest {
         assertEquals("CITA_VET", cita["tipo"]!!.jsonPrimitive.content)
         // El peso de la ficha también subió
         assertEquals("12300", remotas().single()["peso_gramos"]!!.jsonPrimitive.content)
+    }
+
+    @Test
+    fun unCambioEnElServidorLlegaEnVivo(): Unit = runBlocking {
+        val antes = programador.solicitudes
+        val alcance = kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.Default)
+        tiempoReal.iniciar(alcance)
+        kotlinx.coroutines.delay(4_000) // tiempo para suscribirse al canal
+        // "Otro teléfono" crea una mascota directamente en el servidor
+        supabase.from("mascotas").insert(buildJsonObject { put("id", UUID.randomUUID().toString()); put("nombre", "En vivo"); put("especie", "AVE") })
+        var llego = false
+        repeat(50) {
+            if (!llego && programador.solicitudes > antes) llego = true
+            if (!llego) kotlinx.coroutines.delay(200)
+        }
+        tiempoReal.detener()
+        alcance.cancel()
+        assertTrue("El cambio no llegó por Realtime", llego)
     }
 
     @Test

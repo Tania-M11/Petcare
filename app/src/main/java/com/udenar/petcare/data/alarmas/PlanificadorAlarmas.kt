@@ -26,12 +26,15 @@ class PlanificadorAlarmas @Inject constructor(
     private val reloj: RelojAlarmas,
     private val notificador: Notificador,
     private val clock: Clock,
+    private val preferencias: com.udenar.petcare.data.local.PreferenciaDao,
 ) : ProgramadorRecordatorios {
 
     private val candado = Mutex()
 
     override suspend fun reprogramar() = candado.withLock {
-        val listaEventos = eventos.observarActivos().first().map { it.comoDominio() }
+        // RF-14: las mascotas silenciadas en este teléfono no suenan
+        val silenciadas = preferencias.silenciadasAhora().toSet()
+        val listaEventos = eventos.observarActivos().first().map { it.comoDominio() }.filter { it.mascotaId !in silenciadas }
         val listaRegistros = registros.observarActivos().first().map { it.comoDominio() }
         val deseadas = PlanAlarmas.calcular(listaEventos, listaRegistros, LocalDateTime.now(clock), clock.zone)
             .associateBy { it.clave }

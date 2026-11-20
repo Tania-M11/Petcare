@@ -88,6 +88,7 @@ fun DetalleMascotaScreen(
     val estadoCuidado by viewModel.estadoCuidado.collectAsStateWithLifecycle()
     val historial by viewModel.historial.collectAsStateWithLifecycle()
     val miembros by viewModel.miembros.collectAsStateWithLifecycle()
+    val recordatoriosActivos by viewModel.recordatoriosActivos.collectAsStateWithLifecycle()
     var seccion by rememberSaveable { mutableIntStateOf(0) }
     var elegirClase by remember { mutableStateOf(false) }
     var confirmarEliminar by remember { mutableStateOf(false) }
@@ -173,6 +174,28 @@ fun DetalleMascotaScreen(
                 3 -> TarjetaHistorial(historial)
                 else -> {
                     TarjetaEstadoCuidado(estadoCuidado)
+                    Row(
+                        Modifier
+                            .fillMaxWidth()
+                            .clip(MaterialTheme.shapes.large)
+                            .background(Pc.Blanco)
+                            .padding(horizontal = 16.dp, vertical = 10.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Column(Modifier.weight(1f)) {
+                            Text("Recordatorios en este teléfono", style = MaterialTheme.typography.titleSmall)
+                            Text(
+                                if (recordatoriosActivos) "Te avisaremos de los cuidados de ${mascota.nombre}" else "No sonarán aquí (los demás miembros deciden por su cuenta)",
+                                style = MaterialTheme.typography.bodySmall, color = Pc.TintaSuave,
+                            )
+                        }
+                        androidx.compose.material3.Switch(
+                            checked = recordatoriosActivos,
+                            onCheckedChange = viewModel::cambiarRecordatorios,
+                            colors = androidx.compose.material3.SwitchDefaults.colors(checkedTrackColor = Pc.Naranja),
+                            modifier = Modifier.testTag("interruptor_recordatorios"),
+                        )
+                    }
                     if (mascota.esPropietario) {
                         FichaYCodigo(
                             mascota, codigo, contexto, avisar, viewModel, onEditar, onEliminar = { confirmarEliminar = true },

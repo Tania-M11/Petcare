@@ -50,6 +50,8 @@ class AlarmasTest {
     @Inject lateinit var mascotas: RepositorioMascotas
     @Inject lateinit var cuidados: RepositorioCuidados
     @Inject lateinit var reloj: RelojAlarmasFalso
+    @Inject lateinit var preferencias: com.udenar.petcare.data.local.PreferenciaDao
+    @Inject lateinit var planificador: com.udenar.petcare.domain.cuidados.ProgramadorRecordatorios
 
     private val contexto: Context get() = InstrumentationRegistry.getInstrumentation().targetContext
     private val notificaciones get() = contexto.getSystemService(NotificationManager::class.java)
@@ -118,6 +120,18 @@ class AlarmasTest {
         )
         assertTrue(esperar { cuidados.agenda(toma.toLocalDate()).first().singleOrNull()?.registro?.estado == EstadoRegistro.ADMINISTRADA })
         assertTrue(esperar { notificaciones.activeNotifications.none { it.tag == etiqueta } })
+    }
+
+    @Test
+    fun silenciarLaMascotaEnEsteTelefonoCancelaSusAlarmas(): Unit = runBlocking {
+        crearMedicamento()
+        assertTrue("e1" in reloj.programadas)
+        preferencias.guardar(com.udenar.petcare.data.local.PreferenciaMascota("m1", false))
+        planificador.reprogramar()
+        assertFalse("e1" in reloj.programadas)
+        preferencias.guardar(com.udenar.petcare.data.local.PreferenciaMascota("m1", true))
+        planificador.reprogramar()
+        assertTrue("e1" in reloj.programadas)
     }
 
     @Test

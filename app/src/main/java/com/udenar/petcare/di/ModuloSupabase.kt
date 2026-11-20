@@ -26,5 +26,6 @@ object ModuloSupabase {
         install(Auth)
         install(Postgrest)
         install(Storage)
+        install(io.github.jan.supabase.realtime.Realtime)
     }
 }

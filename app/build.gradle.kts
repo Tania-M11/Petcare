@@ -89,6 +89,7 @@ dependencies {
     implementation(libs.supabase.auth)
     implementation(libs.supabase.postgrest)
     implementation(libs.supabase.storage)
+    implementation(libs.supabase.realtime) // cambios en vivo entre miembros (WebSocket con OkHttp)
 
     // Imágenes (fotos de mascotas desde archivos locales)
     implementation(libs.coil.compose)

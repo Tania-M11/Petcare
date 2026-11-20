@@ -19,6 +19,7 @@ import javax.inject.Inject
 class RaizViewModel @Inject constructor(
     private val cuenta: RepositorioCuenta,
     private val sync: ProgramadorSync,
+    private val tiempoReal: com.udenar.petcare.data.sync.TiempoReal,
 ) : ViewModel() {
 
     val sesion: StateFlow<EstadoSesion> = cuenta.estadoSesion
@@ -27,6 +28,10 @@ class RaizViewModel @Inject constructor(
                 viewModelScope.launch { cuenta.cargarUsuario() }
                 // Al abrir la app (o en un teléfono nuevo) se sube lo pendiente y se baja lo nuevo
                 sync.solicitar()
+                // Mientras la app esté abierta, los cambios de otros miembros llegan en vivo
+                tiempoReal.iniciar(viewModelScope)
+            } else if (it == EstadoSesion.SIN_SESION) {
+                viewModelScope.launch { tiempoReal.detener() }
             }
         }
         .stateIn(viewModelScope, SharingStarted.Eagerly, EstadoSesion.CARGANDO)

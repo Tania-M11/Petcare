@@ -56,7 +56,19 @@ class DetalleMascotaViewModel @Inject constructor(
     cuidados: RepositorioCuidados,
     private val salud: RepositorioSalud,
     private val compartir: RepositorioCompartir,
+    private val preferencias: com.udenar.petcare.data.local.PreferenciaDao,
+    private val recordatorios: com.udenar.petcare.domain.cuidados.ProgramadorRecordatorios,
 ) : ViewModel() {
+
+    /** RF-14: si este teléfono recibe los recordatorios de esta mascota (cada miembro decide). */
+    val recordatoriosActivos: StateFlow<Boolean> = preferencias.silenciadas()
+        .map { id !in it }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), true)
+
+    fun cambiarRecordatorios(activos: Boolean) = viewModelScope.launch {
+        preferencias.guardar(com.udenar.petcare.data.local.PreferenciaMascota(id, activos))
+        recordatorios.reprogramar()
+    }
 
     /** Personas que cuidan esta mascota (solo la ve el dueño; requiere internet). */
     private val _miembros = MutableStateFlow<List<Miembro>?>(null)
