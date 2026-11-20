@@ -1,7 +1,8 @@
 package com.udenar.petcare
 
 import androidx.compose.ui.test.assertIsSelected
-import androidx.compose.ui.test.junit4.createAndroidComposeRule
+import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
+import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import dagger.hilt.android.testing.HiltAndroidRule
@@ -10,7 +11,7 @@ import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 
-/** Parte 0.1: la barra inferior del modo personal abre cada sección. */
+/** Parte 0.2: las 4 pestañas del modo personal y los accesos de Hoy. */
 @HiltAndroidTest
 class NavegacionTest {
 
@@ -24,24 +25,39 @@ class NavegacionTest {
     fun inyectar() = hilt.inject()
 
     @Test
-    fun abreEnInicio() {
-        compose.onNodeWithText("Inicio").assertIsSelected()
-        compose.onNodeWithText("Aquí verás los cuidados de hoy de tus mascotas.").assertExists()
+    fun abreEnHoy() {
+        compose.onNodeWithTag("pestana_hoy").assertIsSelected()
+        compose.onNodeWithText("Pendientes de hoy").assertExists()
+        compose.onNodeWithText("Agrega a tu primera mascota").assertExists()
     }
 
     @Test
     fun cadaPestanaMuestraSuSeccion() {
-        val esperado = mapOf(
-            "Mascotas" to "Tus mascotas y las que cuidas (parte 1.3).",
-            "Calendario" to "Vista mensual de cuidados (parte 1.12).",
-            "Explorar" to "Veterinarios y prestadores (fases 4 y 5).",
-            "Perfil" to "Tu cuenta, perfiles profesionales y modos (partes 1.1 y 4.1).",
-        )
-        esperado.forEach { (pestana, texto) ->
-            compose.onNodeWithText(pestana, useUnmergedTree = true).performClick()
-            compose.onNodeWithText(texto).assertExists()
-        }
-        compose.onNodeWithText("Inicio", useUnmergedTree = true).performClick()
-        compose.onNodeWithText("Aquí verás los cuidados de hoy de tus mascotas.").assertExists()
+        compose.onNodeWithTag("pestana_mascotas").performClick()
+        compose.onNodeWithText("Aún no hay mascotas").assertExists()
+
+        compose.onNodeWithTag("pestana_servicios").performClick()
+        compose.onNodeWithText("Veterinarios").assertExists()
+
+        compose.onNodeWithTag("pestana_perfil").performClick()
+        compose.onNodeWithText("Trabaja con PetCare").assertExists()
+
+        compose.onNodeWithTag("pestana_hoy").performClick()
+        compose.onNodeWithText("Pendientes de hoy").assertExists()
+    }
+
+    @Test
+    fun tarjetaDePrimerosPasosLlevaAMascotas() {
+        compose.onNodeWithText("Agrega a tu primera mascota").performClick()
+        compose.onNodeWithTag("pestana_mascotas").assertIsSelected()
+    }
+
+    @Test
+    fun menuMasDeMascotasMuestraLasTresOpciones() {
+        compose.onNodeWithTag("pestana_mascotas").performClick()
+        compose.onNodeWithText("Aún no hay mascotas").performClick()
+        compose.onNodeWithText("Agregar mascota").assertExists()
+        compose.onNodeWithText("Cuidar con código").assertExists()
+        compose.onNodeWithText("Escanear QR").assertExists()
     }
 }

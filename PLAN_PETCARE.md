@@ -94,20 +94,21 @@ Si alguien es veterinario **y** prestador, al cambiar de modo elige cuál (chip 
 ## 5. Identidad visual
 
 - **Tipografía:** **Kalnia** (títulos) · **Quicksand** (textos, botones y etiquetas). Ambas de Google Fonts, incluidas en `res/font`.
-- **Paleta** (de la hoja de estilo en `icons/`):
+- **Paleta** (cálida y natural, de la referencia de bienestar + el azul y amarillo del logo; tokens en `ui/theme/Color.kt`):
 
 | Rol | Color |
 |---|---|
-| Primario (botones principales) | Naranja `#FFB547` |
-| Acento suave | Amarillo `#FFD686` · Durazno `#F7CFC0` |
-| Secundario (estados, chips "Completado") | Lavanda `#DCC6E8` |
-| Categorías | Agua `#BCE4E5` · Menta `#B9DCC2` |
-| Fondos | Crema `#FFF6E9` · Blanco `#FFFFFF` · Lavanda claro `#F3E7FF` · Menta claro `#E9F8F2` |
-| Texto | Café oscuro `#292521` |
+| Fondo | Crema `#FBF6F1` · tarjetas blancas |
+| Acción principal | Naranja `#F08A4B` (degradado desde `#F7B183`) · Durazno `#FCDCC6` para fondos activos |
+| Secundario | Lavanda `#B9A5EA` → `#8F78D6` |
+| Del logo | Cielo `#7BA7CF` → `#5B89BA` · Sol `#F5D565` |
+| Apoyo | Menta `#9FD3B6` |
+| Texto | Tinta `#2D2433` · secundario `#8C8394` |
 
 - **Formas** (de la referencia de bienestar): tarjetas muy redondeadas (24–32 dp), botones en píldora, fondos con degradados suaves crema→durazno o lavanda, "blobs" orgánicos detrás de Chopper, tira de días como selector grande, barra inferior flotante redondeada.
 - **Íconos de sección:** cuadrados redondeados de color pastel con ícono (Vacunas lavanda, Medicamentos menta, Comida durazno, Baño agua, Paseos amarillo), como en la hoja de estilo.
-- **Logo:** `petcare_logo_sin_fondo.png`.
+- **Logo:** `petcare_logo_sin_fondo.png` (azul y amarillo). La hoja de estilo de `icons/` hecha con IA **no** se usa como guía.
+- **Acabado:** grano sutil sobre degradados y formas orgánicas (blobs) detrás de Chopper, como la referencia.
 - **Créditos:** Tony Tony Chopper © Eiichiro Oda / Shueisha / Toei Animation; uso académico sin ánimo de lucro, con créditos en "Acerca de" y en el README. No se publica en tiendas con el personaje.
 
 ---
@@ -133,7 +134,7 @@ Reglas: una parte por sesión · compila y se prueba en el teléfono antes de se
 | Fase | Parte | Contenido | Estado |
 |---|---|---|---|
 | **0 Base** | 0.1 | Proyecto Android, Hilt, Compose, navegación provisional, pruebas instrumentadas | ✅ |
-| | 0.2 | **Identidad visual**: fuentes, paleta, formas, logo, recortes de Chopper, barra de **4 pestañas** con Hoy/Mascotas/Servicios/Perfil vacíos pero con estilo | |
+| | 0.2 | **Identidad visual**: fuentes, paleta, formas, logo, recortes de Chopper, barra de **4 pestañas** con Hoy/Mascotas/Servicios/Perfil vacíos pero con estilo | ✅ |
 | | 0.3 | Supabase `petcare` + tabla de perfiles + cliente en la app | |
 | **1 Cuenta** | 1.1 | Bienvenida, registro, inicio de sesión, recuperar contraseña | |
 | | 1.2 | **"¿Qué te trae a PetCare?"** + lista Primeros pasos | |
