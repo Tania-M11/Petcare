@@ -21,6 +21,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
 import com.udenar.petcare.R
 import com.udenar.petcare.ui.componentes.TarjetaIlustrada
@@ -28,7 +29,7 @@ import com.udenar.petcare.ui.theme.Pc
 
 /** Pestaña Servicios: puerta a los directorios de veterinarios y prestadores (fase 4). */
 @Composable
-fun ServiciosScreen(avisar: (String) -> Unit, modifier: Modifier = Modifier) {
+fun ServiciosScreen(avisar: (String) -> Unit, onVeterinarios: () -> Unit, modifier: Modifier = Modifier) {
     Column(
         modifier
             .fillMaxSize()
@@ -47,13 +48,13 @@ fun ServiciosScreen(avisar: (String) -> Unit, modifier: Modifier = Modifier) {
                 .fillMaxWidth()
                 .clip(RoundedCornerShape(50))
                 .background(Pc.Blanco)
-                .clickable { avisar("La búsqueda llega con los directorios (fase 4)") }
+                .clickable(onClick = onVeterinarios)
                 .padding(horizontal = 18.dp, vertical = 14.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Icon(Icons.Rounded.Search, contentDescription = null, tint = Pc.TintaSuave, modifier = Modifier.size(22.dp))
             Text(
-                "Busca por ciudad o servicio",
+                "Busca veterinarios por ciudad",
                 style = MaterialTheme.typography.bodyMedium,
                 color = Pc.TintaSuave,
                 modifier = Modifier.padding(start = 10.dp),
@@ -62,11 +63,12 @@ fun ServiciosScreen(avisar: (String) -> Unit, modifier: Modifier = Modifier) {
 
         TarjetaIlustrada(
             titulo = "Veterinarios",
-            texto = "Perfiles verificados, cerca de ti.",
+            texto = "Con insignia de verificación, cerca de ti.",
             chip = "Verificados ✓",
             ilustracion = R.drawable.chopper_veterinario,
             degradado = listOf(Pc.Cielo, Pc.CieloOscuro),
-            onClick = { avisar("El directorio de veterinarios llega en la fase 4") },
+            onClick = onVeterinarios,
+            modifier = Modifier.testTag("tarjeta_veterinarios"),
         )
         TarjetaIlustrada(
             titulo = "Paseo, baño y cuidado",
@@ -75,7 +77,7 @@ fun ServiciosScreen(avisar: (String) -> Unit, modifier: Modifier = Modifier) {
             ilustracion = R.drawable.chopper_doctor,
             degradado = listOf(Pc.SolClaro, Pc.Sol),
             colorTexto = Pc.Tinta,
-            onClick = { avisar("El directorio de prestadores llega en la fase 4") },
+            onClick = { avisar("El directorio de prestadores llega muy pronto") },
         )
     }
 }

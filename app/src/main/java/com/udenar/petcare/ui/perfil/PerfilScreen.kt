@@ -20,6 +20,8 @@ import androidx.compose.material.icons.rounded.Alarm
 import androidx.compose.material.icons.rounded.CloudSync
 import androidx.compose.material.icons.rounded.Explore
 import androidx.compose.material.icons.rounded.Info
+import androidx.compose.material.icons.rounded.ContentCut
+import androidx.compose.material.icons.rounded.MedicalServices
 import androidx.compose.material.icons.rounded.NotificationsActive
 import androidx.compose.material.icons.rounded.Person
 import androidx.compose.material3.AlertDialog
@@ -66,6 +68,7 @@ import java.util.Locale
 fun PerfilScreen(
     avisar: (String) -> Unit,
     irAIntenciones: () -> Unit,
+    onPerfilVeterinario: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: PerfilViewModel = hiltViewModel(),
 ) {
@@ -86,6 +89,8 @@ fun PerfilScreen(
         if (!ok) avisar("Actívalas en los ajustes del teléfono para recibir recordatorios")
     }
     var confirmarSalida by remember { mutableStateOf(false) }
+    var trabajar by remember { mutableStateOf(false) }
+    val perfilVet by viewModel.perfilVet.collectAsStateWithLifecycle()
 
     Column(
         modifier
@@ -124,14 +129,28 @@ fun PerfilScreen(
             }
         }
 
-        TarjetaIlustrada(
-            titulo = "Trabaja con PetCare",
-            texto = "¿Eres veterinario o cuidas mascotas? Activa tu perfil profesional.",
-            ilustracion = R.drawable.chopper_organizador,
-            degradado = listOf(Pc.Durazno, Pc.NaranjaClaro),
-            colorTexto = Pc.Tinta,
-            onClick = { avisar("Los perfiles profesionales llegan en la fase 4") },
-        )
+        if (perfilVet?.activo == true) {
+            // RF-30: cambiar de modo sin cerrar sesión
+            TarjetaIlustrada(
+                titulo = "Modo veterinario",
+                texto = "Tus solicitudes, agenda, pacientes y verificación.",
+                chip = "Cambiar de modo",
+                ilustracion = R.drawable.chopper_veterinario,
+                degradado = listOf(Pc.Cielo, Pc.CieloOscuro),
+                onClick = viewModel::modoVeterinario,
+                modifier = Modifier.testTag("tarjeta_modo_vet"),
+            )
+        } else {
+            TarjetaIlustrada(
+                titulo = "Trabaja con PetCare",
+                texto = "¿Eres veterinario o cuidas mascotas? Activa tu perfil profesional.",
+                ilustracion = R.drawable.chopper_organizador,
+                degradado = listOf(Pc.Durazno, Pc.NaranjaClaro),
+                colorTexto = Pc.Tinta,
+                onClick = { trabajar = true },
+                modifier = Modifier.testTag("tarjeta_trabaja"),
+            )
+        }
 
         Column(
             Modifier
@@ -218,6 +237,43 @@ fun PerfilScreen(
                 onClick = { confirmarSalida = true },
             )
         }
+    }
+
+    if (trabajar) {
+        AlertDialog(
+            onDismissRequest = { trabajar = false },
+            containerColor = Pc.Crema,
+            title = { Text("¿Cómo quieres trabajar?", style = MaterialTheme.typography.headlineSmall) },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    Text("Sigues teniendo tus mascotas: el perfil profesional se suma a tu cuenta.", style = MaterialTheme.typography.bodySmall, color = Pc.TintaSuave)
+                    FilaOpcion(
+                        icono = Icons.Rounded.MedicalServices,
+                        titulo = if (perfilVet != null) "Reactivar mi perfil de veterinario" else "Soy veterinario/a",
+                        subtitulo = "Aparece en el directorio y recibe pacientes",
+                        fondoIcono = Pc.CieloClaro,
+                        colorIcono = Pc.CieloOscuro,
+                        onClick = {
+                            trabajar = false
+                            onPerfilVeterinario()
+                        },
+                        modifier = Modifier.testTag("trabajar_vet"),
+                    )
+                    FilaOpcion(
+                        icono = Icons.Rounded.ContentCut,
+                        titulo = "Ofrezco servicios",
+                        subtitulo = "Paseo, baño y peluquería o cuidado temporal",
+                        fondoIcono = Pc.SolClaro,
+                        colorIcono = Pc.Naranja,
+                        onClick = {
+                            trabajar = false
+                            avisar("Los perfiles de prestador llegan muy pronto")
+                        },
+                    )
+                }
+            },
+            confirmButton = { TextButton(onClick = { trabajar = false }) { Text("Ahora no") } },
+        )
     }
 
     if (confirmarSalida) {

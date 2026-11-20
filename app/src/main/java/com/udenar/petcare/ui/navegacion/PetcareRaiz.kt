@@ -50,7 +50,7 @@ fun PetcareRaiz() {
         containerColor = Pc.Crema,
         snackbarHost = { SnackbarHost(avisos) },
         // La barra solo se ve en las 4 pestañas (no en pantallas completas como Intenciones)
-        bottomBar = { if (actual != null) BarraInferior(actual = actual, onElegir = { nav.irAPestana(it) }) },
+        bottomBar = { if (actual != null) BarraInferior(PestanaPersonal.entries, actual = actual, onElegir = { nav.irAPestana(it) }) },
     ) { relleno ->
         NavHost(
             navController = nav,
@@ -65,6 +65,7 @@ fun PetcareRaiz() {
                     onAbrirMascota = { nav.navigate(RutaDetalleMascota(it)) },
                     onNuevoCuidado = { mascotaId, clase -> nav.navigate(RutaFormCuidado(mascotaId, clase)) },
                     onPasear = { mascotaId -> nav.navigate(RutaPaseo(mascotaId)) },
+                    onPerfilVeterinario = { nav.navigate(RutaFormVeterinario) },
                     avisar = avisar,
                 )
             }
@@ -122,8 +123,22 @@ fun PetcareRaiz() {
                 )
             }
             composable<RutaFormVisita> { com.udenar.petcare.ui.mascotas.FormVisitaScreen(onListo = { nav.popBackStack() }) }
-            composable<RutaServicios> { ServiciosScreen(avisar = avisar) }
-            composable<RutaPerfil> { PerfilScreen(avisar = avisar, irAIntenciones = { nav.navigate(RutaIntenciones) }) }
+            composable<RutaServicios> { ServiciosScreen(avisar = avisar, onVeterinarios = { nav.navigate(RutaDirectorioVet) }) }
+            composable<RutaPerfil> {
+                PerfilScreen(avisar = avisar, irAIntenciones = { nav.navigate(RutaIntenciones) }, onPerfilVeterinario = { nav.navigate(RutaFormVeterinario) })
+            }
+            composable<RutaFormVeterinario> {
+                com.udenar.petcare.ui.profesional.FormVeterinarioScreen(
+                    onVolver = { nav.popBackStack() },
+                    // Al activarlo, la raíz cambia sola al modo veterinario
+                    onGuardado = { activado -> if (!activado) nav.popBackStack() },
+                    avisar = avisar,
+                )
+            }
+            composable<RutaDirectorioVet> {
+                com.udenar.petcare.ui.servicios.DirectorioVeterinariosScreen(onVolver = { nav.popBackStack() }, onAbrir = { nav.navigate(RutaDetalleVet(it)) }, avisar = avisar)
+            }
+            composable<RutaDetalleVet> { com.udenar.petcare.ui.servicios.DetalleVeterinarioScreen(onVolver = { nav.popBackStack() }, avisar = avisar) }
             composable<RutaIntenciones> {
                 IntencionesScreen(onListo = { nav.popBackStack() }, onVolver = { nav.popBackStack() })
             }

@@ -20,18 +20,32 @@ class RaizViewModel @Inject constructor(
     private val cuenta: RepositorioCuenta,
     private val sync: ProgramadorSync,
     private val tiempoReal: com.udenar.petcare.data.sync.TiempoReal,
+    private val veterinarios: com.udenar.petcare.domain.profesionales.RepositorioVeterinarios,
+    private val modoRepo: com.udenar.petcare.domain.profesionales.RepositorioModo,
 ) : ViewModel() {
+
+    /** Modo activo (RF-30); se recuerda en el teléfono y funciona sin conexión. */
+    val modo: StateFlow<com.udenar.petcare.domain.modelo.ModoUso> = modoRepo.modo
 
     val sesion: StateFlow<EstadoSesion> = cuenta.estadoSesion
         .onEach {
             if (it == EstadoSesion.CON_SESION) {
                 viewModelScope.launch { cuenta.cargarUsuario() }
+                viewModelScope.launch {
+                    // Si el perfil ya no está activo (lo ocultó en otro teléfono), vuelve al modo personal
+                    runCatching { veterinarios.cargarMiPerfil() }.onSuccess { p ->
+                        if (p?.activo != true && modoRepo.modo.value == com.udenar.petcare.domain.modelo.ModoUso.VETERINARIO) {
+                            modoRepo.cambiar(com.udenar.petcare.domain.modelo.ModoUso.PERSONAL)
+                        }
+                    }
+                }
                 // Al abrir la app (o en un teléfono nuevo) se sube lo pendiente y se baja lo nuevo
                 sync.solicitar()
                 // Mientras la app esté abierta, los cambios de otros miembros llegan en vivo
                 tiempoReal.iniciar(viewModelScope)
             } else if (it == EstadoSesion.SIN_SESION) {
                 viewModelScope.launch { tiempoReal.detener() }
+                modoRepo.cambiar(com.udenar.petcare.domain.modelo.ModoUso.PERSONAL)
             }
         }
         .stateIn(viewModelScope, SharingStarted.Eagerly, EstadoSesion.CARGANDO)

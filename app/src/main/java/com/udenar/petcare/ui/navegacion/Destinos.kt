@@ -26,8 +26,20 @@ import kotlinx.serialization.Serializable
 @Serializable data class RutaFormVisita(val mascotaId: String, val id: String? = null)
 @Serializable data class RutaFormCuidado(val mascotaId: String, val clase: String, val id: String? = null)
 
+/** Pestaña de una barra inferior (modo personal o profesional). */
+interface Pestana {
+    val ruta: Any
+    val etiqueta: String
+    val icono: ImageVector
+    val etiquetaPrueba: String
+}
+
+@Serializable data object RutaFormVeterinario
+@Serializable data object RutaDirectorioVet
+@Serializable data class RutaDetalleVet(val id: String)
+
 /** Las 4 pestañas del modo personal (plan, sección 3). El calendario vive dentro de Hoy. */
-enum class PestanaPersonal(val ruta: Any, val etiqueta: String, val icono: ImageVector, val etiquetaPrueba: String) {
+enum class PestanaPersonal(override val ruta: Any, override val etiqueta: String, override val icono: ImageVector, override val etiquetaPrueba: String) : Pestana {
     HOY(RutaHoy, "Hoy", Icons.Rounded.WbSunny, "pestana_hoy"),
     MASCOTAS(RutaMascotas, "Mascotas", Icons.Rounded.Pets, "pestana_mascotas"),
     SERVICIOS(RutaServicios, "Servicios", Icons.Rounded.Storefront, "pestana_servicios"),

@@ -25,6 +25,7 @@ import com.udenar.petcare.ui.theme.Pc
 fun PetcareApp(viewModel: RaizViewModel = hiltViewModel()) {
     val sesion by viewModel.sesion.collectAsStateWithLifecycle()
     val usuario by viewModel.usuario.collectAsStateWithLifecycle()
+    val modo by viewModel.modo.collectAsStateWithLifecycle()
     // Recién registrado: primero la pregunta, luego las pestañas
     val preguntar = sesion == EstadoSesion.CON_SESION && usuario?.guiaRespondida == false
     Crossfade(if (preguntar) null else sesion, label = "sesion") { estado ->
@@ -39,7 +40,9 @@ fun PetcareApp(viewModel: RaizViewModel = hiltViewModel()) {
                 Image(painterResource(R.drawable.logo_petcare), contentDescription = "PetCare", modifier = Modifier.height(40.dp))
             }
             EstadoSesion.SIN_SESION -> NavegacionAcceso()
-            EstadoSesion.CON_SESION -> PetcareRaiz()
+            EstadoSesion.CON_SESION -> Crossfade(modo, label = "modo") { m ->
+                if (m == com.udenar.petcare.domain.modelo.ModoUso.VETERINARIO) com.udenar.petcare.ui.profesional.RaizProfesional() else PetcareRaiz()
+            }
         }
     }
 }

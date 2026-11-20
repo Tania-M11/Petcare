@@ -78,6 +78,7 @@ fun HoyScreen(
     onAbrirMascota: (String) -> Unit,
     onNuevoCuidado: (mascotaId: String, clase: String) -> Unit,
     onPasear: (mascotaId: String?) -> Unit,
+    onPerfilVeterinario: () -> Unit,
     avisar: (String) -> Unit,
     modifier: Modifier = Modifier,
     viewModel: HoyViewModel = hiltViewModel(),
@@ -156,7 +157,11 @@ fun HoyScreen(
                                 irAMascotas()
                                 paso.disponibleEn?.let { avisar("\"${paso.titulo}\" llega en $it") }
                             }
-                            else -> avisar("\"${paso.titulo}\" llega en ${paso.disponibleEn}")
+                            else -> when {
+                                paso.disponibleEn != null -> avisar("\"${paso.titulo}\" llega en ${paso.disponibleEn}")
+                                paso.id == Guia.CERTIFICADO && viewModel.tienePerfilVet -> viewModel.abrirModoVeterinario()
+                                else -> onPerfilVeterinario()
+                            }
                         }
                     },
                     onOmitir = { paso -> viewModel.omitir(paso.id, avisar) },

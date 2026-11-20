@@ -30,7 +30,7 @@ import com.udenar.petcare.ui.theme.Pc
 
 /** Barra inferior flotante y redondeada; la pestaña activa se abre en píldora con su nombre. */
 @Composable
-fun BarraInferior(actual: PestanaPersonal?, onElegir: (PestanaPersonal) -> Unit, modifier: Modifier = Modifier) {
+fun <T : Pestana> BarraInferior(pestanas: List<T>, actual: T?, onElegir: (T) -> Unit, modifier: Modifier = Modifier) {
     val forma = RoundedCornerShape(32.dp)
     Row(
         modifier
@@ -44,7 +44,7 @@ fun BarraInferior(actual: PestanaPersonal?, onElegir: (PestanaPersonal) -> Unit,
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        PestanaPersonal.entries.forEach { pestana ->
+        pestanas.forEach { pestana ->
             val activa = pestana == actual
             val fondo by animateColorAsState(if (activa) Pc.Durazno else Pc.Blanco, label = "fondo")
             val tinte by animateColorAsState(if (activa) Pc.Naranja else Pc.TintaSuave, label = "tinte")

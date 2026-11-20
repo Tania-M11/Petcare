@@ -155,8 +155,8 @@ Reglas: una parte por sesión · compila y se prueba en el teléfono antes de se
 | | 3.2 | Sincronización en vivo entre miembros (Realtime, `supabase/08_tiempo_real.sql`) y recordatorios por mascota en cada teléfono | ✅ |
 | | 3.3 | Carné con QR configurable y escáner; veterinario manual con Llamar (RF-04, `09_veterinario_manual.sql`); documentos imagen/PDF (`10_documentos.sql`) | ✅ |
 | | 3.4 | Paseos manuales y con GPS: servicio en primer plano, ruta en MapLibre/OpenFreeMap, polilínea (`supabase/11_paseos.sql`) | ✅ |
-| **4 Profesionales** | 4.1 | "Trabaja con PetCare", cambio de modo y esqueleto profesional | |
-| | 4.2 | Perfil veterinario + verificación; directorio y mapa | |
+| **4 Profesionales** | 4.1 | "Trabaja con PetCare", cambio de modo y esqueleto profesional | ✅ |
+| | 4.2 | Perfil veterinario + verificación; directorio y mapa (`supabase/12_veterinarios.sql`; el panel cambia `verificacion` a VERIFICADO/RECHAZADO) | ✅ |
 | | 4.3 | Solicitudes a veterinario, vínculo y registros clínicos | |
 | | 4.4 | Perfil de prestador (categorías, servicios, horario, galería); directorio y mapa | |
 | | 4.5 | Cotizaciones y datos compartidos con el prestador | |

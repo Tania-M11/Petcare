@@ -61,7 +61,13 @@ class HoyViewModel @Inject constructor(
     private val cuidados: RepositorioCuidados,
     private val compartir: RepositorioCompartir,
     tiempoReal: com.udenar.petcare.data.sync.TiempoReal,
+    private val veterinarios: com.udenar.petcare.domain.profesionales.RepositorioVeterinarios,
+    private val modo: com.udenar.petcare.domain.profesionales.RepositorioModo,
 ) : ViewModel() {
+
+    /** Paso "Sube tu certificado": la verificación vive en el modo veterinario. */
+    val tienePerfilVet: Boolean get() = veterinarios.miPerfil.value?.activo == true
+    fun abrirModoVeterinario() = modo.cambiar(com.udenar.petcare.domain.modelo.ModoUso.VETERINARIO)
 
     init {
         // Una solicitud nueva aparece sin tener que salir y volver a Hoy
@@ -155,7 +161,7 @@ class HoyViewModel @Inject constructor(
     private val notificacionesActivas = MutableStateFlow(false)
 
     /** Guía de Primeros pasos; null si no aplica (sin intenciones o ya cerrada). */
-    val guia: StateFlow<ProgresoGuia?> = combine(cuenta.usuario, notificacionesActivas, mascotas, cuidados.observarEventos(), envieSolicitud) { u, notif, lista, eventos, envie ->
+    val guia: StateFlow<ProgresoGuia?> = combine(cuenta.usuario, notificacionesActivas, mascotas, cuidados.observarEventos(), combine(envieSolicitud, veterinarios.miPerfil, ::Pair)) { u, notif, lista, eventos, (envie, vet) ->
         if (u == null || u.guiaRespondida != true || u.intenciones.isEmpty() || Guia.CERRADA in u.pasosOmitidos) {
             null
         } else {
@@ -167,6 +173,11 @@ class HoyViewModel @Inject constructor(
                 val cuido = lista.any { !it.esPropietario }
                 if (cuido || envie) add(Guia.CODIGO_CUIDAR)
                 if (cuido) add(Guia.APROBACION)
+                if (vet != null) {
+                    add(Guia.PERFIL_VET)
+                    add(Guia.CONSULTORIO)
+                    if (vet.verificacion != com.udenar.petcare.domain.profesionales.Verificacion.SIN_CERTIFICADO) add(Guia.CERTIFICADO)
+                }
             }
             Guia.progreso(u.intenciones, hechos, u.pasosOmitidos)
         }
