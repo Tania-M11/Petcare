@@ -6,6 +6,8 @@ import com.udenar.petcare.domain.cuenta.CuentaException
 import com.udenar.petcare.domain.cuenta.RepositorioCuenta
 import com.udenar.petcare.domain.guia.Guia
 import com.udenar.petcare.domain.guia.ProgresoGuia
+import com.udenar.petcare.domain.mascotas.RepositorioMascotas
+import com.udenar.petcare.domain.modelo.Mascota
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -30,7 +32,14 @@ data class HoyEstado(
 
 /** Estado de la pestaña Hoy: saludo, semana y Primeros pasos. */
 @HiltViewModel
-class HoyViewModel @Inject constructor(reloj: Clock, private val cuenta: RepositorioCuenta) : ViewModel() {
+class HoyViewModel @Inject constructor(
+    reloj: Clock,
+    private val cuenta: RepositorioCuenta,
+    mascotasRepo: RepositorioMascotas,
+) : ViewModel() {
+
+    val mascotas: StateFlow<List<Mascota>> = mascotasRepo.observar()
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
     private val hoy = LocalDate.now(reloj)
     private val lunes = hoy.with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY))
@@ -48,12 +57,15 @@ class HoyViewModel @Inject constructor(reloj: Clock, private val cuenta: Reposit
     private val notificacionesActivas = MutableStateFlow(false)
 
     /** Guía de Primeros pasos; null si no aplica (sin intenciones o ya cerrada). */
-    val guia: StateFlow<ProgresoGuia?> = combine(cuenta.usuario, notificacionesActivas) { u, notif ->
+    val guia: StateFlow<ProgresoGuia?> = combine(cuenta.usuario, notificacionesActivas, mascotas) { u, notif, lista ->
         if (u == null || u.guiaRespondida != true || u.intenciones.isEmpty() || Guia.CERRADA in u.pasosOmitidos) {
             null
         } else {
-            // Por ahora solo las notificaciones se detectan solas; los demás pasos se marcarán al existir su función
-            val hechos = buildSet { if (notif) add(Guia.NOTIFICACIONES) }
+            // Se marcan solos los pasos cuya función ya existe
+            val hechos = buildSet {
+                if (notif) add(Guia.NOTIFICACIONES)
+                if (lista.isNotEmpty()) add(Guia.CREAR_MASCOTA)
+            }
             Guia.progreso(u.intenciones, hechos, u.pasosOmitidos)
         }
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)

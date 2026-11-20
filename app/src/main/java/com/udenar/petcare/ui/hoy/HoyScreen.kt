@@ -8,6 +8,8 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -23,6 +25,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import com.udenar.petcare.ui.componentes.AvatarMascota
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.core.content.ContextCompat
@@ -48,6 +52,7 @@ private val FORMATO_DIA = DateTimeFormatter.ofPattern("EEEE d 'de' MMMM", Locale
 @Composable
 fun HoyScreen(
     irAMascotas: () -> Unit,
+    onAbrirMascota: (String) -> Unit,
     avisar: (String) -> Unit,
     modifier: Modifier = Modifier,
     viewModel: HoyViewModel = hiltViewModel(),
@@ -55,6 +60,7 @@ fun HoyScreen(
     val estado by viewModel.estado.collectAsStateWithLifecycle()
     val nombre by viewModel.nombre.collectAsStateWithLifecycle()
     val guia by viewModel.guia.collectAsStateWithLifecycle()
+    val mascotas by viewModel.mascotas.collectAsStateWithLifecycle()
 
     // Permiso de notificaciones (Android 13+): se revisa al volver a la app
     val contexto = LocalContext.current
@@ -105,6 +111,24 @@ fun HoyScreen(
             onElegir = viewModel::elegirDia,
         )
 
+        if (mascotas.isNotEmpty()) {
+            // Fila de mascotas (en la parte 2.7 también filtra los pendientes del día)
+            Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(14.dp)) {
+                mascotas.forEach { m ->
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        modifier = Modifier
+                            .clip(MaterialTheme.shapes.medium)
+                            .clickable { onAbrirMascota(m.id) }
+                            .padding(4.dp),
+                    ) {
+                        AvatarMascota(m.especie, m.fotoLocal, tam = 60.dp)
+                        Text(m.nombre, style = MaterialTheme.typography.labelMedium, modifier = Modifier.padding(top = 4.dp))
+                    }
+                }
+            }
+        }
+
         val progreso = guia
         when {
             progreso != null && progreso.completa -> TarjetaIlustrada(
@@ -129,7 +153,7 @@ fun HoyScreen(
                 },
                 onOmitir = { paso -> viewModel.omitir(paso.id, avisar) },
             )
-            else -> TarjetaIlustrada(
+            mascotas.isEmpty() -> TarjetaIlustrada(
                 titulo = "Agrega a tu primera mascota",
                 texto = "Chopper te ayuda a no olvidar ningún cuidado.",
                 chip = "Empieza aquí",

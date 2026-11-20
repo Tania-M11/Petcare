@@ -19,6 +19,8 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.udenar.petcare.ui.guia.IntencionesScreen
 import com.udenar.petcare.ui.hoy.HoyScreen
+import com.udenar.petcare.ui.mascotas.DetalleMascotaScreen
+import com.udenar.petcare.ui.mascotas.FormMascotaScreen
 import com.udenar.petcare.ui.mascotas.MascotasScreen
 import com.udenar.petcare.ui.perfil.PerfilScreen
 import com.udenar.petcare.ui.servicios.ServiciosScreen
@@ -54,8 +56,37 @@ fun PetcareRaiz() {
                 .padding(relleno)
                 .consumeWindowInsets(relleno),
         ) {
-            composable<RutaHoy> { HoyScreen(irAMascotas = { nav.irAPestana(PestanaPersonal.MASCOTAS) }, avisar = avisar) }
-            composable<RutaMascotas> { MascotasScreen(avisar = avisar) }
+            composable<RutaHoy> {
+                HoyScreen(
+                    irAMascotas = { nav.irAPestana(PestanaPersonal.MASCOTAS) },
+                    onAbrirMascota = { nav.navigate(RutaDetalleMascota(it)) },
+                    avisar = avisar,
+                )
+            }
+            composable<RutaMascotas> {
+                MascotasScreen(
+                    avisar = avisar,
+                    onAgregar = { nav.navigate(RutaFormMascota()) },
+                    onAbrir = { nav.navigate(RutaDetalleMascota(it)) },
+                )
+            }
+            composable<RutaFormMascota> {
+                FormMascotaScreen(
+                    onVolver = { nav.popBackStack() },
+                    onGuardada = { id ->
+                        nav.popBackStack()
+                        // Si era nueva (se abrió desde la lista), se muestra su ficha
+                        if (nav.currentDestination?.hasRoute(RutaDetalleMascota::class) != true) nav.navigate(RutaDetalleMascota(id))
+                    },
+                )
+            }
+            composable<RutaDetalleMascota> {
+                DetalleMascotaScreen(
+                    onVolver = { nav.popBackStack() },
+                    onEditar = { nav.navigate(RutaFormMascota(it)) },
+                    avisar = avisar,
+                )
+            }
             composable<RutaServicios> { ServiciosScreen(avisar = avisar) }
             composable<RutaPerfil> { PerfilScreen(avisar = avisar, irAIntenciones = { nav.navigate(RutaIntenciones) }) }
             composable<RutaIntenciones> {

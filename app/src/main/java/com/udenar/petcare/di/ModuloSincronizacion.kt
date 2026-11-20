@@ -1,5 +1,7 @@
 package com.udenar.petcare.di
 
+import com.udenar.petcare.data.fotos.AlmacenFotos
+import com.udenar.petcare.data.fotos.FotosSupabase
 import com.udenar.petcare.data.mascotas.RepositorioMascotasLocal
 import com.udenar.petcare.data.mascotas.TablaMascotas
 import com.udenar.petcare.data.sync.AlmacenCursores
@@ -30,6 +32,9 @@ abstract class ModuloSincronizacion {
 
     @Binds
     abstract fun remota(r: RemotaSupabase): FuenteRemota
+
+    @Binds
+    abstract fun fotos(f: FotosSupabase): AlmacenFotos
 
     @Binds
     abstract fun cursores(c: CursoresRoom): AlmacenCursores

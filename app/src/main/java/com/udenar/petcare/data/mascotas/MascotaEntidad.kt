@@ -1,5 +1,6 @@
 package com.udenar.petcare.data.mascotas
 
+import androidx.room.ColumnInfo
 import androidx.room.Dao
 import androidx.room.Entity
 import androidx.room.PrimaryKey
@@ -37,6 +38,10 @@ data class MascotaEntidad(
     val pendiente: Boolean,
     /** Momento de la última edición local; evita confirmar una versión ya reemplazada. */
     val cambioLocal: Long,
+    /** Copia de la foto en el teléfono (la elegida aquí o la descargada). */
+    val fotoLocal: String? = null,
+    /** La foto elegida aún no se sube a Storage. */
+    @ColumnInfo(defaultValue = "0") val fotoPendiente: Boolean = false,
 )
 
 @Dao
@@ -52,6 +57,15 @@ interface MascotaDao {
 
     @Query("SELECT * FROM mascotas WHERE pendiente = 1")
     suspend fun pendientes(): List<MascotaEntidad>
+
+    @Query("SELECT * FROM mascotas WHERE fotoPendiente = 1 AND eliminado = 0")
+    suspend fun fotosPendientes(): List<MascotaEntidad>
+
+    @Query("UPDATE mascotas SET fotoUrl = :fotoUrl, fotoPendiente = 0 WHERE id = :id AND fotoLocal = :fotoLocal")
+    suspend fun fotoSubida(id: String, fotoLocal: String, fotoUrl: String)
+
+    @Query("UPDATE mascotas SET fotoLocal = :fotoLocal WHERE id = :id AND fotoUrl = :fotoUrl")
+    suspend fun fotoDescargada(id: String, fotoUrl: String, fotoLocal: String)
 
     @Query("SELECT COUNT(*) FROM mascotas WHERE pendiente = 1")
     fun contarPendientes(): Flow<Int>
@@ -72,7 +86,13 @@ interface MascotaDao {
         for (r in filas) {
             val local = porId(r.id)
             if (local?.pendiente == true) continue
-            if (r.eliminado) borrar(r.id) else guardar(r)
+            if (r.eliminado) {
+                borrar(r.id)
+            } else {
+                // La copia local de la foto sirve mientras sea la misma foto del servidor
+                val mismaFoto = local != null && local.fotoUrl == r.fotoUrl
+                guardar(r.copy(fotoLocal = if (mismaFoto) local!!.fotoLocal else null))
+            }
         }
     }
 }

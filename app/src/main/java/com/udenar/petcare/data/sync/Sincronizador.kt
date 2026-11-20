@@ -15,6 +15,10 @@ data class Pendiente(val id: String, val cambioLocal: Long, val fila: JsonObject
 /** Una tabla que se guarda en el teléfono y se sincroniza (implementada por cada entidad). */
 interface TablaSincronizable {
     val tabla: String
+
+    /** Trabajo previo a subir filas (p. ej. subir fotos para tener su ruta). */
+    suspend fun antesDeSubir() {}
+
     suspend fun pendientes(): List<Pendiente>
 
     /** Marca como subido solo si no se volvió a editar mientras se subía. */
@@ -63,6 +67,7 @@ class Sincronizador(
 
     private suspend fun subir(t: TablaSincronizable): Int {
         var total = 0
+        t.antesDeSubir()
         t.pendientes().chunked(LOTE_SUBIDA).forEach { lote ->
             val porId = lote.associateBy { it.id }
             remota.subir(t.tabla, lote.map { it.fila }).forEach { fila ->

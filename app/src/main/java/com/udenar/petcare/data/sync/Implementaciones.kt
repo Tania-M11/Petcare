@@ -10,6 +10,7 @@ import androidx.work.NetworkType
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkManager
 import androidx.work.WorkerParameters
+import com.udenar.petcare.data.fotos.ArchivosFotos
 import com.udenar.petcare.data.local.CursorDao
 import com.udenar.petcare.data.local.CursorEntidad
 import com.udenar.petcare.data.local.PetcareDb
@@ -114,9 +115,13 @@ class ProgramadorWorkManager @Inject constructor(
 class AlmacenLocalRoom @Inject constructor(
     @ApplicationContext private val contexto: Context,
     private val db: PetcareDb,
+    private val fotos: ArchivosFotos,
 ) : AlmacenLocal {
     override suspend fun borrarTodo() {
         WorkManager.getInstance(contexto).cancelUniqueWork(ProgramadorWorkManager.NOMBRE)
-        withContext(Dispatchers.IO) { db.clearAllTables() }
+        withContext(Dispatchers.IO) {
+            db.clearAllTables()
+            fotos.borrarTodo()
+        }
     }
 }

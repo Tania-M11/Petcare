@@ -1,5 +1,6 @@
 package com.udenar.petcare.data.mascotas
 
+import com.udenar.petcare.data.fotos.AlmacenFotos
 import com.udenar.petcare.data.sync.Pendiente
 import com.udenar.petcare.data.sync.TablaSincronizable
 import kotlinx.serialization.SerialName
@@ -9,6 +10,7 @@ import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.decodeFromJsonElement
 import kotlinx.serialization.json.put
+import java.io.File
 import javax.inject.Inject
 
 /** Fila tal como la devuelve Supabase (supabase/03_mascotas_sync.sql). */
@@ -66,9 +68,25 @@ fun MascotaEntidad.comoFilaRemota(): JsonObject = buildJsonObject {
     put("eliminado", eliminado)
 }
 
-class TablaMascotas @Inject constructor(private val dao: MascotaDao) : TablaSincronizable {
+class TablaMascotas @Inject constructor(
+    private val dao: MascotaDao,
+    private val fotos: AlmacenFotos,
+) : TablaSincronizable {
     override val tabla = "mascotas"
     private val json = Json { ignoreUnknownKeys = true }
+
+    /** Sube las fotos nuevas; la fila (ya pendiente) sale después con la ruta en foto_url. */
+    override suspend fun antesDeSubir() {
+        for (m in dao.fotosPendientes()) {
+            val local = m.fotoLocal ?: continue
+            val archivo = File(local)
+            if (!archivo.exists()) continue
+            val ruta = fotos.subir(m.id, archivo)
+            dao.fotoSubida(m.id, local, ruta)
+            // La foto anterior ya no se usa
+            m.fotoUrl?.let { anterior -> runCatching { fotos.borrar(anterior) } }
+        }
+    }
 
     override suspend fun pendientes() = dao.pendientes().map { Pendiente(it.id, it.cambioLocal, it.comoFilaRemota()) }
 

@@ -1,6 +1,15 @@
 package com.udenar.petcare.ui.componentes
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.selection.selectable
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.semantics.Role
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
@@ -50,6 +59,7 @@ fun CampoTexto(
     onAccion: () -> Unit = {},
     esClave: Boolean = false,
     habilitado: Boolean = true,
+    lineas: Int = 1,
 ) {
     var verClave by rememberSaveable { mutableStateOf(false) }
     OutlinedTextField(
@@ -70,7 +80,8 @@ fun CampoTexto(
         } else null,
         isError = error != null,
         supportingText = error?.let { { Text(it) } },
-        singleLine = true,
+        singleLine = lineas == 1,
+        minLines = lineas,
         enabled = habilitado,
         visualTransformation = if (esClave && !verClave) PasswordVisualTransformation() else VisualTransformation.None,
         keyboardOptions = KeyboardOptions(keyboardType = teclado, imeAction = accion),
@@ -137,5 +148,42 @@ fun BotonSecundario(texto: String, onClick: () -> Unit, modifier: Modifier = Mod
             .height(56.dp),
     ) {
         Text(texto, style = MaterialTheme.typography.titleMedium)
+    }
+}
+
+/** Opción en píldora que se puede seleccionar (especie, sexo, tamaño…). */
+@Composable
+fun ChipOpcion(
+    texto: String,
+    seleccionado: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Text(
+        texto,
+        style = MaterialTheme.typography.labelLarge,
+        color = if (seleccionado) Pc.Tinta else Pc.TintaSuave,
+        modifier = modifier
+            .clip(RoundedCornerShape(50))
+            .background(if (seleccionado) Pc.Durazno else Pc.Blanco)
+            .border(1.5.dp, if (seleccionado) Pc.Naranja else Pc.Linea, RoundedCornerShape(50))
+            .selectable(selected = seleccionado, role = Role.RadioButton, onClick = onClick)
+            .padding(horizontal = 14.dp, vertical = 9.dp),
+    )
+}
+
+/** Bloque blanco redondeado con título, para agrupar campos de un formulario o una ficha. */
+@Composable
+fun Seccion(titulo: String, modifier: Modifier = Modifier, contenido: @Composable ColumnScope.() -> Unit) {
+    Column(
+        modifier
+            .fillMaxWidth()
+            .clip(MaterialTheme.shapes.large)
+            .background(Pc.Blanco)
+            .padding(16.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        Text(titulo, style = MaterialTheme.typography.titleMedium)
+        contenido()
     }
 }

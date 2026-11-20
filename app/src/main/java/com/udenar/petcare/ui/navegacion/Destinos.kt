@@ -14,6 +14,8 @@ import kotlinx.serialization.Serializable
 @Serializable data object RutaServicios
 @Serializable data object RutaPerfil
 @Serializable data object RutaIntenciones
+@Serializable data class RutaFormMascota(val id: String? = null)
+@Serializable data class RutaDetalleMascota(val id: String)
 
 /** Las 4 pestañas del modo personal (plan, sección 3). El calendario vive dentro de Hoy. */
 enum class PestanaPersonal(val ruta: Any, val etiqueta: String, val icono: ImageVector, val etiquetaPrueba: String) {

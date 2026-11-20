@@ -27,6 +27,8 @@ data class Mascota(
     val medicamentosActuales: String? = null,
     val observaciones: String? = null,
     val fotoUrl: String? = null,
+    /** Archivo de la foto en el teléfono (para mostrarla sin internet). */
+    val fotoLocal: String? = null,
     val propietarioId: String? = null,
     /** true mientras el cambio no ha llegado al servidor. */
     val porSubir: Boolean = false,

@@ -1,5 +1,6 @@
 package com.udenar.petcare.data.local
 
+import androidx.room.AutoMigration
 import androidx.room.Dao
 import androidx.room.Database
 import androidx.room.Entity
@@ -37,8 +38,9 @@ interface CursorDao {
  */
 @Database(
     entities = [MascotaEntidad::class, CursorEntidad::class],
-    version = 1,
+    version = 2,
     exportSchema = true,
+    autoMigrations = [AutoMigration(from = 1, to = 2)], // 2.2: foto local de la mascota
 )
 abstract class PetcareDb : RoomDatabase() {
     abstract fun mascotas(): MascotaDao

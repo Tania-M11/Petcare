@@ -1,5 +1,8 @@
 package com.udenar.petcare
 
+import android.graphics.Bitmap
+import android.graphics.Color
+import androidx.test.platform.app.InstrumentationRegistry
 import com.udenar.petcare.data.local.PetcareDb
 import com.udenar.petcare.data.sync.Sincronizador
 import com.udenar.petcare.domain.mascotas.RepositorioMascotas
@@ -12,6 +15,7 @@ import io.github.jan.supabase.auth.auth
 import io.github.jan.supabase.auth.providers.builtin.Email
 import io.github.jan.supabase.postgrest.from
 import io.github.jan.supabase.postgrest.postgrest
+import io.github.jan.supabase.storage.storage
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.JsonObject
@@ -27,6 +31,7 @@ import io.github.jan.supabase.postgrest.exception.PostgrestRestException
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
+import java.io.File
 import java.util.UUID
 import javax.inject.Inject
 
@@ -60,6 +65,13 @@ class SincronizacionRealTest {
             e.code != "PGRST202" // sin sesión responde "sin permiso" (existe) en vez de "no existe"
         }
         assumeTrue("Falta aplicar supabase/03_mascotas_sync.sql", sqlAplicado)
+        val codigosAplicado = try {
+            supabase.from("codigos_mascota").select { limit(0) }
+            true
+        } catch (e: PostgrestRestException) {
+            e.code != "PGRST205" // tabla inexistente
+        }
+        assumeTrue("Falta aplicar supabase/04_fotos_y_codigos.sql", codigosAplicado)
         supabase.auth.signUpWith(Email) {
             email = correo
             password = clave
@@ -74,6 +86,14 @@ class SincronizacionRealTest {
     @After
     fun eliminarCuentaTemporal() = runBlocking {
         if (supabase.auth.currentSessionOrNull() == null) return@runBlocking
+        // Storage no permite borrar archivos desde SQL: se borra toda la carpeta de la cuenta por la API
+        // (aunque la prueba haya fallado a mitad de camino)
+        runCatching {
+            val bucket = supabase.storage.from("mascotas")
+            val raiz = supabase.auth.currentUserOrNull()!!.id
+            val archivos = bucket.list(raiz).flatMap { carpeta -> bucket.list("$raiz/${carpeta.name}").map { "$raiz/${carpeta.name}/${it.name}" } }
+            if (archivos.isNotEmpty()) bucket.delete(archivos)
+        }
         supabase.postgrest.rpc("eliminar_mi_cuenta")
         supabase.auth.clearSession()
         try {
@@ -88,6 +108,38 @@ class SincronizacionRealTest {
     }
 
     private suspend fun remotas(): List<JsonObject> = supabase.from("mascotas").select().decodeList()
+
+    /** Una foto JPEG pequeña creada en el momento. */
+    private fun fotoDePrueba(): String {
+        val bmp = Bitmap.createBitmap(64, 64, Bitmap.Config.ARGB_8888).apply { eraseColor(Color.rgb(240, 138, 75)) }
+        val archivo = File(InstrumentationRegistry.getInstrumentation().targetContext.cacheDir, "prueba_${UUID.randomUUID()}.jpg")
+        archivo.outputStream().use { bmp.compress(Bitmap.CompressFormat.JPEG, 80, it) }
+        return archivo.absolutePath
+    }
+
+    @Test
+    fun fotoYCodigoLlegaAlServidorYAOtroTelefono() = runBlocking {
+        val id = UUID.randomUUID().toString()
+        mascotas.guardar(Mascota(id = id, nombre = "Max", especie = Especie.PERRO), fotoNueva = fotoDePrueba())
+        sincronizador.sincronizar()
+
+        // La foto quedó en Storage, en la carpeta del usuario, y la fila tiene su ruta
+        val ruta = remotas().single()["foto_url"]!!.jsonPrimitive.content
+        assertTrue(ruta.startsWith(supabase.auth.currentUserOrNull()!!.id + "/$id/"))
+        assertTrue(supabase.storage.from("mascotas").downloadAuthenticated(ruta).isNotEmpty())
+
+        // El servidor generó el código: 8 caracteres sin ambiguos
+        val codigo = mascotas.codigo(id)!!
+        assertTrue(codigo.codigo, Regex("^[A-HJKMNP-Z2-9]{8}$").matches(codigo.codigo))
+        assertTrue(codigo.activo)
+
+        // Teléfono nuevo: baja la fila sin foto local y la descarga al pedirla
+        db.clearAllTables()
+        sincronizador.sincronizar()
+        assertEquals(null, mascotas.obtener(id)!!.fotoLocal)
+        mascotas.asegurarFoto(id)
+        assertTrue(File(mascotas.obtener(id)!!.fotoLocal!!).length() > 0)
+    }
 
     @Test
     fun idaYVueltaConElServidor() = runBlocking {

@@ -42,9 +42,10 @@ data class ProgresoGuia(
 object Guia {
     const val CERRADA = "GUIA_CERRADA"
     const val NOTIFICACIONES = "notificaciones"
+    const val CREAR_MASCOTA = "crear_mascota"
 
     private val PASOS = listOf(
-        PasoGuia("crear_mascota", Intencion.MASCOTAS, "Agrega a tu primera mascota", "Su ficha, foto y especie", DestinoPaso.MASCOTAS, "la parte 2.2"),
+        PasoGuia(CREAR_MASCOTA, Intencion.MASCOTAS, "Agrega a tu primera mascota", "Su ficha, foto y especie", DestinoPaso.MASCOTAS, null),
         PasoGuia("primer_recordatorio", Intencion.MASCOTAS, "Crea su primer recordatorio", "Comida, medicina o baño", DestinoPaso.MASCOTAS, "la parte 2.5"),
         PasoGuia(NOTIFICACIONES, Intencion.MASCOTAS, "Activa las notificaciones", "Para que los recordatorios suenen", DestinoPaso.NOTIFICACIONES, null),
         PasoGuia("codigo_cuidar", Intencion.CUIDAR, "Escribe el código de la mascota", "Pídeselo a su dueño", DestinoPaso.MASCOTAS, "la parte 3.1"),

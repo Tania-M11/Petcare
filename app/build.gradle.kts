@@ -88,6 +88,10 @@ dependencies {
     implementation(platform(libs.supabase.bom))
     implementation(libs.supabase.auth)
     implementation(libs.supabase.postgrest)
+    implementation(libs.supabase.storage)
+
+    // Imágenes (fotos de mascotas desde archivos locales)
+    implementation(libs.coil.compose)
     implementation(libs.ktor.client.okhttp)
 
     // Inyección de dependencias (Hilt)

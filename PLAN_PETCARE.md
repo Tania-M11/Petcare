@@ -143,7 +143,7 @@ Reglas: una parte por sesión · compila y se prueba en el teléfono antes de se
 | **1 Cuenta** | 1.1 | Bienvenida, registro (con política de privacidad), inicio y cierre de sesión | ✅ |
 | | 1.2 | **"¿Qué te trae a PetCare?"** + lista Primeros pasos (`supabase/02_guia.sql`) | ✅ |
 | **2 Mascotas y agenda** | 2.1 | Room + sincronización con Supabase; tabla `mascotas` y `eliminar_mi_cuenta()` (`supabase/03_mascotas_sync.sql`) | ✅ |
-| | 2.2 | Agregar/editar mascota (foto, especie, código) y lista de mascotas | |
+| | 2.2 | Agregar/editar mascota (foto, especie, código) y lista de mascotas; fotos en Storage y códigos (`supabase/04_fotos_y_codigos.sql`) | ✅ |
 | | 2.3 | Motor de cuidados (frecuencias, próxima fecha) con pruebas | |
 | | 2.4 | Alarmas y notificaciones con acciones Hecho/Posponer/Omitir | |
 | | 2.5 | Comidas, higiene y actividades personalizadas | |
