@@ -101,6 +101,8 @@ class ProgramadorWorkManager @Inject constructor(
     mascotas: MascotaDao,
     eventos: EventoDao,
     registros: RegistroDao,
+    pesos: com.udenar.petcare.data.salud.PesoDao,
+    visitas: com.udenar.petcare.data.salud.VisitaDao,
     cursores: CursorDao,
 ) : ProgramadorSync {
 
@@ -114,12 +116,10 @@ class ProgramadorWorkManager @Inject constructor(
     }
 
     override val estado: Flow<EstadoSync> = combine(
-        mascotas.contarPendientes(),
-        eventos.contarPendientes(),
-        registros.contarPendientes(),
+        combine(mascotas.contarPendientes(), eventos.contarPendientes(), registros.contarPendientes(), pesos.contarPendientes(), visitas.contarPendientes()) { a -> a.sum() },
         cursores.ultimaSincronizacion(),
-    ) { m, e, r, ultima ->
-        EstadoSync(porSubir = m + e + r, ultima = ultima?.let { Instant.ofEpochMilli(it) })
+    ) { pendientes, ultima ->
+        EstadoSync(porSubir = pendientes, ultima = ultima?.let { Instant.ofEpochMilli(it) })
     }
 
     companion object {

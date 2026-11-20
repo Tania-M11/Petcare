@@ -36,7 +36,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -67,19 +69,25 @@ import java.util.Locale
 
 private val FECHA = DateTimeFormatter.ofPattern("d MMM yyyy", Locale.forLanguageTag("es-CO"))
 
-/** Ficha de la mascota (vista del propietario). Las secciones de salud y cuidados llegan en la fase 2. */
+/** Ficha de la mascota (vista del propietario): Resumen · Cuidados · Salud · Historial. */
 @OptIn(ExperimentalLayoutApi::class, ExperimentalMaterial3Api::class)
 @Composable
 fun DetalleMascotaScreen(
     onVolver: () -> Unit,
     onEditar: (String) -> Unit,
     onCuidado: (clase: String, id: String?) -> Unit,
+    onVisita: (id: String?) -> Unit,
     avisar: (String) -> Unit,
     viewModel: DetalleMascotaViewModel = hiltViewModel(),
 ) {
     val m by viewModel.mascota.collectAsStateWithLifecycle()
     val codigo by viewModel.codigo.collectAsStateWithLifecycle()
     val cuidados by viewModel.cuidados.collectAsStateWithLifecycle()
+    val pesos by viewModel.pesos.collectAsStateWithLifecycle()
+    val visitas by viewModel.visitas.collectAsStateWithLifecycle()
+    val estadoCuidado by viewModel.estadoCuidado.collectAsStateWithLifecycle()
+    val historial by viewModel.historial.collectAsStateWithLifecycle()
+    var seccion by rememberSaveable { mutableIntStateOf(0) }
     var elegirClase by remember { mutableStateOf(false) }
     var confirmarEliminar by remember { mutableStateOf(false) }
     val contexto = LocalContext.current
@@ -140,43 +148,24 @@ fun DetalleMascotaScreen(
                 .navigationBarsPadding(),
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
-            SeccionCuidados(
-                cuidados,
-                onAgregar = { elegirClase = true },
-                onAbrir = { e -> onCuidado(ClaseCuidado.de(e.tipo).name, e.id) },
-            )
+            ChipsSeccion(seccion, onElegir = { seccion = it })
 
-            TarjetaCodigo(mascota, codigo, contexto, avisar, onReintentar = viewModel::cargarCodigo)
-
-            Seccion("Ficha") {
-                Dato("Especie", mascota.especieOtro ?: mascota.especie.etiqueta)
-                mascota.raza?.let { Dato("Raza", it) }
-                mascota.fechaNacimiento?.let {
-                    Dato("Nacimiento", it.format(FECHA) + if (mascota.nacimientoAproximado) " (aprox.)" else "")
+            when (seccion) {
+                1 -> SeccionCuidados(
+                    cuidados,
+                    onAgregar = { elegirClase = true },
+                    onAbrir = { e -> onCuidado(ClaseCuidado.de(e.tipo).name, e.id) },
+                )
+                2 -> {
+                    SaludBasica(mascota)
+                    TarjetaPeso(pesos, viewModel.hoy, onRegistrar = viewModel::registrarPeso, onEliminar = { viewModel.eliminarPeso(it) })
+                    TarjetaVisitas(visitas, onNueva = { onVisita(null) }, onAbrir = { onVisita(it.id) })
                 }
-                mascota.pesoGramos?.let { Dato("Peso", FichaMascota.peso(it)) }
-                mascota.color?.let { Dato("Color", it) }
-                mascota.notas?.let { Dato("Notas", it) }
-            }
-
-            val salud = listOfNotNull(
-                mascota.alergias?.let { "Alergias" to it },
-                mascota.condiciones?.let { "Condiciones" to it },
-                mascota.medicamentosActuales?.let { "Medicamentos actuales" to it },
-                mascota.observaciones?.let { "Observaciones" to it },
-            )
-            Seccion("Salud básica") {
-                if (salud.isEmpty()) {
-                    Text("Sin datos. Puedes agregarlos al editar la ficha.", style = MaterialTheme.typography.bodyMedium, color = Pc.TintaSuave)
-                } else {
-                    salud.forEach { (t, v) -> Dato(t, v) }
+                3 -> TarjetaHistorial(historial)
+                else -> {
+                    TarjetaEstadoCuidado(estadoCuidado)
+                    FichaYCodigo(mascota, codigo, contexto, avisar, viewModel, onEditar, onEliminar = { confirmarEliminar = true })
                 }
-                Text("Esto no constituye un diagnóstico médico.", style = MaterialTheme.typography.bodySmall, color = Pc.TintaSuave)
-            }
-
-            BotonPrincipal("Editar ficha", onClick = { onEditar(mascota.id) })
-            TextButton(onClick = { confirmarEliminar = true }, modifier = Modifier.align(Alignment.CenterHorizontally)) {
-                Text("Eliminar mascota", color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.labelLarge)
             }
         }
     }
@@ -295,5 +284,50 @@ private fun TarjetaCodigo(
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun FichaYCodigo(
+    mascota: com.udenar.petcare.domain.modelo.Mascota,
+    codigo: EstadoCodigo,
+    contexto: android.content.Context,
+    avisar: (String) -> Unit,
+    viewModel: DetalleMascotaViewModel,
+    onEditar: (String) -> Unit,
+    onEliminar: () -> Unit,
+) {
+    Seccion("Ficha") {
+        Dato("Especie", mascota.especieOtro ?: mascota.especie.etiqueta)
+        mascota.raza?.let { Dato("Raza", it) }
+        mascota.fechaNacimiento?.let {
+            Dato("Nacimiento", it.format(FECHA) + if (mascota.nacimientoAproximado) " (aprox.)" else "")
+        }
+        mascota.pesoGramos?.let { Dato("Peso", FichaMascota.peso(it)) }
+        mascota.color?.let { Dato("Color", it) }
+        mascota.notas?.let { Dato("Notas", it) }
+    }
+    TarjetaCodigo(mascota, codigo, contexto, avisar, onReintentar = viewModel::cargarCodigo)
+    BotonPrincipal("Editar ficha", onClick = { onEditar(mascota.id) })
+    TextButton(onClick = onEliminar, modifier = Modifier.fillMaxWidth()) {
+        Text("Eliminar mascota", color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.labelLarge)
+    }
+}
+
+@Composable
+private fun SaludBasica(mascota: com.udenar.petcare.domain.modelo.Mascota) {
+    val salud = listOfNotNull(
+        mascota.alergias?.let { "Alergias" to it },
+        mascota.condiciones?.let { "Condiciones" to it },
+        mascota.medicamentosActuales?.let { "Medicamentos actuales" to it },
+        mascota.observaciones?.let { "Observaciones" to it },
+    )
+    Seccion("Salud básica") {
+        if (salud.isEmpty()) {
+            Text("Sin datos. Puedes agregarlos al editar la ficha.", style = MaterialTheme.typography.bodyMedium, color = Pc.TintaSuave)
+        } else {
+            salud.forEach { (t, v) -> Dato(t, v) }
+        }
+        Text("Esto no constituye un diagnóstico médico.", style = MaterialTheme.typography.bodySmall, color = Pc.TintaSuave)
     }
 }

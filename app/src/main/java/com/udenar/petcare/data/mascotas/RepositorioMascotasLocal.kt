@@ -37,6 +37,8 @@ class RepositorioMascotasLocal @Inject constructor(
     private val archivos: ArchivosFotos,
     private val supabase: SupabaseClient,
     private val recordatorios: ProgramadorRecordatorios,
+    private val pesos: com.udenar.petcare.data.salud.PesoDao,
+    private val cuenta: com.udenar.petcare.domain.cuenta.RepositorioCuenta,
 ) : RepositorioMascotas {
 
     override fun observar(): Flow<List<Mascota>> = dao.observarActivas().map { lista -> lista.map { it.comoDominio() } }
@@ -51,6 +53,17 @@ class RepositorioMascotasLocal @Inject constructor(
             entidad = entidad.copy(fotoLocal = fotoNueva, fotoPendiente = true)
         }
         dao.guardar(entidad)
+        // RF-02: cambiar el peso en la ficha crea un registro de peso con la fecha de hoy
+        val nuevoPeso = mascota.pesoGramos
+        if (nuevoPeso != null && nuevoPeso != anterior?.pesoGramos) {
+            val yo = cuenta.usuario.value
+            pesos.guardar(
+                com.udenar.petcare.data.salud.PesoEntidad(
+                    java.util.UUID.randomUUID().toString(), mascota.id, java.time.LocalDate.now(reloj).toString(), nuevoPeso, null,
+                    yo?.id, yo?.nombre, null, java.time.Instant.now(reloj).toString(), false, null, true, reloj.millis(),
+                ),
+            )
+        }
         sync.solicitar()
     }
 

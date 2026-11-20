@@ -149,7 +149,7 @@ Reglas: una parte por sesión · compila y se prueba en el teléfono antes de se
 | | 2.5 | Comidas, higiene y actividades personalizadas | ✅ |
 | | 2.6 | Medicamentos, vacunas y desparasitación (mismo formulario por clase de cuidado) | ✅ |
 | | 2.7 | **Hoy** completo: tira semanal, pendientes con un toque, filtro por mascota, alertas, calendario mensual, + Nuevo cuidado | ✅ |
-| | 2.8 | Detalle de mascota: Salud, Historial, peso con gráfica, estado de cuidado, visitas | |
+| | 2.8 | Ficha con pestañas Resumen · Cuidados · Salud · Historial: estado de cuidado, peso con gráfica, visitas con próxima cita (`supabase/06_pesos_y_visitas.sql`) | ✅ |
 | **3 Compartir** | 3.1 | Cuidar con código, aprobación, sección Personas, permisos (RLS + pruebas) | |
 | | 3.2 | Sincronización en vivo entre miembros | |
 | | 3.3 | Documentos, carné con QR y escáner | |

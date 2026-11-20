@@ -59,6 +59,7 @@ class SincronizacionRealTest {
     @Inject lateinit var sincronizador: Sincronizador
     @Inject lateinit var db: PetcareDb
     @Inject lateinit var cuidados: RepositorioCuidados
+    @Inject lateinit var salud: com.udenar.petcare.domain.salud.RepositorioSalud
 
     private val correo = "sync.${System.currentTimeMillis()}@petcare.test"
     private val clave = "Prueba-${UUID.randomUUID()}"
@@ -180,6 +181,30 @@ class SincronizacionRealTest {
             // Esperado: sin permiso sobre esa columna
         }
         assertEquals(yo, supabase.from("registros_cuidado").select().decodeList<JsonObject>().single()["registrado_por"]!!.jsonPrimitive.content)
+    }
+
+    @Test
+    fun pesoYVisitaSubenConSuAutor(): Unit = runBlocking {
+        val mascotaId = UUID.randomUUID().toString()
+        mascotas.guardar(Mascota(id = mascotaId, nombre = "Toby", especie = Especie.PERRO))
+        salud.registrarPeso(mascotaId, LocalDate.now(), 12300)
+        salud.guardarVisita(
+            com.udenar.petcare.domain.salud.Visita(UUID.randomUUID().toString(), mascotaId, LocalDate.now(), "Control", tratamiento = "Ninguno"),
+            LocalDate.now().plusDays(30).atTime(10, 0),
+        )
+        sincronizador.sincronizar()
+
+        val peso = supabase.from("pesos").select().decodeList<JsonObject>().single()
+        assertEquals("12300", peso["gramos"]!!.jsonPrimitive.content)
+        assertEquals("Prueba sincronización", peso["registrado_por_nombre"]!!.jsonPrimitive.content)
+        val visita = supabase.from("visitas").select().decodeList<JsonObject>().single()
+        assertEquals("Control", visita["motivo"]!!.jsonPrimitive.content)
+        // La próxima cita quedó como cuidado CITA_VET en el servidor
+        val citaId = visita["proxima_cita_id"]!!.jsonPrimitive.content
+        val cita = supabase.from("eventos_cuidado").select { filter { eq("id", citaId) } }.decodeList<JsonObject>().single()
+        assertEquals("CITA_VET", cita["tipo"]!!.jsonPrimitive.content)
+        // El peso de la ficha también subió
+        assertEquals("12300", remotas().single()["peso_gramos"]!!.jsonPrimitive.content)
     }
 
     @Test

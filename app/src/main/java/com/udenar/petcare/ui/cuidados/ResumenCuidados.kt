@@ -30,6 +30,7 @@ import com.udenar.petcare.domain.cuidados.GrupoCuidado
 import com.udenar.petcare.domain.cuidados.MotorCuidados
 import com.udenar.petcare.domain.cuidados.RegistroCuidado
 import com.udenar.petcare.domain.cuidados.TipoCuidado
+import com.udenar.petcare.domain.cuidados.ResumenCuidado
 import com.udenar.petcare.domain.cuidados.Vencimiento
 import com.udenar.petcare.domain.cuidados.grupo
 import com.udenar.petcare.ui.componentes.Chip
@@ -67,32 +68,6 @@ fun GrupoCuidado.color(): Pair<Color, Color> = when (this) {
     GrupoCuidado.HIGIENE -> Pc.CieloClaro to Pc.CieloOscuro
     GrupoCuidado.ACTIVIDADES -> Pc.SolClaro to Pc.Naranja
     GrupoCuidado.CITAS -> Pc.MentaClara to Pc.Tinta
-}
-
-/** Resumen de un cuidado para la ficha: próxima fecha y estado (RF-05, RF-07, RF-16). */
-data class ResumenCuidado(
-    val evento: EventoCuidado,
-    val descripcion: String,
-    val proxima: LocalDate?,
-    val vencimiento: Vencimiento?,
-    val terminaPronto: Boolean,
-)
-
-fun resumir(e: EventoCuidado, registros: List<RegistroCuidado>, ahora: LocalDateTime, zona: ZoneId): ResumenCuidado {
-    val hoy = ahora.toLocalDate()
-    val proxima = when (e.ancla) {
-        Ancla.CALENDARIO -> MotorCuidados.siguiente(e, ahora.toLocalDate().minusDays(1).atTime(23, 59))?.toLocalDate()
-        Ancla.ULTIMA_VEZ -> MotorCuidados.proximaDesdeUltima(e, MotorCuidados.ultimaVez(e, registros, zona))
-    }
-    val conEstado = e.tipo == TipoCuidado.VACUNA || e.ancla == Ancla.ULTIMA_VEZ
-    val yaHecha = e.tipo == TipoCuidado.VACUNA && registros.any { it.eventoId == e.id && it.hecho }
-    return ResumenCuidado(
-        evento = e,
-        descripcion = DescripcionCuidados.frecuencia(e.frecuencia),
-        proxima = proxima,
-        vencimiento = if (conEstado && proxima != null && !yaHecha) MotorCuidados.vencimiento(proxima, hoy, e.avisoAnticipadoDias) else null,
-        terminaPronto = MotorCuidados.terminaPronto(e, hoy),
-    )
 }
 
 /** Sección "Cuidados" de la ficha: agrupados, con su próxima fecha y botón para agregar. */

@@ -44,6 +44,8 @@ class CuidadosFormTest {
         compose.onNodeWithTag("pestana_mascotas").performClick()
         compose.waitUntil(5_000) { compose.onAllNodesWithTagExists("mascota_Luna") }
         compose.onNodeWithTag("mascota_Luna").performClick()
+        compose.waitUntil(5_000) { compose.onAllNodesWithTagExists("seccion_Cuidados") }
+        compose.onNodeWithTag("seccion_Cuidados").performClick()
         compose.waitUntil(5_000) { compose.onAllNodesWithTagExists("agregar_cuidado") }
     }
 

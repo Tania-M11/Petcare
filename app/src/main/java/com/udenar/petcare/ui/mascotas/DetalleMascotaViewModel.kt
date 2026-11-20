@@ -4,10 +4,20 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.toRoute
+import com.udenar.petcare.domain.cuidados.AreaCuidado
+import com.udenar.petcare.domain.cuidados.DescripcionCuidados
+import com.udenar.petcare.domain.cuidados.EstadoCuidado
+import com.udenar.petcare.domain.cuidados.EstadoRegistro
+import com.udenar.petcare.domain.cuidados.NivelCuidado
 import com.udenar.petcare.domain.cuidados.RepositorioCuidados
+import com.udenar.petcare.domain.mascotas.FichaMascota
+import com.udenar.petcare.domain.salud.RegistroPeso
+import com.udenar.petcare.domain.salud.RepositorioSalud
+import com.udenar.petcare.domain.salud.Visita
+import com.udenar.petcare.ui.cuidados.emoji
 import com.udenar.petcare.domain.mascotas.CodigoMascota
-import com.udenar.petcare.ui.cuidados.ResumenCuidado
-import com.udenar.petcare.ui.cuidados.resumir
+import com.udenar.petcare.domain.cuidados.ResumenCuidado
+import com.udenar.petcare.domain.cuidados.resumir
 import kotlinx.coroutines.flow.combine
 import java.time.LocalDateTime
 import com.udenar.petcare.domain.mascotas.RepositorioMascotas
@@ -41,6 +51,7 @@ class DetalleMascotaViewModel @Inject constructor(
     private val repo: RepositorioMascotas,
     private val reloj: Clock,
     cuidados: RepositorioCuidados,
+    private val salud: RepositorioSalud,
 ) : ViewModel() {
 
     val id = estado.toRoute<RutaDetalleMascota>().id
@@ -54,6 +65,47 @@ class DetalleMascotaViewModel @Inject constructor(
         val ahora = LocalDateTime.now(reloj)
         e.filter { it.mascotaId == id }.map { resumir(it, r, ahora, reloj.zone) }
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
+
+    val pesos: StateFlow<List<RegistroPeso>> = salud.observarPesos(id)
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
+
+    val visitas: StateFlow<List<Visita>> = salud.observarVisitas(id)
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
+
+    /** Estado de cuidado (RF-16) con la agenda de hoy de esta mascota. */
+    val estadoCuidado: StateFlow<Map<AreaCuidado, NivelCuidado>> = combine(this.cuidados, cuidados.agenda(LocalDate.now(reloj))) { res, tomas ->
+        EstadoCuidado.calcular(res, tomas.filter { it.evento.mascotaId == id }, LocalDateTime.now(reloj))
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyMap())
+
+    /** Línea de tiempo: cuidados hechos u omitidos, pesos y visitas (RF-15). */
+    val historial: StateFlow<List<ItemHistorial>> = combine(cuidados.observarEventos(), cuidados.observarRegistros(), pesos, visitas) { ev, reg, ps, vs ->
+        val porId = ev.associateBy { it.id }
+        val zona = reloj.zone
+        buildList {
+            reg.filter { it.mascotaId == id && it.estado != EstadoRegistro.POSPUESTA }.forEach { r ->
+                val e = porId[r.eventoId]
+                val quien = r.registradoPor?.nombre?.substringBefore(' ')
+                val verbo = if (r.estado == EstadoRegistro.OMITIDA) "Omitido" else "Hecho"
+                add(
+                    ItemHistorial(
+                        r.registradoEn.atZone(zona).toLocalDateTime(), CategoriaHistorial.CUIDADOS, e?.tipo?.emoji ?: "✔️",
+                        e?.titulo ?: "Cuidado eliminado",
+                        "$verbo${quien?.let { " por $it" } ?: ""} · ${DescripcionCuidados.hora(r.registradoEn.atZone(zona).toLocalTime())}",
+                    ),
+                )
+            }
+            ps.forEach { p ->
+                add(ItemHistorial(p.fecha.atTime(12, 0), CategoriaHistorial.PESO, "⚖️", FichaMascota.peso(p.gramos), "Pesaje${p.registradoPor?.nombre?.let { " · ${it.substringBefore(' ')}" } ?: ""}"))
+            }
+            vs.forEach { v ->
+                add(ItemHistorial(v.fecha.atTime(12, 0), CategoriaHistorial.VISITAS, "🩺", v.motivo, listOfNotNull("Visita veterinaria", v.veterinario, v.clinica).joinToString(" · ")))
+            }
+        }.sortedByDescending { it.instante }
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
+
+    fun registrarPeso(fecha: LocalDate, gramos: Int) = viewModelScope.launch { salud.registrarPeso(id, fecha, gramos) }
+
+    fun eliminarPeso(pesoId: String) = viewModelScope.launch { salud.eliminarPeso(pesoId) }
 
     private val _codigo = MutableStateFlow<EstadoCodigo>(EstadoCodigo.Cargando)
     val codigo: StateFlow<EstadoCodigo> = _codigo.asStateFlow()

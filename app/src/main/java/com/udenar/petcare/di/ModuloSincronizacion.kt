@@ -40,6 +40,15 @@ abstract class ModuloSincronizacion {
     @Binds @IntoSet
     abstract fun tablaRegistros(t: TablaRegistros): TablaSincronizable
 
+    @Binds @IntoSet
+    abstract fun tablaPesos(t: com.udenar.petcare.data.salud.TablaPesos): TablaSincronizable
+
+    @Binds @IntoSet
+    abstract fun tablaVisitas(t: com.udenar.petcare.data.salud.TablaVisitas): TablaSincronizable
+
+    @Binds
+    abstract fun salud(r: com.udenar.petcare.data.salud.RepositorioSaludLocal): com.udenar.petcare.domain.salud.RepositorioSalud
+
     @Binds
     abstract fun cuidados(r: RepositorioCuidadosLocal): RepositorioCuidados
 

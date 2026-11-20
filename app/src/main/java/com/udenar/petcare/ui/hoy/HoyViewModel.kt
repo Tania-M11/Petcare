@@ -14,7 +14,7 @@ import com.udenar.petcare.domain.guia.Guia
 import com.udenar.petcare.domain.guia.ProgresoGuia
 import com.udenar.petcare.domain.mascotas.RepositorioMascotas
 import com.udenar.petcare.domain.modelo.Mascota
-import com.udenar.petcare.ui.cuidados.resumir
+import com.udenar.petcare.domain.cuidados.resumir
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow

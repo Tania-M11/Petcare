@@ -18,6 +18,7 @@ import kotlinx.serialization.Serializable
 @Serializable data class RutaDetalleMascota(val id: String)
 
 /** [clase] = ClaseCuidado.name; [id] = null para uno nuevo. */
+@Serializable data class RutaFormVisita(val mascotaId: String, val id: String? = null)
 @Serializable data class RutaFormCuidado(val mascotaId: String, val clase: String, val id: String? = null)
 
 /** Las 4 pestañas del modo personal (plan, sección 3). El calendario vive dentro de Hoy. */

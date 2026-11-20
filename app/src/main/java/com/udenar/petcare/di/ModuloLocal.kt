@@ -39,4 +39,10 @@ object ModuloLocal {
 
     @Provides
     fun alarmas(db: PetcareDb): AlarmaDao = db.alarmas()
+
+    @Provides
+    fun pesos(db: PetcareDb): com.udenar.petcare.data.salud.PesoDao = db.pesos()
+
+    @Provides
+    fun visitas(db: PetcareDb): com.udenar.petcare.data.salud.VisitaDao = db.visitas()
 }

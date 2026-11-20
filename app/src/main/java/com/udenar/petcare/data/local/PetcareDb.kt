@@ -15,6 +15,10 @@ import com.udenar.petcare.data.cuidados.EventoEntidad
 import com.udenar.petcare.data.cuidados.RegistroDao
 import com.udenar.petcare.data.cuidados.RegistroEntidad
 import com.udenar.petcare.data.mascotas.MascotaDao
+import com.udenar.petcare.data.salud.PesoDao
+import com.udenar.petcare.data.salud.PesoEntidad
+import com.udenar.petcare.data.salud.VisitaDao
+import com.udenar.petcare.data.salud.VisitaEntidad
 import com.udenar.petcare.data.mascotas.MascotaEntidad
 import kotlinx.coroutines.flow.Flow
 
@@ -43,13 +47,14 @@ interface CursorDao {
  * Cada parte agrega sus tablas subiendo la versión con una migración automática.
  */
 @Database(
-    entities = [MascotaEntidad::class, CursorEntidad::class, EventoEntidad::class, RegistroEntidad::class, AlarmaEntidad::class],
-    version = 4,
+    entities = [MascotaEntidad::class, CursorEntidad::class, EventoEntidad::class, RegistroEntidad::class, AlarmaEntidad::class, PesoEntidad::class, VisitaEntidad::class],
+    version = 5,
     exportSchema = true,
     autoMigrations = [
         AutoMigration(from = 1, to = 2), // 2.2: foto local de la mascota
         AutoMigration(from = 2, to = 3), // 2.3: cuidados y registros
         AutoMigration(from = 3, to = 4), // 2.4: alarmas programadas
+        AutoMigration(from = 4, to = 5), // 2.8: pesos y visitas
     ],
 )
 abstract class PetcareDb : RoomDatabase() {
@@ -58,4 +63,6 @@ abstract class PetcareDb : RoomDatabase() {
     abstract fun eventos(): EventoDao
     abstract fun registros(): RegistroDao
     abstract fun alarmas(): AlarmaDao
+    abstract fun pesos(): PesoDao
+    abstract fun visitas(): VisitaDao
 }
