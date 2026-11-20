@@ -39,6 +39,7 @@ class HoyTest {
     @Before
     fun preparar() {
         hilt.inject()
+        compose.esperarInterfaz()
         val hoy = LocalDate.now()
         runBlocking {
             mascotas.guardar(Mascota("m1", "Luna", Especie.GATO))

@@ -61,6 +61,7 @@ class SincronizacionRealTest {
     @Inject lateinit var db: PetcareDb
     @Inject lateinit var cuidados: RepositorioCuidados
     @Inject lateinit var documentos: com.udenar.petcare.domain.documentos.RepositorioDocumentos
+    @Inject lateinit var paseosRepo: com.udenar.petcare.domain.paseos.RepositorioPaseos
     @Inject lateinit var tiempoReal: com.udenar.petcare.data.sync.TiempoReal
     @Inject lateinit var programador: ProgramadorFalso
     @Inject lateinit var salud: com.udenar.petcare.domain.salud.RepositorioSalud
@@ -227,6 +228,24 @@ class SincronizacionRealTest {
         tiempoReal.detener()
         alcance.cancel()
         assertTrue("El cambio no llegó por Realtime", llego)
+    }
+
+    @Test
+    fun paseoConRutaSube(): Unit = runBlocking {
+        val mascotaId = UUID.randomUUID().toString()
+        mascotas.guardar(Mascota(id = mascotaId, nombre = "Rocky", especie = Especie.PERRO))
+        val ruta = listOf(com.udenar.petcare.domain.paseos.Coordenada(1.2136, -77.2811), com.udenar.petcare.domain.paseos.Coordenada(1.2145, -77.2811))
+        paseosRepo.guardarGps(
+            com.udenar.petcare.domain.paseos.ResumenPaseo(listOf(mascotaId), java.time.Instant.now().minusSeconds(900), java.time.Instant.now(), 900, 100, ruta),
+        )
+        sincronizador.sincronizar()
+        val remoto = supabase.from("paseos").select().decodeList<JsonObject>().single()
+        assertEquals("900", remoto["duracion_s"]!!.jsonPrimitive.content)
+        assertEquals(2, com.udenar.petcare.domain.paseos.Polilinea.decodificar(remoto["ruta_polyline"]!!.jsonPrimitive.content).size)
+        // Teléfono nuevo: la ruta vuelve completa
+        db.clearAllTables()
+        sincronizador.sincronizar()
+        assertEquals(ruta, paseosRepo.observar(mascotaId).first().single().ruta)
     }
 
     @Test

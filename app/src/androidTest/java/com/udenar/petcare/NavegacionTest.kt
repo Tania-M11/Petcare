@@ -22,7 +22,10 @@ class NavegacionTest {
     val compose = createAndroidComposeRule<MainActivity>()
 
     @Before
-    fun inyectar() = hilt.inject()
+    fun inyectar() {
+        hilt.inject()
+        compose.esperarInterfaz()
+    }
 
     @Test
     fun abreEnHoy() {

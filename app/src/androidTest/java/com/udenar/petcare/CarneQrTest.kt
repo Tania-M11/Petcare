@@ -36,6 +36,7 @@ class CarneQrTest {
     @Before
     fun preparar() {
         hilt.inject()
+        compose.esperarInterfaz()
         runBlocking {
             mascotas.guardar(
                 Mascota(

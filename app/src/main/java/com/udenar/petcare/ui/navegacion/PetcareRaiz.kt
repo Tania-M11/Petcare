@@ -18,6 +18,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.udenar.petcare.ui.cuidados.FormCuidadoScreen
 import com.udenar.petcare.ui.guia.IntencionesScreen
 import com.udenar.petcare.ui.hoy.HoyScreen
@@ -63,6 +64,7 @@ fun PetcareRaiz() {
                     irAMascotas = { nav.irAPestana(PestanaPersonal.MASCOTAS) },
                     onAbrirMascota = { nav.navigate(RutaDetalleMascota(it)) },
                     onNuevoCuidado = { mascotaId, clase -> nav.navigate(RutaFormCuidado(mascotaId, clase)) },
+                    onPasear = { mascotaId -> nav.navigate(RutaPaseo(mascotaId)) },
                     avisar = avisar,
                 )
             }
@@ -94,6 +96,8 @@ fun PetcareRaiz() {
                         nav.navigate(RutaFormCuidado(mascotaId, clase, idCuidado))
                     },
                     onCarne = { nav.navigate(RutaCarne(it)) },
+                    onPasear = { nav.navigate(RutaPaseo(it)) },
+                    onPaseo = { nav.navigate(RutaDetallePaseo(it)) },
                     onVisita = { idVisita ->
                         val mascotaId = nav.currentBackStackEntry?.toRoute<RutaDetalleMascota>()?.id ?: return@DetalleMascotaScreen
                         nav.navigate(RutaFormVisita(mascotaId, idVisita))
@@ -103,6 +107,12 @@ fun PetcareRaiz() {
             }
             composable<RutaFormCuidado> { FormCuidadoScreen(onListo = { nav.popBackStack() }) }
             composable<RutaCuidarCodigo> { com.udenar.petcare.ui.compartir.CuidarConCodigoScreen(onVolver = { nav.popBackStack() }) }
+            composable<RutaPaseo> { com.udenar.petcare.ui.paseos.PaseoScreen(onVolver = { nav.popBackStack() }, avisar = avisar) }
+            composable<RutaDetallePaseo> {
+                val vm: com.udenar.petcare.ui.paseos.DetallePaseoViewModel = androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel()
+                val paseo by vm.paseo.collectAsStateWithLifecycle()
+                com.udenar.petcare.ui.paseos.DetallePaseoScreen(paseo, onVolver = { nav.popBackStack() }, onEliminar = { vm.eliminar { nav.popBackStack() } })
+            }
             composable<RutaCarne> { com.udenar.petcare.ui.carne.CarneScreen(onVolver = { nav.popBackStack() }, avisar = avisar) }
             composable<RutaResultadoQr> { entrada ->
                 com.udenar.petcare.ui.compartir.ResultadoQrScreen(

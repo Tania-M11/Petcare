@@ -77,6 +77,7 @@ fun HoyScreen(
     irAMascotas: () -> Unit,
     onAbrirMascota: (String) -> Unit,
     onNuevoCuidado: (mascotaId: String, clase: String) -> Unit,
+    onPasear: (mascotaId: String?) -> Unit,
     avisar: (String) -> Unit,
     modifier: Modifier = Modifier,
     viewModel: HoyViewModel = hiltViewModel(),
@@ -219,7 +220,7 @@ fun HoyScreen(
             Spacer(Modifier.height(72.dp))
         }
 
-        if (mascotas.any { it.esPropietario }) {
+        if (mascotas.isNotEmpty()) {
             Row(
                 Modifier
                     .align(Alignment.BottomEnd)
@@ -232,7 +233,7 @@ fun HoyScreen(
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Icon(Icons.Rounded.Add, contentDescription = null, tint = Pc.Blanco)
-                Text("Nuevo cuidado", style = MaterialTheme.typography.labelLarge, color = Pc.Blanco, modifier = Modifier.padding(start = 6.dp))
+                Text("Registrar", style = MaterialTheme.typography.labelLarge, color = Pc.Blanco, modifier = Modifier.padding(start = 6.dp))
             }
         }
     }
@@ -256,7 +257,30 @@ fun HoyScreen(
         ModalBottomSheet(onDismissRequest = { nuevo = false }, containerColor = Pc.Crema) {
             Column(Modifier.padding(horizontal = 16.dp).padding(bottom = 16.dp).navigationBarsPadding()) {
                 val elegida = mascotaElegida
-                if (elegida == null) {
+                var queHacer by remember { mutableStateOf(if (propias.isEmpty()) "paseo" else null) }
+                if (queHacer == null) {
+                    Text("¿Qué quieres registrar?", style = MaterialTheme.typography.headlineSmall, modifier = Modifier.padding(start = 12.dp, bottom = 8.dp))
+                    listOf("paseo" to "🦮  Un paseo (con GPS o sin él)", "cuidado" to "➕  Un cuidado nuevo (comida, medicina, baño…)").forEach { (clave, texto) ->
+                        Text(
+                            texto,
+                            style = MaterialTheme.typography.titleMedium,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(MaterialTheme.shapes.medium)
+                                .clickable {
+                                    if (clave == "paseo") {
+                                        nuevo = false
+                                        onPasear(filtro)
+                                    } else queHacer = clave
+                                }
+                                .padding(14.dp)
+                                .testTag("registrar_$clave"),
+                        )
+                    }
+                } else if (queHacer == "paseo") {
+                    nuevo = false
+                    onPasear(filtro)
+                } else if (elegida == null) {
                     Text("¿Para quién?", style = MaterialTheme.typography.headlineSmall, modifier = Modifier.padding(start = 12.dp, bottom = 8.dp))
                     propias.forEach { m ->
                         Row(

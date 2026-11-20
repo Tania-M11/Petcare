@@ -32,7 +32,10 @@ class PrimerosPasosTest {
     lateinit var cuenta: CuentaFalsa
 
     @Before
-    fun preparar() = hilt.inject()
+    fun preparar() {
+        hilt.inject()
+        compose.esperarInterfaz()
+    }
 
     @Test
     fun sinResponderPreguntaYArmaLaGuia() {

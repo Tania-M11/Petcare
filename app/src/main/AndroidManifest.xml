@@ -10,6 +10,12 @@
     <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
     <!-- Reprogramar las alarmas después de reiniciar el teléfono -->
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+    <!-- Paseos con GPS (RF-12): ubicación precisa con un servicio en primer plano -->
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_LOCATION" />
+    <uses-feature android:name="android.hardware.location.gps" android:required="false" />
 
     <application
         android:name=".PetcareApp"
@@ -29,6 +35,12 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <!-- Paseo en curso: sigue con la pantalla apagada -->
+        <service
+            android:name=".data.paseos.ServicioPaseo"
+            android:exported="false"
+            android:foregroundServiceType="location" />
 
         <!-- Compartir imágenes (QR) y abrir documentos con otras apps sin exponer rutas -->
         <provider

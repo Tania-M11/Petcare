@@ -44,6 +44,7 @@ class SaludTest {
     @Before
     fun preparar() {
         hilt.inject()
+        compose.esperarInterfaz()
         runBlocking {
             mascotas.guardar(Mascota("m1", "Luna", Especie.GATO, pesoGramos = 4000))
             cuidados.guardarEvento(EventoCuidado("c1", "m1", TipoCuidado.COMIDA, "Cena", Frecuencia(TipoFrecuencia.DIARIO, horas = listOf(LocalTime.of(23, 59))), fechaInicio = LocalDate.now()))

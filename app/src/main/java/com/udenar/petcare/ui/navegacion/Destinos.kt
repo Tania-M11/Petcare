@@ -16,6 +16,8 @@ import kotlinx.serialization.Serializable
 @Serializable data object RutaIntenciones
 @Serializable data class RutaCuidarCodigo(val codigo: String = "")
 @Serializable data class RutaCarne(val id: String)
+@Serializable data class RutaPaseo(val mascotaId: String? = null)
+@Serializable data class RutaDetallePaseo(val id: String)
 @Serializable data class RutaResultadoQr(val texto: String)
 @Serializable data class RutaFormMascota(val id: String? = null)
 @Serializable data class RutaDetalleMascota(val id: String)

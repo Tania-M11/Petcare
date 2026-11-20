@@ -33,7 +33,10 @@ class MascotasTest {
     @Inject lateinit var programador: ProgramadorFalso
 
     @Before
-    fun preparar() = hilt.inject()
+    fun preparar() {
+        hilt.inject()
+        compose.esperarInterfaz()
+    }
 
     private fun abrirFormulario() {
         compose.onNodeWithTag("pestana_mascotas").performClick()

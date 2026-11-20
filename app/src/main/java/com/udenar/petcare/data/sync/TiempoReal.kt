@@ -44,7 +44,7 @@ class TiempoReal @Inject constructor(
             runCatching {
                 val c = supabase.channel("petcare-cambios")
                 canal = c
-                val tablas = listOf("mascotas", "eventos_cuidado", "registros_cuidado", "pesos", "miembros_mascota")
+                val tablas = listOf("mascotas", "eventos_cuidado", "registros_cuidado", "pesos", "paseos", "miembros_mascota")
                 val flujos = tablas.map { t -> c.postgresChangeFlow<PostgresAction>(schema = "public") { table = t } }
                 val solicitudes = c.postgresChangeFlow<PostgresAction>(schema = "public") { table = "solicitudes_cuidado" }
                 // Varios cambios seguidos se agrupan en una sola sincronización

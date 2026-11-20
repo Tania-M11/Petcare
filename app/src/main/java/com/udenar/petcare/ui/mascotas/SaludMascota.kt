@@ -255,7 +255,7 @@ data class ItemHistorial(
     val detalle: String,
 )
 
-enum class CategoriaHistorial(val titulo: String) { CUIDADOS("Cuidados"), PESO("Peso"), VISITAS("Visitas") }
+enum class CategoriaHistorial(val titulo: String) { CUIDADOS("Cuidados"), PASEOS("Paseos"), PESO("Peso"), VISITAS("Visitas") }
 
 @Composable
 fun TarjetaHistorial(items: List<ItemHistorial>) {

@@ -78,6 +78,8 @@ fun DetalleMascotaScreen(
     onCuidado: (clase: String, id: String?) -> Unit,
     onVisita: (id: String?) -> Unit,
     onCarne: (String) -> Unit,
+    onPasear: (String) -> Unit,
+    onPaseo: (String) -> Unit,
     avisar: (String) -> Unit,
     viewModel: DetalleMascotaViewModel = hiltViewModel(),
 ) {
@@ -91,6 +93,7 @@ fun DetalleMascotaScreen(
     val miembros by viewModel.miembros.collectAsStateWithLifecycle()
     val recordatoriosActivos by viewModel.recordatoriosActivos.collectAsStateWithLifecycle()
     val documentos by viewModel.documentos.collectAsStateWithLifecycle()
+    val paseos by viewModel.paseos.collectAsStateWithLifecycle()
     var seccion by rememberSaveable { mutableIntStateOf(0) }
     var elegirClase by remember { mutableStateOf(false) }
     var confirmarEliminar by remember { mutableStateOf(false) }
@@ -161,12 +164,15 @@ fun DetalleMascotaScreen(
             ChipsSeccion(seccion, onElegir = { seccion = it })
 
             when (seccion) {
-                1 -> SeccionCuidados(
+                1 -> {
+                    TarjetaPaseos(paseos, onPasear = { onPasear(mascota.id) }, onAbrir = { onPaseo(it.id) })
+                    SeccionCuidados(
                     cuidados,
                     // Solo el dueño crea o cambia cuidados; quien cuida los ve y registra desde Hoy
                     onAgregar = if (mascota.esPropietario) ({ elegirClase = true }) else null,
                     onAbrir = { e -> if (mascota.esPropietario) onCuidado(ClaseCuidado.de(e.tipo).name, e.id) },
                 )
+                }
                 2 -> {
                     SaludBasica(mascota)
                     TarjetaPeso(pesos, viewModel.hoy, onRegistrar = viewModel::registrarPeso, onEliminar = { viewModel.eliminarPeso(it) }, editable = mascota.esPropietario)
@@ -472,5 +478,37 @@ private fun TarjetaVeterinario(v: com.udenar.petcare.domain.modelo.VeterinarioMa
                 contexto.startActivity(Intent(Intent.ACTION_DIAL, android.net.Uri.parse("tel:${v.telefono.filter { it.isDigit() || it == '+' }}")))
             })
         }
+    }
+}
+
+/** Paseos recientes (RF-12): los registran el dueño y los cuidadores. */
+@Composable
+private fun TarjetaPaseos(paseos: List<com.udenar.petcare.domain.paseos.Paseo>, onPasear: () -> Unit, onAbrir: (com.udenar.petcare.domain.paseos.Paseo) -> Unit) {
+    Seccion("Paseos") {
+        if (paseos.isEmpty()) Text("Registra sus paseos con GPS o a mano.", style = MaterialTheme.typography.bodyMedium, color = Pc.TintaSuave)
+        paseos.take(5).forEach { p ->
+            Row(
+                Modifier
+                    .fillMaxWidth()
+                    .clip(MaterialTheme.shapes.medium)
+                    .clickable { onAbrir(p) }
+                    .padding(vertical = 6.dp)
+                    .testTag("paseo_registrado"),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text(p.tipo.emoji, fontSize = 20.sp)
+                Column(Modifier.weight(1f).padding(start = 12.dp)) {
+                    Text(
+                        listOfNotNull(p.distanciaM?.let { com.udenar.petcare.domain.paseos.textoDistancia(it) }, com.udenar.petcare.domain.paseos.textoDuracion(p.duracionS)).joinToString(" · "),
+                        style = MaterialTheme.typography.titleSmall,
+                    )
+                    Text(
+                        listOfNotNull(p.inicio.atZone(java.time.ZoneId.systemDefault()).toLocalDate().format(FECHA), if (p.esManual) "sin GPS" else "con ruta", p.registradoPor?.nombre?.substringBefore(' ')).joinToString(" · "),
+                        style = MaterialTheme.typography.bodySmall, color = Pc.TintaSuave,
+                    )
+                }
+            }
+        }
+        com.udenar.petcare.ui.componentes.BotonSecundario("Pasear ahora", onClick = onPasear, modifier = Modifier.testTag("pasear_ahora"))
     }
 }

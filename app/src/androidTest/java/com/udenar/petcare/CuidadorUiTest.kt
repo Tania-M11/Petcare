@@ -42,6 +42,7 @@ class CuidadorUiTest {
     @Before
     fun preparar() {
         hilt.inject()
+        compose.esperarInterfaz()
         runBlocking {
             // Mascota de otra persona (llegó por sincronización) que Ana cuida
             mascotas.guardar(Mascota("ajena", "Toby", Especie.PERRO, propietarioId = "dueno"))

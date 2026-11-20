@@ -67,6 +67,9 @@ object ModuloLocalPrueba {
 
     @Provides
     fun documentos(db: PetcareDb): com.udenar.petcare.data.documentos.DocumentoDao = db.documentos()
+
+    @Provides
+    fun paseos(db: PetcareDb): com.udenar.petcare.data.paseos.PaseoDao = db.paseos()
 }
 
 /** Supabase con la sesión solo en memoria: no reemplaza la sesión real guardada en el teléfono. */

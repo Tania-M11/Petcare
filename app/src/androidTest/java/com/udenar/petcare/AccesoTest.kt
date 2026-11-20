@@ -29,6 +29,7 @@ class AccesoTest {
     @Before
     fun preparar() {
         hilt.inject()
+        compose.esperarInterfaz()
         cuenta.sinSesion()
         compose.waitForIdle()
     }

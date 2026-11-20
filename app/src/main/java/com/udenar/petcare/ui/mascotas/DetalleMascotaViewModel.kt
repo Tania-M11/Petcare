@@ -59,7 +59,12 @@ class DetalleMascotaViewModel @Inject constructor(
     private val preferencias: com.udenar.petcare.data.local.PreferenciaDao,
     private val recordatorios: com.udenar.petcare.domain.cuidados.ProgramadorRecordatorios,
     private val documentosRepo: com.udenar.petcare.domain.documentos.RepositorioDocumentos,
+    private val paseosRepo: com.udenar.petcare.domain.paseos.RepositorioPaseos,
 ) : ViewModel() {
+
+    val paseos: StateFlow<List<com.udenar.petcare.domain.paseos.Paseo>> by lazy {
+        paseosRepo.observar(id).stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
+    }
 
     val documentos: StateFlow<List<com.udenar.petcare.domain.documentos.Documento>> by lazy {
         documentosRepo.observar(id).stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
@@ -164,7 +169,7 @@ class DetalleMascotaViewModel @Inject constructor(
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyMap())
 
     /** Línea de tiempo: cuidados hechos u omitidos, pesos y visitas (RF-15). */
-    val historial: StateFlow<List<ItemHistorial>> = combine(cuidados.observarEventos(), cuidados.observarRegistros(), pesos, visitas) { ev, reg, ps, vs ->
+    val historial: StateFlow<List<ItemHistorial>> = combine(cuidados.observarEventos(), cuidados.observarRegistros(), pesos, visitas, paseosRepo.observar(id)) { ev, reg, ps, vs, pas ->
         val porId = ev.associateBy { it.id }
         val zona = reloj.zone
         buildList {
@@ -182,6 +187,15 @@ class DetalleMascotaViewModel @Inject constructor(
             }
             ps.forEach { p ->
                 add(ItemHistorial(p.fecha.atTime(12, 0), CategoriaHistorial.PESO, "⚖️", FichaMascota.peso(p.gramos), "Pesaje${p.registradoPor?.nombre?.let { " · ${it.substringBefore(' ')}" } ?: ""}"))
+            }
+            pas.forEach { p ->
+                add(
+                    ItemHistorial(
+                        p.inicio.atZone(zona).toLocalDateTime(), CategoriaHistorial.PASEOS, p.tipo.emoji,
+                        listOfNotNull(p.distanciaM?.let { com.udenar.petcare.domain.paseos.textoDistancia(it) }, com.udenar.petcare.domain.paseos.textoDuracion(p.duracionS)).joinToString(" · "),
+                        "${p.tipo.etiqueta}${p.registradoPor?.nombre?.let { " · ${it.substringBefore(' ')}" } ?: ""}",
+                    ),
+                )
             }
             vs.forEach { v ->
                 add(ItemHistorial(v.fecha.atTime(12, 0), CategoriaHistorial.VISITAS, "🩺", v.motivo, listOfNotNull("Visita veterinaria", v.veterinario, v.clinica).joinToString(" · ")))

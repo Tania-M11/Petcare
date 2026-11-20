@@ -71,6 +71,7 @@ class RepositorioCompartirSupabase @Inject constructor(
     private val registros: RegistroDao,
     private val pesos: PesoDao,
     private val visitas: VisitaDao,
+    private val paseos: com.udenar.petcare.data.paseos.PaseoDao,
     private val cursores: CursorDao,
     private val alarmas: PlanificadorAlarmas,
     private val sync: ProgramadorSync,
@@ -163,6 +164,7 @@ class RepositorioCompartirSupabase @Inject constructor(
         eventos.borrarDeMascota(mascotaId)
         pesos.borrarDeMascota(mascotaId)
         visitas.borrarDeMascota(mascotaId)
+        paseos.borrarDeMascota(mascotaId)
         mascotas.borrar(mascotaId)
         alarmas.reprogramar()
     }

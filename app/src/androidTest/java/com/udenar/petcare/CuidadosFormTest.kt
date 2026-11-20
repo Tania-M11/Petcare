@@ -40,6 +40,7 @@ class CuidadosFormTest {
     @Before
     fun preparar() {
         hilt.inject()
+        compose.esperarInterfaz()
         runBlocking { mascotas.guardar(Mascota("m1", "Luna", Especie.GATO)) }
         compose.onNodeWithTag("pestana_mascotas").performClick()
         compose.waitUntil(5_000) { compose.onAllNodesWithTagExists("mascota_Luna") }

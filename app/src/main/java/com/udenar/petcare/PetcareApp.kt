@@ -26,6 +26,8 @@ class PetcareApp : Application(), Configuration.Provider {
     override fun onCreate() {
         super.onCreate()
         notificador.crearCanales()
+        // Motor de mapas (paseos con GPS)
+        org.maplibre.android.MapLibre.getInstance(this)
         // Cada vez que arranca la app (también si Android la cerró), las alarmas quedan al día
         CoroutineScope(SupervisorJob() + Dispatchers.Default).launch { recordatorios.reprogramar() }
     }

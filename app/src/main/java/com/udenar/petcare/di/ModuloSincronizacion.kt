@@ -53,6 +53,12 @@ abstract class ModuloSincronizacion {
     abstract fun compartir(r: com.udenar.petcare.data.compartir.RepositorioCompartirSupabase): com.udenar.petcare.domain.compartir.RepositorioCompartir
 
     @Binds @IntoSet
+    abstract fun tablaPaseos(t: com.udenar.petcare.data.paseos.TablaPaseos): TablaSincronizable
+
+    @Binds
+    abstract fun paseos(r: com.udenar.petcare.data.paseos.RepositorioPaseosLocal): com.udenar.petcare.domain.paseos.RepositorioPaseos
+
+    @Binds @IntoSet
     abstract fun tablaDocumentos(t: com.udenar.petcare.data.documentos.TablaDocumentos): TablaSincronizable
 
     @Binds
