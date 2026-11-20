@@ -30,6 +30,22 @@
             </intent-filter>
         </activity>
 
+        <!-- Compartir imágenes (QR) y abrir documentos con otras apps sin exponer rutas -->
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.archivos"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/rutas_compartidas" />
+        </provider>
+
+        <!-- Descarga el módulo del escáner de QR de Google Play services al instalar -->
+        <meta-data
+            android:name="com.google.mlkit.vision.DEPENDENCIES"
+            android:value="barcode_ui" />
+
         <!-- Recordatorios: alarma que suena, botones de la notificación y eventos del sistema -->
         <receiver android:name=".data.alarmas.ReceptorAlarma" android:exported="false" />
         <receiver android:name=".data.alarmas.ReceptorAccion" android:exported="false" />

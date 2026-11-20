@@ -25,3 +25,21 @@ interface PreferenciaDao {
     @Upsert
     suspend fun guardar(p: PreferenciaMascota)
 }
+
+/** Qué muestra el QR de cada mascota (RF-18). Lo decide el propietario en este teléfono. */
+@Entity(tableName = "config_qr")
+data class ConfigQrEntidad(
+    @PrimaryKey val mascotaId: String,
+    /** Nombres de CampoQr separados por coma. */
+    val campos: String,
+    val contacto: String,
+)
+
+@Dao
+interface ConfigQrDao {
+    @Query("SELECT * FROM config_qr WHERE mascotaId = :mascotaId")
+    fun observar(mascotaId: String): Flow<ConfigQrEntidad?>
+
+    @Upsert
+    suspend fun guardar(c: ConfigQrEntidad)
+}

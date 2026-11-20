@@ -124,6 +124,12 @@ private fun Mascota.comoEntidad(anterior: MascotaEntidad?, ahora: Long) = Mascot
     medicamentosActuales = medicamentosActuales?.trim()?.ifBlank { null },
     observaciones = observaciones?.trim()?.ifBlank { null },
     fotoUrl = anterior?.fotoUrl ?: fotoUrl,
+    veterinario = veterinario?.takeIf { !it.vacio }?.let { v ->
+        kotlinx.serialization.json.buildJsonObject {
+            listOf("nombre" to v.nombre, "telefono" to v.telefono, "clinica" to v.clinica, "direccion" to v.direccion, "horario" to v.horario, "notas" to v.notas)
+                .filter { it.second.isNotBlank() }.forEach { (k, valor) -> put(k, kotlinx.serialization.json.JsonPrimitive(valor.trim())) }
+        }.toString()
+    },
     eliminado = false,
     actualizadoEn = anterior?.actualizadoEn,
     fotoLocal = anterior?.fotoLocal,
@@ -153,6 +159,13 @@ internal fun MascotaEntidad.comoDominio(yo: String? = null) = Mascota(
     observaciones = observaciones,
     fotoUrl = fotoUrl,
     fotoLocal = fotoLocal?.takeIf { File(it).exists() },
+    veterinario = veterinario?.let { texto ->
+        runCatching {
+            val o = kotlinx.serialization.json.Json.parseToJsonElement(texto) as kotlinx.serialization.json.JsonObject
+            fun c(k: String) = (o[k] as? kotlinx.serialization.json.JsonPrimitive)?.content.orEmpty()
+            com.udenar.petcare.domain.modelo.VeterinarioManual(c("nombre"), c("telefono"), c("clinica"), c("direccion"), c("horario"), c("notas"))
+        }.getOrNull()
+    },
     propietarioId = propietarioId,
     porSubir = pendiente,
     esPropietario = propietarioId == null || yo == null || propietarioId == yo,

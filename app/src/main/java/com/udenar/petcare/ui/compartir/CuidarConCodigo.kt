@@ -36,6 +36,7 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewModelScope
+import androidx.navigation.toRoute
 import com.udenar.petcare.domain.compartir.CompartirException
 import com.udenar.petcare.domain.compartir.EstadoSolicitud
 import com.udenar.petcare.domain.compartir.MascotaPorCodigo
@@ -73,6 +74,7 @@ data class EstadoCuidar(
 /** RF-20: buscar por código (solo nombre y especie) y pedir cuidar; el dueño debe aprobar. */
 @HiltViewModel
 class CuidarViewModel @Inject constructor(
+    estado: androidx.lifecycle.SavedStateHandle,
     private val repo: RepositorioCompartir,
     private val sync: ProgramadorSync,
     private val reloj: Clock,
@@ -83,6 +85,12 @@ class CuidarViewModel @Inject constructor(
 
     init {
         cargarMias()
+        // Desde un QR con código: se prellena y se busca de una vez
+        val desdeQr = estado.toRoute<com.udenar.petcare.ui.navegacion.RutaCuidarCodigo>().codigo
+        if (desdeQr.isNotBlank()) {
+            escribir(desdeQr)
+            buscar()
+        }
     }
 
     fun cargarMias() = viewModelScope.launch {

@@ -260,6 +260,15 @@ fun FormMascotaScreen(
             }
         }
 
+        Seccion("Veterinario de la mascota (opcional)") {
+            CampoTexto(f.vet.nombre, { v -> viewModel.editar { it.copy(vet = it.vet.copy(nombre = v)) } }, "Nombre del veterinario")
+            CampoTexto(f.vet.telefono, { v -> viewModel.editar { it.copy(vet = it.vet.copy(telefono = v)) } }, "Teléfono", teclado = KeyboardType.Phone)
+            CampoTexto(f.vet.clinica, { v -> viewModel.editar { it.copy(vet = it.vet.copy(clinica = v)) } }, "Clínica")
+            CampoTexto(f.vet.direccion, { v -> viewModel.editar { it.copy(vet = it.vet.copy(direccion = v)) } }, "Dirección")
+            CampoTexto(f.vet.horario, { v -> viewModel.editar { it.copy(vet = it.vet.copy(horario = v)) } }, "Horario")
+            CampoTexto(f.vet.notas, { v -> viewModel.editar { it.copy(vet = it.vet.copy(notas = v)) } }, "Observaciones", lineas = 2)
+        }
+
         f.mensaje?.let { Text(it, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodyMedium) }
         BotonPrincipal(
             texto = if (f.esNueva) "Agregar mascota" else "Guardar cambios",

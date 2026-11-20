@@ -93,6 +93,10 @@ dependencies {
 
     // Imágenes (fotos de mascotas desde archivos locales)
     implementation(libs.coil.compose)
+
+    // QR (RF-18, RF-19)
+    implementation(libs.zxing.core)
+    implementation(libs.play.services.code.scanner)
     implementation(libs.ktor.client.okhttp)
 
     // Inyección de dependencias (Hilt)

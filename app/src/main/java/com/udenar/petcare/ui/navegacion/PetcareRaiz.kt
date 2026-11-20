@@ -70,7 +70,8 @@ fun PetcareRaiz() {
                 MascotasScreen(
                     avisar = avisar,
                     onAgregar = { nav.navigate(RutaFormMascota()) },
-                    onCuidar = { nav.navigate(RutaCuidarCodigo) },
+                    onCuidar = { nav.navigate(RutaCuidarCodigo()) },
+                    onQrLeido = { nav.navigate(RutaResultadoQr(it)) },
                     onAbrir = { nav.navigate(RutaDetalleMascota(it)) },
                 )
             }
@@ -92,6 +93,7 @@ fun PetcareRaiz() {
                         val mascotaId = nav.currentBackStackEntry?.toRoute<RutaDetalleMascota>()?.id ?: return@DetalleMascotaScreen
                         nav.navigate(RutaFormCuidado(mascotaId, clase, idCuidado))
                     },
+                    onCarne = { nav.navigate(RutaCarne(it)) },
                     onVisita = { idVisita ->
                         val mascotaId = nav.currentBackStackEntry?.toRoute<RutaDetalleMascota>()?.id ?: return@DetalleMascotaScreen
                         nav.navigate(RutaFormVisita(mascotaId, idVisita))
@@ -101,6 +103,14 @@ fun PetcareRaiz() {
             }
             composable<RutaFormCuidado> { FormCuidadoScreen(onListo = { nav.popBackStack() }) }
             composable<RutaCuidarCodigo> { com.udenar.petcare.ui.compartir.CuidarConCodigoScreen(onVolver = { nav.popBackStack() }) }
+            composable<RutaCarne> { com.udenar.petcare.ui.carne.CarneScreen(onVolver = { nav.popBackStack() }, avisar = avisar) }
+            composable<RutaResultadoQr> { entrada ->
+                com.udenar.petcare.ui.compartir.ResultadoQrScreen(
+                    texto = entrada.toRoute<RutaResultadoQr>().texto,
+                    onVolver = { nav.popBackStack() },
+                    onQuieroCuidar = { codigo -> nav.navigate(RutaCuidarCodigo(codigo)) { popUpTo<RutaResultadoQr> { inclusive = true } } },
+                )
+            }
             composable<RutaFormVisita> { com.udenar.petcare.ui.mascotas.FormVisitaScreen(onListo = { nav.popBackStack() }) }
             composable<RutaServicios> { ServiciosScreen(avisar = avisar) }
             composable<RutaPerfil> { PerfilScreen(avisar = avisar, irAIntenciones = { nav.navigate(RutaIntenciones) }) }

@@ -77,6 +77,7 @@ fun DetalleMascotaScreen(
     onEditar: (String) -> Unit,
     onCuidado: (clase: String, id: String?) -> Unit,
     onVisita: (id: String?) -> Unit,
+    onCarne: (String) -> Unit,
     avisar: (String) -> Unit,
     viewModel: DetalleMascotaViewModel = hiltViewModel(),
 ) {
@@ -174,6 +175,8 @@ fun DetalleMascotaScreen(
                 3 -> TarjetaHistorial(historial)
                 else -> {
                     TarjetaEstadoCuidado(estadoCuidado)
+                    com.udenar.petcare.ui.componentes.BotonSecundario("Carné y QR", onClick = { onCarne(mascota.id) }, modifier = Modifier.testTag("ver_carne"))
+                    mascota.veterinario?.takeIf { !it.vacio }?.let { v -> TarjetaVeterinario(v, contexto) }
                     Row(
                         Modifier
                             .fillMaxWidth()
@@ -442,5 +445,22 @@ private fun TarjetaPersonas(miembros: List<com.udenar.petcare.domain.compartir.M
             confirmButton = { TextButton(onClick = { onQuitar(m); quitar = null }) { Text("Quitar", color = MaterialTheme.colorScheme.error) } },
             dismissButton = { TextButton(onClick = { quitar = null }) { Text("Cancelar") } },
         )
+    }
+}
+
+/** Veterinario de la mascota con botón Llamar (RF-04); lo ven propietario y cuidadores. */
+@Composable
+private fun TarjetaVeterinario(v: com.udenar.petcare.domain.modelo.VeterinarioManual, contexto: Context) {
+    Seccion("Veterinario de ${"la mascota"}") {
+        Text(v.nombre.ifBlank { "Veterinario" }, style = MaterialTheme.typography.titleSmall)
+        listOf(v.clinica, v.direccion, v.horario, v.notas).filter { it.isNotBlank() }.forEach {
+            Text(it, style = MaterialTheme.typography.bodyMedium, color = Pc.TintaSuave)
+        }
+        if (v.telefono.isNotBlank()) {
+            BotonPrincipal("Llamar ${v.telefono}", onClick = {
+                // ACTION_DIAL abre el marcador sin llamar ni pedir permisos
+                contexto.startActivity(Intent(Intent.ACTION_DIAL, android.net.Uri.parse("tel:${v.telefono.filter { it.isDigit() || it == '+' }}")))
+            })
+        }
     }
 }

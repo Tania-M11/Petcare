@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<paths>
+    <!-- Imágenes del QR para compartir -->
+    <cache-path name="compartidos" path="compartidos/" />
+    <!-- Documentos de las mascotas (para abrirlos con otra app) -->
+    <files-path name="documentos" path="documentos/" />
+</paths>

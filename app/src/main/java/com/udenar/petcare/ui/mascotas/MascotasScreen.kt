@@ -54,12 +54,14 @@ fun MascotasScreen(
     avisar: (String) -> Unit,
     onAgregar: () -> Unit,
     onCuidar: () -> Unit,
+    onQrLeido: (String) -> Unit,
     onAbrir: (String) -> Unit,
     modifier: Modifier = Modifier,
     viewModel: MascotasViewModel = hiltViewModel(),
 ) {
     val mascotas by viewModel.mascotas.collectAsStateWithLifecycle()
     var menuAbierto by remember { mutableStateOf(false) }
+    val contexto = androidx.compose.ui.platform.LocalContext.current
 
     LazyColumn(
         modifier.fillMaxSize(),
@@ -141,7 +143,7 @@ fun MascotasScreen(
                 })
                 FilaOpcion(Icons.Rounded.QrCodeScanner, "Escanear QR", "Lee el carné de una mascota", Pc.CieloClaro, Pc.Cielo, onClick = {
                     menuAbierto = false
-                    avisar("\"Escanear QR\" llega en la parte 3.3")
+                    com.udenar.petcare.ui.compartir.escanearQr(contexto, onTexto = onQrLeido, onError = avisar)
                 })
             }
         }

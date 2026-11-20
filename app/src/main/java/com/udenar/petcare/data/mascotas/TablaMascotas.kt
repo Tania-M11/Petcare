@@ -35,13 +35,14 @@ data class MascotaRemota(
     @SerialName("medicamentos_actuales") val medicamentosActuales: String? = null,
     val observaciones: String? = null,
     @SerialName("foto_url") val fotoUrl: String? = null,
+    val veterinario: JsonObject? = null,
     val eliminado: Boolean = false,
     @SerialName("actualizado_en") val actualizadoEn: String? = null,
 ) {
     fun comoEntidad() = MascotaEntidad(
         id, propietarioId, nombre, especie, especieOtro, raza, sexo, fechaNacimiento, nacimientoAproximado, color,
         tamano, pesoGramos, esterilizado, notas, alergias, condiciones, medicamentosActuales, observaciones, fotoUrl,
-        eliminado, actualizadoEn, pendiente = false, cambioLocal = 0,
+        eliminado, actualizadoEn, pendiente = false, cambioLocal = 0, veterinario = veterinario?.toString(),
     )
 }
 
@@ -65,6 +66,7 @@ fun MascotaEntidad.comoFilaRemota(): JsonObject = buildJsonObject {
     put("medicamentos_actuales", medicamentosActuales)
     put("observaciones", observaciones)
     put("foto_url", fotoUrl)
+    put("veterinario", veterinario?.let { Json.parseToJsonElement(it) } ?: kotlinx.serialization.json.JsonNull)
     put("eliminado", eliminado)
 }
 

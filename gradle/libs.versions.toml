@@ -19,6 +19,8 @@ room = "2.8.5"
 work = "2.11.2"
 coroutines = "1.11.0"
 coil = "3.6.3"
+zxing = "3.5.4"
+codeScanner = "16.1.0"
 testExtJunit = "1.3.0"
 # Espresso 3.8 (alpha) es la primera compatible con Android 17 (InputManager.getInstance ya no existe)
 espresso = "3.8.0-alpha04"
@@ -64,6 +66,9 @@ supabase-postgrest = { group = "io.github.jan-tennert.supabase", name = "postgre
 supabase-storage = { group = "io.github.jan-tennert.supabase", name = "storage-kt" }
 supabase-realtime = { group = "io.github.jan-tennert.supabase", name = "realtime-kt" }
 coil-compose = { group = "io.coil-kt.coil3", name = "coil-compose", version.ref = "coil" }
+# QR: generar (ZXing) y leer (escáner de Google Play services, sin permiso de cámara)
+zxing-core = { group = "com.google.zxing", name = "core", version.ref = "zxing" }
+play-services-code-scanner = { group = "com.google.android.gms", name = "play-services-code-scanner", version.ref = "codeScanner" }
 ktor-client-okhttp = { group = "io.ktor", name = "ktor-client-okhttp", version.ref = "ktor" }
 
 # Pruebas instrumentadas (corren en el teléfono)

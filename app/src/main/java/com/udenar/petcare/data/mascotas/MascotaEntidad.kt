@@ -42,6 +42,8 @@ data class MascotaEntidad(
     val fotoLocal: String? = null,
     /** La foto elegida aún no se sube a Storage. */
     @ColumnInfo(defaultValue = "0") val fotoPendiente: Boolean = false,
+    /** Veterinario manual como objeto JSON (RF-04). */
+    val veterinario: String? = null,
 )
 
 @Dao
