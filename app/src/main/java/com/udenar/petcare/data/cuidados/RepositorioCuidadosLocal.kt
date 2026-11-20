@@ -8,6 +8,7 @@ import com.udenar.petcare.domain.cuidados.EventoCuidado
 import com.udenar.petcare.domain.cuidados.Frecuencia
 import com.udenar.petcare.domain.cuidados.MotorCuidados
 import com.udenar.petcare.domain.cuidados.Origen
+import com.udenar.petcare.domain.cuidados.ProgramadorRecordatorios
 import com.udenar.petcare.domain.cuidados.RegistroCuidado
 import com.udenar.petcare.domain.cuidados.RepositorioCuidados
 import com.udenar.petcare.domain.cuidados.TipoCuidado
@@ -38,6 +39,7 @@ class RepositorioCuidadosLocal @Inject constructor(
     private val sync: ProgramadorSync,
     private val cuenta: RepositorioCuenta,
     private val reloj: Clock,
+    private val recordatorios: ProgramadorRecordatorios,
 ) : RepositorioCuidados {
 
     override fun observarEventos(): Flow<List<EventoCuidado>> = eventos.observarActivos().map { l -> l.map { it.comoDominio() } }
@@ -51,12 +53,14 @@ class RepositorioCuidadosLocal @Inject constructor(
     override suspend fun guardarEvento(evento: EventoCuidado) {
         val anterior = eventos.porId(evento.id)
         eventos.guardar(evento.comoEntidad(anterior, siguienteCambio(anterior?.cambioLocal)))
+        recordatorios.reprogramar()
         sync.solicitar()
     }
 
     override suspend fun eliminarEvento(id: String) {
         val actual = eventos.porId(id) ?: return
         eventos.guardar(actual.copy(eliminado = true, pendiente = true, cambioLocal = siguienteCambio(actual.cambioLocal)))
+        recordatorios.reprogramar()
         sync.solicitar()
     }
 
@@ -83,12 +87,14 @@ class RepositorioCuidadosLocal @Inject constructor(
                 cambioLocal = siguienteCambio(anterior?.cambioLocal),
             ),
         )
+        recordatorios.reprogramar()
         sync.solicitar()
     }
 
     override suspend fun deshacer(toma: Toma) {
         val actual = registros.porId(MotorCuidados.idRegistro(toma.evento.id, toma.fechaHora)) ?: return
         registros.guardar(actual.copy(eliminado = true, pendiente = true, cambioLocal = siguienteCambio(actual.cambioLocal)))
+        recordatorios.reprogramar()
         sync.solicitar()
     }
 

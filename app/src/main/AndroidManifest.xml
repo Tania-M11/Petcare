@@ -6,6 +6,10 @@
     <uses-permission android:name="android.permission.INTERNET" />
     <!-- Recordatorios (Android 13+ pide permiso; se solicita desde Primeros pasos) -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <!-- Alarmas a la hora exacta (Android 12+; en 14+ el usuario debe permitirlo) -->
+    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
+    <!-- Reprogramar las alarmas después de reiniciar el teléfono -->
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
 
     <application
         android:name=".PetcareApp"
@@ -25,6 +29,19 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <!-- Recordatorios: alarma que suena, botones de la notificación y eventos del sistema -->
+        <receiver android:name=".data.alarmas.ReceptorAlarma" android:exported="false" />
+        <receiver android:name=".data.alarmas.ReceptorAccion" android:exported="false" />
+        <receiver android:name=".data.alarmas.ReceptorSistema" android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.TIME_SET" />
+                <action android:name="android.intent.action.TIMEZONE_CHANGED" />
+                <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
+                <action android:name="android.app.action.SCHEDULE_EXACT_ALARM_PERMISSION_STATE_CHANGED" />
+            </intent-filter>
+        </receiver>
 
         <!-- WorkManager se configura en PetcareApp (para inyectar dependencias en los trabajos) -->
         <provider

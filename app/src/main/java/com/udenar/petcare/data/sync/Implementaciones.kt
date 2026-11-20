@@ -10,6 +10,8 @@ import androidx.work.NetworkType
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkManager
 import androidx.work.WorkerParameters
+import com.udenar.petcare.data.alarmas.Notificador
+import com.udenar.petcare.data.alarmas.RelojAlarmas
 import com.udenar.petcare.data.cuidados.EventoDao
 import com.udenar.petcare.data.cuidados.RegistroDao
 import com.udenar.petcare.data.fotos.ArchivosFotos
@@ -17,6 +19,7 @@ import com.udenar.petcare.data.local.CursorDao
 import com.udenar.petcare.data.local.CursorEntidad
 import com.udenar.petcare.data.local.PetcareDb
 import com.udenar.petcare.data.mascotas.MascotaDao
+import com.udenar.petcare.domain.cuidados.ProgramadorRecordatorios
 import com.udenar.petcare.domain.sync.AlmacenLocal
 import com.udenar.petcare.domain.sync.EstadoSync
 import com.udenar.petcare.domain.sync.ProgramadorSync
@@ -73,6 +76,7 @@ class TrabajoSincronizacion @AssistedInject constructor(
     @Assisted params: WorkerParameters,
     private val sincronizador: Sincronizador,
     private val supabase: SupabaseClient,
+    private val recordatorios: ProgramadorRecordatorios,
 ) : CoroutineWorker(contexto, params) {
 
     override suspend fun doWork(): Result {
@@ -80,6 +84,8 @@ class TrabajoSincronizacion @AssistedInject constructor(
         if (supabase.auth.currentSessionOrNull() == null) return Result.success()
         return try {
             sincronizador.sincronizar()
+            // Lo que llegó de otros teléfonos también suena aquí (y se retira lo ya resuelto)
+            recordatorios.reprogramar()
             Result.success()
         } catch (e: CancellationException) {
             throw e
@@ -125,9 +131,14 @@ class AlmacenLocalRoom @Inject constructor(
     @ApplicationContext private val contexto: Context,
     private val db: PetcareDb,
     private val fotos: ArchivosFotos,
+    private val reloj: RelojAlarmas,
+    private val notificador: Notificador,
 ) : AlmacenLocal {
     override suspend fun borrarTodo() {
         WorkManager.getInstance(contexto).cancelUniqueWork(ProgramadorWorkManager.NOMBRE)
+        // Al cerrar sesión no queda ninguna alarma ni notificación de esta cuenta
+        db.alarmas().todas().forEach { reloj.cancelar(it.clave) }
+        notificador.retirarTodas()
         withContext(Dispatchers.IO) {
             db.clearAllTables()
             fotos.borrarTodo()

@@ -2,6 +2,8 @@ package com.udenar.petcare.ui.perfil
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.udenar.petcare.data.alarmas.PlanificadorAlarmas
+import com.udenar.petcare.data.alarmas.RelojAlarmas
 import com.udenar.petcare.data.remoto.EstadoServidor
 import com.udenar.petcare.domain.cuenta.RepositorioCuenta
 import com.udenar.petcare.domain.modelo.Usuario
@@ -23,7 +25,21 @@ class PerfilViewModel @Inject constructor(
     private val servidor: EstadoServidor,
     private val cuenta: RepositorioCuenta,
     private val sync: ProgramadorSync,
+    private val relojAlarmas: RelojAlarmas,
+    private val planificador: PlanificadorAlarmas,
 ) : ViewModel() {
+
+    /** Android 12+: permiso de alarmas a la hora exacta (se revisa al volver a la pantalla). */
+    private val _horaExacta = MutableStateFlow(relojAlarmas.puedeExactas())
+    val horaExacta: StateFlow<Boolean> = _horaExacta.asStateFlow()
+
+    fun revisarHoraExacta() {
+        _horaExacta.value = relojAlarmas.puedeExactas()
+        viewModelScope.launch { planificador.reprogramar() }
+    }
+
+    /** Solo en la versión de desarrollo: notificación de prueba en 1 minuto. */
+    fun probarRecordatorio() = planificador.probar()
 
     val estadoSync: StateFlow<EstadoSync?> = sync.estado
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)

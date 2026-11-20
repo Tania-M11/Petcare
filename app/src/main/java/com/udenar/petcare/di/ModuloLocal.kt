@@ -2,6 +2,7 @@ package com.udenar.petcare.di
 
 import android.content.Context
 import androidx.room.Room
+import com.udenar.petcare.data.alarmas.AlarmaDao
 import com.udenar.petcare.data.cuidados.EventoDao
 import com.udenar.petcare.data.cuidados.RegistroDao
 import com.udenar.petcare.data.local.CursorDao
@@ -35,4 +36,7 @@ object ModuloLocal {
 
     @Provides
     fun registros(db: PetcareDb): RegistroDao = db.registros()
+
+    @Provides
+    fun alarmas(db: PetcareDb): AlarmaDao = db.alarmas()
 }

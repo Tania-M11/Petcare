@@ -16,6 +16,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.Logout
+import androidx.compose.material.icons.rounded.Alarm
 import androidx.compose.material.icons.rounded.CloudSync
 import androidx.compose.material.icons.rounded.Explore
 import androidx.compose.material.icons.rounded.Info
@@ -34,7 +35,18 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
+import androidx.core.app.NotificationManagerCompat
+import androidx.core.net.toUri
+import androidx.lifecycle.compose.LifecycleResumeEffect
+import android.Manifest
+import android.content.Intent
+import android.os.Build
+import android.provider.Settings
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import com.udenar.petcare.BuildConfig
 import androidx.compose.ui.res.painterResource
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -61,6 +73,18 @@ fun PerfilScreen(
     val conexion by viewModel.conexion.collectAsStateWithLifecycle()
     val usuario by viewModel.usuario.collectAsStateWithLifecycle()
     val estadoSync by viewModel.estadoSync.collectAsStateWithLifecycle()
+    val horaExacta by viewModel.horaExacta.collectAsStateWithLifecycle()
+    val contexto = LocalContext.current
+    var notificacionesActivas by remember { mutableStateOf(NotificationManagerCompat.from(contexto).areNotificationsEnabled()) }
+    LifecycleResumeEffect(Unit) {
+        notificacionesActivas = NotificationManagerCompat.from(contexto).areNotificationsEnabled()
+        viewModel.revisarHoraExacta()
+        onPauseOrDispose { }
+    }
+    val pedirNotificaciones = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { ok ->
+        notificacionesActivas = ok
+        if (!ok) avisar("Actívalas en los ajustes del teléfono para recibir recordatorios")
+    }
     var confirmarSalida by remember { mutableStateOf(false) }
 
     Column(
@@ -126,12 +150,42 @@ fun PerfilScreen(
             )
             FilaOpcion(
                 icono = Icons.Rounded.NotificationsActive,
-                titulo = "Notificaciones",
-                subtitulo = "Elige de qué mascotas recibes avisos",
-                fondoIcono = Pc.MentaClara,
-                colorIcono = Pc.Menta,
-                onClick = { avisar("Las notificaciones llegan en la parte 2.4") },
+                titulo = "Recordatorios",
+                subtitulo = when {
+                    !notificacionesActivas -> "Notificaciones desactivadas · toca para activarlas"
+                    !horaExacta -> "Pueden llegar unos minutos tarde · toca para permitir la hora exacta"
+                    else -> "Activados, a la hora exacta"
+                },
+                fondoIcono = if (notificacionesActivas && horaExacta) Pc.MentaClara else Pc.Durazno,
+                colorIcono = if (notificacionesActivas && horaExacta) Pc.Menta else Pc.Naranja,
+                onClick = {
+                    when {
+                        !notificacionesActivas && Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU ->
+                            pedirNotificaciones.launch(Manifest.permission.POST_NOTIFICATIONS)
+                        !notificacionesActivas -> contexto.startActivity(
+                            Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS).putExtra(Settings.EXTRA_APP_PACKAGE, contexto.packageName),
+                        )
+                        !horaExacta && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> contexto.startActivity(
+                            Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM, "package:${contexto.packageName}".toUri()),
+                        )
+                        else -> avisar("Tus recordatorios están listos")
+                    }
+                },
+                modifier = Modifier.testTag("fila_recordatorios"),
             )
+            if (BuildConfig.DEBUG) {
+                FilaOpcion(
+                    icono = Icons.Rounded.Alarm,
+                    titulo = "Probar recordatorio",
+                    subtitulo = "Solo en desarrollo: suena en 1 minuto, aunque cierres la app",
+                    fondoIcono = Pc.SolClaro,
+                    colorIcono = Pc.Naranja,
+                    onClick = {
+                        viewModel.probarRecordatorio()
+                        avisar("Cierra la app: en 1 minuto llega la notificación")
+                    },
+                )
+            }
             FilaOpcion(
                 icono = Icons.Rounded.CloudSync,
                 titulo = "Sincronización",
@@ -147,7 +201,7 @@ fun PerfilScreen(
             FilaOpcion(
                 icono = Icons.Rounded.Info,
                 titulo = "Acerca de PetCare",
-                subtitulo = "Versión 0.6 · créditos",
+                subtitulo = "Versión 0.7 · créditos",
                 fondoIcono = Pc.LavandaClara,
                 colorIcono = Pc.Lavanda,
                 onClick = {

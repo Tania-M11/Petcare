@@ -104,6 +104,7 @@ dependencies {
 
     // Pruebas instrumentadas: ./gradlew connectedDebugAndroidTest (o "Run" sobre la clase en Android Studio)
     androidTestImplementation(libs.androidx.test.runner)
+    androidTestImplementation(libs.androidx.test.rules)
     androidTestImplementation(libs.androidx.test.ext.junit)
     androidTestImplementation(platform(libs.androidx.compose.bom))
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)

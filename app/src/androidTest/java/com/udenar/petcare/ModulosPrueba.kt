@@ -2,6 +2,7 @@ package com.udenar.petcare
 
 import android.content.Context
 import androidx.room.Room
+import com.udenar.petcare.data.alarmas.AlarmaDao
 import com.udenar.petcare.data.cuidados.EventoDao
 import com.udenar.petcare.data.cuidados.RegistroDao
 import com.udenar.petcare.data.local.CursorDao
@@ -48,6 +49,9 @@ object ModuloLocalPrueba {
 
     @Provides
     fun registros(db: PetcareDb): RegistroDao = db.registros()
+
+    @Provides
+    fun alarmas(db: PetcareDb): AlarmaDao = db.alarmas()
 }
 
 /** Supabase con la sesión solo en memoria: no reemplaza la sesión real guardada en el teléfono. */
@@ -82,4 +86,27 @@ class ProgramadorFalso @Inject constructor(mascotas: MascotaDao) : ProgramadorSy
 abstract class ModuloTrabajosPrueba {
     @Binds
     abstract fun programador(p: ProgramadorFalso): ProgramadorSync
+}
+
+/** Reloj de alarmas en memoria: las pruebas no dejan alarmas reales en el teléfono. */
+@Singleton
+class RelojAlarmasFalso @Inject constructor() : com.udenar.petcare.data.alarmas.RelojAlarmas {
+    val programadas = mutableMapOf<String, java.time.Instant>()
+    override fun programar(datos: com.udenar.petcare.data.alarmas.DatosAlarma, cuando: java.time.Instant) {
+        programadas[datos.clave] = cuando
+    }
+    override fun cancelar(clave: String) {
+        programadas.remove(clave)
+    }
+    override fun puedeExactas() = true
+}
+
+@Module
+@TestInstallIn(components = [SingletonComponent::class], replaces = [com.udenar.petcare.di.ModuloAlarmas::class])
+abstract class ModuloAlarmasPrueba {
+    @Binds
+    abstract fun reloj(r: RelojAlarmasFalso): com.udenar.petcare.data.alarmas.RelojAlarmas
+
+    @Binds
+    abstract fun recordatorios(p: com.udenar.petcare.data.alarmas.PlanificadorAlarmas): com.udenar.petcare.domain.cuidados.ProgramadorRecordatorios
 }

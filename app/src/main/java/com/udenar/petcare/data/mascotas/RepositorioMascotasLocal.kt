@@ -2,6 +2,7 @@ package com.udenar.petcare.data.mascotas
 
 import com.udenar.petcare.data.fotos.AlmacenFotos
 import com.udenar.petcare.data.fotos.ArchivosFotos
+import com.udenar.petcare.domain.cuidados.ProgramadorRecordatorios
 import com.udenar.petcare.domain.mascotas.CodigoMascota
 import com.udenar.petcare.domain.mascotas.RepositorioMascotas
 import com.udenar.petcare.domain.modelo.Especie
@@ -35,6 +36,7 @@ class RepositorioMascotasLocal @Inject constructor(
     private val fotos: AlmacenFotos,
     private val archivos: ArchivosFotos,
     private val supabase: SupabaseClient,
+    private val recordatorios: ProgramadorRecordatorios,
 ) : RepositorioMascotas {
 
     override fun observar(): Flow<List<Mascota>> = dao.observarActivas().map { lista -> lista.map { it.comoDominio() } }
@@ -78,6 +80,8 @@ class RepositorioMascotasLocal @Inject constructor(
         val actual = dao.porId(id) ?: return
         dao.guardar(actual.copy(eliminado = true, pendiente = true, cambioLocal = maxOf(reloj.millis(), actual.cambioLocal + 1)))
         actual.fotoLocal?.let { File(it).delete() }
+        // Sus cuidados dejan de sonar
+        recordatorios.reprogramar()
         sync.solicitar()
     }
 }
