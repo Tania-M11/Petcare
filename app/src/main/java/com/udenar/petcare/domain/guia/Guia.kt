@@ -43,10 +43,11 @@ object Guia {
     const val CERRADA = "GUIA_CERRADA"
     const val NOTIFICACIONES = "notificaciones"
     const val CREAR_MASCOTA = "crear_mascota"
+    const val PRIMER_RECORDATORIO = "primer_recordatorio"
 
     private val PASOS = listOf(
         PasoGuia(CREAR_MASCOTA, Intencion.MASCOTAS, "Agrega a tu primera mascota", "Su ficha, foto y especie", DestinoPaso.MASCOTAS, null),
-        PasoGuia("primer_recordatorio", Intencion.MASCOTAS, "Crea su primer recordatorio", "Comida, medicina o baño", DestinoPaso.MASCOTAS, "la parte 2.5"),
+        PasoGuia(PRIMER_RECORDATORIO, Intencion.MASCOTAS, "Crea su primer recordatorio", "Comida, medicina o baño (desde su ficha)", DestinoPaso.MASCOTAS, null),
         PasoGuia(NOTIFICACIONES, Intencion.MASCOTAS, "Activa las notificaciones", "Para que los recordatorios suenen", DestinoPaso.NOTIFICACIONES, null),
         PasoGuia("codigo_cuidar", Intencion.CUIDAR, "Escribe el código de la mascota", "Pídeselo a su dueño", DestinoPaso.MASCOTAS, "la parte 3.1"),
         PasoGuia("aprobacion", Intencion.CUIDAR, "Espera la aprobación", "El dueño confirma que la cuidas", DestinoPaso.MASCOTAS, "la parte 3.1"),

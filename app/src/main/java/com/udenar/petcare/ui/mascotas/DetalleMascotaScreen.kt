@@ -25,6 +25,9 @@ import androidx.compose.material.icons.rounded.ContentCopy
 import androidx.compose.material.icons.rounded.Edit
 import androidx.compose.material.icons.rounded.Share
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.foundation.clickable
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -49,6 +52,8 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.udenar.petcare.domain.mascotas.FichaMascota
 import com.udenar.petcare.domain.modelo.Mascota
 import com.udenar.petcare.ui.componentes.AvatarMascota
+import com.udenar.petcare.ui.cuidados.ClaseCuidado
+import com.udenar.petcare.ui.cuidados.SeccionCuidados
 import com.udenar.petcare.ui.componentes.BotonCircular
 import com.udenar.petcare.ui.componentes.BotonPrincipal
 import com.udenar.petcare.ui.componentes.Chip
@@ -63,16 +68,19 @@ import java.util.Locale
 private val FECHA = DateTimeFormatter.ofPattern("d MMM yyyy", Locale.forLanguageTag("es-CO"))
 
 /** Ficha de la mascota (vista del propietario). Las secciones de salud y cuidados llegan en la fase 2. */
-@OptIn(ExperimentalLayoutApi::class)
+@OptIn(ExperimentalLayoutApi::class, ExperimentalMaterial3Api::class)
 @Composable
 fun DetalleMascotaScreen(
     onVolver: () -> Unit,
     onEditar: (String) -> Unit,
+    onCuidado: (clase: String, id: String?) -> Unit,
     avisar: (String) -> Unit,
     viewModel: DetalleMascotaViewModel = hiltViewModel(),
 ) {
     val m by viewModel.mascota.collectAsStateWithLifecycle()
     val codigo by viewModel.codigo.collectAsStateWithLifecycle()
+    val cuidados by viewModel.cuidados.collectAsStateWithLifecycle()
+    var elegirClase by remember { mutableStateOf(false) }
     var confirmarEliminar by remember { mutableStateOf(false) }
     val contexto = LocalContext.current
 
@@ -132,6 +140,12 @@ fun DetalleMascotaScreen(
                 .navigationBarsPadding(),
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
+            SeccionCuidados(
+                cuidados,
+                onAgregar = { elegirClase = true },
+                onAbrir = { e -> onCuidado(ClaseCuidado.de(e.tipo).name, e.id) },
+            )
+
             TarjetaCodigo(mascota, codigo, contexto, avisar, onReintentar = viewModel::cargarCodigo)
 
             Seccion("Ficha") {
@@ -163,6 +177,36 @@ fun DetalleMascotaScreen(
             BotonPrincipal("Editar ficha", onClick = { onEditar(mascota.id) })
             TextButton(onClick = { confirmarEliminar = true }, modifier = Modifier.align(Alignment.CenterHorizontally)) {
                 Text("Eliminar mascota", color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.labelLarge)
+            }
+        }
+    }
+
+    if (elegirClase) {
+        ModalBottomSheet(onDismissRequest = { elegirClase = false }, containerColor = Pc.Crema) {
+            Column(
+                Modifier
+                    .padding(horizontal = 16.dp)
+                    .padding(bottom = 16.dp)
+                    .navigationBarsPadding(),
+            ) {
+                Text("¿Qué cuidado agregas?", style = MaterialTheme.typography.headlineSmall, modifier = Modifier.padding(start = 12.dp, bottom = 8.dp))
+                ClaseCuidado.entries.forEach { c ->
+                    Row(
+                        Modifier
+                            .fillMaxWidth()
+                            .clip(MaterialTheme.shapes.medium)
+                            .clickable {
+                                elegirClase = false
+                                onCuidado(c.name, null)
+                            }
+                            .padding(horizontal = 12.dp, vertical = 12.dp)
+                            .testTag("clase_${c.name}"),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Text(c.emoji, fontSize = 22.sp)
+                        Text(c.titulo, style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(start = 14.dp))
+                    }
+                }
             }
         }
     }

@@ -17,6 +17,9 @@ import kotlinx.serialization.Serializable
 @Serializable data class RutaFormMascota(val id: String? = null)
 @Serializable data class RutaDetalleMascota(val id: String)
 
+/** [clase] = ClaseCuidado.name; [id] = null para uno nuevo. */
+@Serializable data class RutaFormCuidado(val mascotaId: String, val clase: String, val id: String? = null)
+
 /** Las 4 pestañas del modo personal (plan, sección 3). El calendario vive dentro de Hoy. */
 enum class PestanaPersonal(val ruta: Any, val etiqueta: String, val icono: ImageVector, val etiquetaPrueba: String) {
     HOY(RutaHoy, "Hoy", Icons.Rounded.WbSunny, "pestana_hoy"),

@@ -4,7 +4,12 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.toRoute
+import com.udenar.petcare.domain.cuidados.RepositorioCuidados
 import com.udenar.petcare.domain.mascotas.CodigoMascota
+import com.udenar.petcare.ui.cuidados.ResumenCuidado
+import com.udenar.petcare.ui.cuidados.resumir
+import kotlinx.coroutines.flow.combine
+import java.time.LocalDateTime
 import com.udenar.petcare.domain.mascotas.RepositorioMascotas
 import com.udenar.petcare.domain.modelo.Mascota
 import com.udenar.petcare.ui.navegacion.RutaDetalleMascota
@@ -35,6 +40,7 @@ class DetalleMascotaViewModel @Inject constructor(
     estado: SavedStateHandle,
     private val repo: RepositorioMascotas,
     private val reloj: Clock,
+    cuidados: RepositorioCuidados,
 ) : ViewModel() {
 
     val id = estado.toRoute<RutaDetalleMascota>().id
@@ -42,6 +48,12 @@ class DetalleMascotaViewModel @Inject constructor(
     val mascota: StateFlow<Mascota?> = repo.observar()
         .map { lista -> lista.firstOrNull { it.id == id } }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
+
+    /** Cuidados de esta mascota con su próxima fecha y estado. */
+    val cuidados: StateFlow<List<ResumenCuidado>> = combine(cuidados.observarEventos(), cuidados.observarRegistros()) { e, r ->
+        val ahora = LocalDateTime.now(reloj)
+        e.filter { it.mascotaId == id }.map { resumir(it, r, ahora, reloj.zone) }
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
     private val _codigo = MutableStateFlow<EstadoCodigo>(EstadoCodigo.Cargando)
     val codigo: StateFlow<EstadoCodigo> = _codigo.asStateFlow()

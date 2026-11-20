@@ -17,6 +17,8 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.toRoute
+import com.udenar.petcare.ui.cuidados.FormCuidadoScreen
 import com.udenar.petcare.ui.guia.IntencionesScreen
 import com.udenar.petcare.ui.hoy.HoyScreen
 import com.udenar.petcare.ui.mascotas.DetalleMascotaScreen
@@ -84,9 +86,14 @@ fun PetcareRaiz() {
                 DetalleMascotaScreen(
                     onVolver = { nav.popBackStack() },
                     onEditar = { nav.navigate(RutaFormMascota(it)) },
+                    onCuidado = { clase, idCuidado ->
+                        val mascotaId = nav.currentBackStackEntry?.toRoute<RutaDetalleMascota>()?.id ?: return@DetalleMascotaScreen
+                        nav.navigate(RutaFormCuidado(mascotaId, clase, idCuidado))
+                    },
                     avisar = avisar,
                 )
             }
+            composable<RutaFormCuidado> { FormCuidadoScreen(onListo = { nav.popBackStack() }) }
             composable<RutaServicios> { ServiciosScreen(avisar = avisar) }
             composable<RutaPerfil> { PerfilScreen(avisar = avisar, irAIntenciones = { nav.navigate(RutaIntenciones) }) }
             composable<RutaIntenciones> {
