@@ -315,6 +315,8 @@ fun DialogoSolicitudPresDueno(
     onConfirmar: () -> Unit,
     onCancelar: () -> Unit,
     onDejarDeCompartir: () -> Unit,
+    yaCalificada: Boolean = false,
+    onCalificar: () -> Unit = {},
 ) {
     AlertDialog(
         onDismissRequest = onCerrar,
@@ -343,6 +345,9 @@ fun DialogoSolicitudPresDueno(
                 }
                 if (s.estado == EstadoSolicitudPres.COTIZADA && !s.cotizacionVencida(hoy)) {
                     BotonPrincipal("Aceptar propuesta", onClick = onConfirmar, modifier = Modifier.testTag("confirmar_cotizacion"))
+                }
+                if (s.estado == EstadoSolicitudPres.COMPLETADA) {
+                    BotonPrincipal(if (yaCalificada) "Editar mi reseña" else "Calificar a ${s.prestadorNombre}", onClick = onCalificar, modifier = Modifier.testTag("calificar"))
                 }
                 if (s.estado.abierta) {
                     TextButton(onClick = onDejarDeCompartir) { Text("Dejar de compartir mis datos", color = Pc.TintaSuave) }

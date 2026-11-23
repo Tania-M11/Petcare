@@ -155,6 +155,7 @@ fun RegistroScreen(
         }
 
         ErrorGeneral(f.errorGeneral)
+        Aviso(f.aviso)
         BotonPrincipal("Crear cuenta", onClick = viewModel::registrar, cargando = f.cargando)
         Text(
             "¿Ya tienes cuenta? Inicia sesión",
@@ -175,6 +176,7 @@ fun RegistroScreen(
 fun InicioSesionScreen(
     onVolver: () -> Unit,
     onIrARegistro: () -> Unit,
+    onOlvide: () -> Unit,
     viewModel: InicioSesionViewModel = hiltViewModel(),
 ) {
     val f by viewModel.form.collectAsStateWithLifecycle()
@@ -192,6 +194,17 @@ fun InicioSesionScreen(
         ErrorGeneral(f.errorGeneral)
         BotonPrincipal("Entrar", onClick = viewModel::entrar, cargando = f.cargando)
         Text(
+            "¿Olvidaste tu contraseña?",
+            style = MaterialTheme.typography.labelLarge,
+            color = Pc.TintaSuave,
+            modifier = Modifier
+                .align(Alignment.CenterHorizontally)
+                .clip(MaterialTheme.shapes.small)
+                .clickable(onClick = onOlvide)
+                .padding(10.dp)
+                .testTag("olvide_clave"),
+        )
+        Text(
             "¿No tienes cuenta? Crea una",
             style = MaterialTheme.typography.labelLarge,
             color = Pc.Naranja,
@@ -201,5 +214,57 @@ fun InicioSesionScreen(
                 .clickable(onClick = onIrARegistro)
                 .padding(10.dp),
         )
+    }
+}
+
+@Composable
+private fun Aviso(texto: String?) {
+    if (texto != null) {
+        Text(
+            texto,
+            style = MaterialTheme.typography.bodyMedium,
+            color = Pc.Tinta,
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(MaterialTheme.shapes.small)
+                .background(Pc.MentaClara)
+                .padding(14.dp)
+                .testTag("aviso_acceso"),
+        )
+    }
+}
+
+/** Recuperar contraseña: envía un enlace al correo (5.2). */
+@Composable
+fun RecuperarClaveScreen(onVolver: () -> Unit, viewModel: RecuperarClaveViewModel = hiltViewModel()) {
+    val f by viewModel.form.collectAsStateWithLifecycle()
+    MarcoFormulario("¿Olvidaste tu contraseña?", "Te enviamos un enlace", R.drawable.chopper_organizador, onVolver) {
+        Text("Escribe el correo de tu cuenta. El enlace abre PetCare para que crees una contraseña nueva.", style = MaterialTheme.typography.bodyMedium, color = Pc.TintaSuave)
+        CampoTexto(
+            f.correo, viewModel::correo, "Correo", icono = Icons.Rounded.Mail, error = f.errores[Campo.CORREO],
+            teclado = KeyboardType.Email, accion = ImeAction.Done, onAccion = viewModel::enviar, habilitado = !f.cargando,
+            modifier = Modifier.testTag("correo_recuperar"),
+        )
+        ErrorGeneral(f.errorGeneral)
+        Aviso(f.aviso)
+        BotonPrincipal("Enviar enlace", onClick = viewModel::enviar, cargando = f.cargando, modifier = Modifier.testTag("enviar_enlace"))
+    }
+}
+
+/** Se abre con el enlace de recuperación: la sesión ya está iniciada y falta la contraseña nueva. */
+@Composable
+fun NuevaClaveScreen(viewModel: NuevaClaveViewModel = hiltViewModel()) {
+    val f by viewModel.form.collectAsStateWithLifecycle()
+    MarcoFormulario("Nueva contraseña", "Elige una que recuerdes", R.drawable.chopper_saludo, viewModel::cancelar) {
+        CampoTexto(
+            f.clave, viewModel::clave, "Contraseña nueva (mínimo 8)", icono = Icons.Rounded.Lock, error = f.errores[Campo.CLAVE],
+            teclado = KeyboardType.Password, esClave = true, habilitado = !f.cargando,
+        )
+        CampoTexto(
+            f.clave2, viewModel::clave2, "Repítela", icono = Icons.Rounded.Lock,
+            teclado = KeyboardType.Password, accion = ImeAction.Done, onAccion = viewModel::guardar, esClave = true, habilitado = !f.cargando,
+        )
+        ErrorGeneral(f.errorGeneral)
+        BotonPrincipal("Guardar contraseña", onClick = viewModel::guardar, cargando = f.cargando)
     }
 }

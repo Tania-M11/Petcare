@@ -348,11 +348,6 @@ fun DetallePrestadorScreen(onVolver: () -> Unit, onSolicitar: () -> Unit, avisar
                 if (p.noDisponible.isNotEmpty()) Text("No disponible: " + p.noDisponible.joinToString(", ") { it.format(FECHA_CORTA) }, style = MaterialTheme.typography.bodySmall, color = Pc.TintaSuave)
             }
         }
-        Seccion("Reseñas") {
-            Text(
-                p.promedio?.let { "★ " + String.format(LOCALE, "%.1f", it) + " (${p.ratingCantidad})" } ?: "Aún sin reseñas",
-                style = MaterialTheme.typography.bodyMedium, color = Pc.TintaSuave,
-            )
-        }
+        SeccionResenas(p.id, com.udenar.petcare.domain.profesionales.TipoResena.PRESTADOR, p.promedio, p.ratingCantidad, avisar)
     }
 }

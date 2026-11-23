@@ -30,6 +30,7 @@ class PerfilViewModel @Inject constructor(
     private val veterinarios: com.udenar.petcare.domain.profesionales.RepositorioVeterinarios,
     private val modo: com.udenar.petcare.domain.profesionales.RepositorioModo,
     prestadoresRepo: com.udenar.petcare.domain.profesionales.RepositorioPrestadores,
+    private val push: com.udenar.petcare.data.avisos.PushFcm,
 ) : ViewModel() {
 
     val perfilVet: StateFlow<com.udenar.petcare.domain.profesionales.PerfilVeterinario?> = veterinarios.miPerfil
@@ -59,7 +60,28 @@ class PerfilViewModel @Inject constructor(
     val usuario: StateFlow<Usuario?> = cuenta.usuario
 
     fun cerrarSesion() {
-        viewModelScope.launch { cuenta.cerrarSesion() }
+        viewModelScope.launch {
+            // Este teléfono deja de recibir los avisos de la cuenta
+            push.olvidar()
+            cuenta.cerrarSesion()
+        }
+    }
+
+    private val _eliminando = MutableStateFlow(false)
+    val eliminando: StateFlow<Boolean> = _eliminando.asStateFlow()
+
+    /** Elimina la cuenta, sus archivos y todo lo del teléfono (5.2). */
+    fun eliminarCuenta(avisar: (String) -> Unit) {
+        _eliminando.value = true
+        viewModelScope.launch {
+            try {
+                cuenta.eliminarCuenta()
+            } catch (e: com.udenar.petcare.domain.cuenta.CuentaException) {
+                avisar(e.message ?: "No se pudo eliminar la cuenta")
+            } finally {
+                _eliminando.value = false
+            }
+        }
     }
 
     private val _conexion = MutableStateFlow(Conexion.COMPROBANDO)

@@ -91,6 +91,8 @@ fun PerfilScreen(
     }
     var confirmarSalida by remember { mutableStateOf(false) }
     var trabajar by remember { mutableStateOf(false) }
+    var eliminar by remember { mutableStateOf(false) }
+    val eliminando by viewModel.eliminando.collectAsStateWithLifecycle()
     val perfilVet by viewModel.perfilVet.collectAsStateWithLifecycle()
     val perfilPres by viewModel.perfilPres.collectAsStateWithLifecycle()
 
@@ -235,7 +237,7 @@ fun PerfilScreen(
             FilaOpcion(
                 icono = Icons.Rounded.Info,
                 titulo = "Acerca de PetCare",
-                subtitulo = "Versión 0.7 · créditos",
+                subtitulo = "Versión ${BuildConfig.VERSION_NAME} · créditos",
                 fondoIcono = Pc.LavandaClara,
                 colorIcono = Pc.Lavanda,
                 onClick = {
@@ -252,6 +254,39 @@ fun PerfilScreen(
                 onClick = { confirmarSalida = true },
             )
         }
+        TextButton(onClick = { eliminar = true }, modifier = Modifier.align(Alignment.CenterHorizontally).testTag("eliminar_cuenta")) {
+            Text("Eliminar mi cuenta", color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.labelLarge)
+        }
+    }
+
+    if (eliminar) {
+        var confirmacion by remember { mutableStateOf("") }
+        AlertDialog(
+            onDismissRequest = { if (!eliminando) eliminar = false },
+            containerColor = Pc.Crema,
+            title = { Text("¿Eliminar tu cuenta?", style = MaterialTheme.typography.headlineSmall) },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    Text(
+                        "Se borran para siempre tus mascotas, sus cuidados, fotos y documentos, tus perfiles profesionales, " +
+                            "solicitudes y reseñas. Quienes cuidan tus mascotas pierden el acceso. No se puede deshacer.",
+                        style = MaterialTheme.typography.bodyMedium,
+                    )
+                    com.udenar.petcare.ui.componentes.CampoTexto(
+                        confirmacion, { confirmacion = it }, "Escribe ELIMINAR para confirmar",
+                        modifier = Modifier.testTag("confirmar_eliminar"),
+                    )
+                }
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = { viewModel.eliminarCuenta(avisar) },
+                    enabled = confirmacion.trim().equals("ELIMINAR", ignoreCase = true) && !eliminando,
+                    modifier = Modifier.testTag("boton_eliminar_cuenta"),
+                ) { Text(if (eliminando) "Eliminando…" else "Eliminar cuenta", color = MaterialTheme.colorScheme.error) }
+            },
+            dismissButton = { TextButton(onClick = { eliminar = false }, enabled = !eliminando) { Text("Cancelar") } },
+        )
     }
 
     if (trabajar) {

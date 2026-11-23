@@ -34,7 +34,23 @@
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
+            <!-- Enlaces de los correos de Supabase: confirmar cuenta y recuperar contraseña -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="petcare" android:host="auth" />
+            </intent-filter>
         </activity>
+
+        <!-- Push de solicitudes (FCM; activo solo con google-services.json) -->
+        <service
+            android:name=".data.avisos.ServicioMensajes"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="com.google.firebase.MESSAGING_EVENT" />
+            </intent-filter>
+        </service>
 
         <!-- Paseo en curso: sigue con la pantalla apagada -->
         <service

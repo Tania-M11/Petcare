@@ -321,11 +321,6 @@ fun DetalleVeterinarioScreen(onVolver: () -> Unit, onSolicitar: () -> Unit, avis
             Text(v.direccion + ", " + v.ciudad, style = MaterialTheme.typography.bodyMedium)
         }
         v.descripcion?.let { Seccion("Sobre mí") { Text(it, style = MaterialTheme.typography.bodyMedium) } }
-        Seccion("Reseñas") {
-            Text(
-                v.promedio?.let { "★ " + String.format(LOCALE, "%.1f", it) + " (${v.ratingCantidad})" } ?: "Aún sin reseñas",
-                style = MaterialTheme.typography.bodyMedium, color = Pc.TintaSuave,
-            )
-        }
+        SeccionResenas(v.id, com.udenar.petcare.domain.profesionales.TipoResena.VET, v.promedio, v.ratingCantidad, avisar)
     }
 }

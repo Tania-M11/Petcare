@@ -14,8 +14,11 @@ interface RepositorioCuenta {
     val estadoSesion: Flow<EstadoSesion>
     val usuario: StateFlow<Usuario?>
 
-    /** Crea la cuenta e inicia sesión. Solo se llama si el usuario aceptó la política de privacidad. */
-    suspend fun registrar(nombre: String, correo: String, clave: String)
+    /**
+     * Crea la cuenta. Solo se llama si el usuario aceptó la política de privacidad.
+     * Devuelve true si ya entró; false si antes debe confirmar su correo.
+     */
+    suspend fun registrar(nombre: String, correo: String, clave: String): Boolean
     suspend fun iniciarSesion(correo: String, clave: String)
     suspend fun cerrarSesion()
 
@@ -27,4 +30,13 @@ interface RepositorioCuenta {
 
     /** Refresca los datos del usuario desde el servidor (si no hay red, conserva los de la sesión). */
     suspend fun cargarUsuario()
+
+    /** Envía el correo con el enlace para crear una contraseña nueva (no revela si la cuenta existe). */
+    suspend fun recuperarClave(correo: String)
+
+    /** Cambia la contraseña de la sesión actual (después de abrir el enlace de recuperación). */
+    suspend fun cambiarClave(nueva: String)
+
+    /** Borra sus archivos, su cuenta con todos sus datos y lo guardado en el teléfono. No se puede deshacer. */
+    suspend fun eliminarCuenta()
 }

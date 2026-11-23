@@ -160,5 +160,14 @@ Reglas: una parte por sesión · compila y se prueba en el teléfono antes de se
 | | 4.3 | Solicitudes a veterinario, vínculo y registros clínicos (`supabase/13_solicitudes_vet.sql`) | ✅ |
 | | 4.4 | Perfil de prestador (categorías, servicios, horario, galería); directorio y mapa (`supabase/14_prestadores.sql`; categorías nuevas = una fila en `categorias_servicio`) | ✅ |
 | | 4.5 | Cotizaciones y datos compartidos con el prestador (`supabase/15_cotizaciones.sql`) | ✅ |
-| **5 Cierre** | 5.1 | Notificaciones push y reseñas (+ reportar) | |
-| | 5.2 | Eliminar cuenta, recuperar contraseña (pospuesta por Tania), confirmación de correo y protección de contraseñas filtradas, pulido y pruebas con varias cuentas | |
+| **5 Cierre** | 5.1 | Avisos (tabla `notificaciones` por triggers → Realtime, revisión cada 15 min y push FCM con la Edge Function `notificar`), reseñas con promedio del servidor y reportes (`supabase/16_notificaciones_resenas.sql`) | ✅ |
+| | 5.2 | Eliminar cuenta (archivos + datos), recuperar contraseña y confirmación de correo con enlaces `petcare://auth`, versión 1.0, pruebas con varias cuentas | ✅ |
+
+### Pendiente en paneles (no se puede hacer desde la app ni con SQL)
+
+1. **Supabase → Authentication → URL Configuration:** agregar `petcare://auth/**` en *Redirect URLs* (los enlaces de confirmar cuenta y recuperar contraseña vuelven a la app).
+2. **Supabase → Authentication → Sign In / Providers → Email:** activar *Confirm email* antes de entregar (la app ya avisa "Te enviamos un correo").
+3. **Supabase → Authentication → Attack Protection:** activar *Leaked password protection* (requiere plan Pro; en el plan gratuito queda la regla de mínimo 8 caracteres).
+4. **Push con la app cerrada (opcional):** crear un proyecto en Firebase con el paquete `com.udenar.petcare`, poner `google-services.json` en `app/` y guardar el JSON de una cuenta de servicio en el secreto `FCM_SERVICE_ACCOUNT` de Edge Functions. Sin esto los avisos llegan igual con la app abierta y cada 15 minutos.
+5. **Storage:** borrar los 3 archivos de prueba huérfanos (2 en `mascotas`, 1 en `galeria`).
+

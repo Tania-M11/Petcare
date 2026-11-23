@@ -139,6 +139,27 @@ class CotizacionesFalsas @Inject constructor() : com.udenar.petcare.domain.profe
     }
 }
 
+/** Reseñas y reportes en memoria. */
+@Singleton
+class ResenasFalsas @Inject constructor() : com.udenar.petcare.domain.profesionales.RepositorioResenas {
+    val resenas = mutableListOf<Pair<String, com.udenar.petcare.domain.profesionales.Resena>>() // profesional → reseña
+    val reportes = mutableListOf<Pair<com.udenar.petcare.domain.profesionales.TipoReporte, String>>()
+
+    override suspend fun de(profesionalId: String, tipo: com.udenar.petcare.domain.profesionales.TipoResena, pagina: Int, tamano: Int) =
+        resenas.filter { it.first == profesionalId }.map { it.second }.drop(pagina * tamano).take(tamano)
+    override suspend fun mias() = resenas.map { it.second }.filter { it.mia }.associateBy { it.solicitudId }
+    override suspend fun guardar(solicitudId: String, tipo: com.udenar.petcare.domain.profesionales.TipoResena, estrellas: Int, comentario: String?) {
+        resenas.removeAll { it.second.solicitudId == solicitudId }
+        resenas += "?" to com.udenar.petcare.domain.profesionales.Resena("r$solicitudId", solicitudId, "Ana María", estrellas, comentario, java.time.LocalDate.now(), mia = true)
+    }
+    override suspend fun eliminar(solicitudId: String) {
+        resenas.removeAll { it.second.solicitudId == solicitudId }
+    }
+    override suspend fun reportar(tipo: com.udenar.petcare.domain.profesionales.TipoReporte, refId: String, motivo: com.udenar.petcare.domain.profesionales.MotivoReporte, detalle: String?) {
+        reportes += tipo to refId
+    }
+}
+
 /** Solicitudes y fichas en memoria para las pruebas de interfaz. */
 @Singleton
 class AtencionVetFalsa @Inject constructor() : com.udenar.petcare.domain.profesionales.RepositorioAtencionVet {
@@ -199,6 +220,8 @@ abstract class ModuloProfesionalesPrueba {
     @Binds abstract fun prestadores(p: PrestadoresFalso): com.udenar.petcare.domain.profesionales.RepositorioPrestadores
 
     @Binds abstract fun cotizaciones(c: CotizacionesFalsas): com.udenar.petcare.domain.profesionales.RepositorioCotizaciones
+
+    @Binds abstract fun resenas(r: ResenasFalsas): com.udenar.petcare.domain.profesionales.RepositorioResenas
 
     @Binds abstract fun atencion(a: AtencionVetFalsa): com.udenar.petcare.domain.profesionales.RepositorioAtencionVet
 }

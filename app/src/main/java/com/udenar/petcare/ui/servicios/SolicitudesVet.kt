@@ -223,7 +223,15 @@ class MisSolicitudesViewModel @Inject constructor(
     tiempoReal: com.udenar.petcare.data.sync.TiempoReal,
     private val cotizaciones: com.udenar.petcare.domain.profesionales.RepositorioCotizaciones,
     private val reloj: Clock,
+    private val resenas: com.udenar.petcare.domain.profesionales.RepositorioResenas,
 ) : ViewModel() {
+    /** Mis reseñas por solicitud: los servicios completados sin reseña invitan a calificar. */
+    val misResenas = MutableStateFlow<Map<String, com.udenar.petcare.domain.profesionales.Resena>>(emptyMap())
+
+    fun calificar(solicitudId: String, tipo: com.udenar.petcare.domain.profesionales.TipoResena, estrellas: Int, comentario: String, avisar: (String) -> Unit) =
+        accionPres(avisar, "¡Gracias por tu reseña!") { resenas.guardar(solicitudId, tipo, estrellas, comentario) }
+
+    fun eliminarResena(solicitudId: String, avisar: (String) -> Unit) = accionPres(avisar, "Reseña eliminada") { resenas.eliminar(solicitudId) }
     val solicitudes = MutableStateFlow<List<SolicitudVet>>(emptyList())
     val cotizacionesPres = MutableStateFlow<List<com.udenar.petcare.domain.profesionales.SolicitudPrestador>>(emptyList())
     val hoy: LocalDate get() = LocalDate.now(reloj)
@@ -250,6 +258,7 @@ class MisSolicitudesViewModel @Inject constructor(
     fun cargar() = viewModelScope.launch {
         runCatching { atencion.misSolicitudes() }.onSuccess { solicitudes.value = it }
         runCatching { cotizaciones.misSolicitudes() }.onSuccess { cotizacionesPres.value = it }
+        runCatching { resenas.mias() }.onSuccess { misResenas.value = it }
     }
 
     fun cancelar(id: String, avisar: (String) -> Unit) = viewModelScope.launch {
@@ -270,10 +279,14 @@ fun MisSolicitudes(avisar: (String) -> Unit, viewModel: MisSolicitudesViewModel 
     val pres by viewModel.cotizacionesPres.collectAsStateWithLifecycle()
     var abierta by remember { mutableStateOf<SolicitudVet?>(null) }
     var abiertaPres by remember { mutableStateOf<com.udenar.petcare.domain.profesionales.SolicitudPrestador?>(null) }
+    val mias by viewModel.misResenas.collectAsStateWithLifecycle()
+    // Calificar: (solicitud, tipo, a quién)
+    var calificar by remember { mutableStateOf<Triple<String, com.udenar.petcare.domain.profesionales.TipoResena, String>?>(null) }
     // Al volver a Servicios (p. ej. después de enviar una) se refresca
     LaunchedEffect(Unit) { viewModel.cargar() }
-    val visibles = todas.filter { it.estado.activa }
-    val visiblesPres = pres.filter { it.estado.abierta }
+    // Activas y, además, las completadas que aún no califico
+    val visibles = todas.filter { it.estado.activa || (it.estado == EstadoSolicitudVet.COMPLETADA && it.id !in mias) }
+    val visiblesPres = pres.filter { it.estado.abierta || (it.estado == com.udenar.petcare.domain.profesionales.EstadoSolicitudPres.COMPLETADA && it.id !in mias) }
     val recientes = if (visibles.isEmpty() && visiblesPres.isEmpty()) todas.take(1) to pres.take(1) else visibles to visiblesPres
     if (recientes.first.isEmpty() && recientes.second.isEmpty()) return
     Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
@@ -288,6 +301,17 @@ fun MisSolicitudes(avisar: (String) -> Unit, viewModel: MisSolicitudesViewModel 
             onConfirmar = { abiertaPres = null; viewModel.confirmarPres(s.id, avisar) },
             onCancelar = { abiertaPres = null; viewModel.cancelarPres(s.id, avisar) },
             onDejarDeCompartir = { abiertaPres = null; viewModel.dejarDeCompartir(s.id, avisar) },
+            yaCalificada = s.id in mias,
+            onCalificar = { abiertaPres = null; calificar = Triple(s.id, com.udenar.petcare.domain.profesionales.TipoResena.PRESTADOR, s.prestadorNombre) },
+        )
+    }
+    calificar?.let { (id, tipo, nombre) ->
+        val previa = mias[id]
+        DialogoResena(
+            "Califica a $nombre", previa,
+            onGuardar = { e, c -> calificar = null; viewModel.calificar(id, tipo, e, c, avisar) },
+            onEliminar = previa?.let { { calificar = null; viewModel.eliminarResena(id, avisar) } },
+            onCerrar = { calificar = null },
         )
     }
     abierta?.let { s ->
@@ -305,6 +329,13 @@ fun MisSolicitudes(avisar: (String) -> Unit, viewModel: MisSolicitudesViewModel 
                     Text(s.modalidad.etiqueta, color = Pc.TintaSuave)
                     s.motivoRechazo?.let { Text("Motivo: $it", color = Pc.TintaSuave) }
                     Chip(s.estado.etiqueta, fondo = s.estado.colores().first, color = s.estado.colores().second)
+                    if (s.estado == EstadoSolicitudVet.COMPLETADA) {
+                        com.udenar.petcare.ui.componentes.BotonPrincipal(
+                            if (s.id in mias) "Editar mi reseña" else "Calificar a ${s.veterinarioNombre}",
+                            onClick = { abierta = null; calificar = Triple(s.id, com.udenar.petcare.domain.profesionales.TipoResena.VET, s.veterinarioNombre) },
+                            modifier = Modifier.testTag("calificar"),
+                        )
+                    }
                 }
             },
             confirmButton = { TextButton(onClick = { abierta = null }) { Text("Cerrar") } },

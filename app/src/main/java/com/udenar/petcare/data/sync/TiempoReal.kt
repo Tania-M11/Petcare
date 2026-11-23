@@ -28,6 +28,7 @@ import javax.inject.Singleton
 class TiempoReal @Inject constructor(
     private val supabase: SupabaseClient,
     private val sync: ProgramadorSync,
+    private val avisos: com.udenar.petcare.data.avisos.CentroAvisos,
 ) {
     private val _solicitudes = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
 
@@ -54,6 +55,9 @@ class TiempoReal @Inject constructor(
                 val solicitudes = c.postgresChangeFlow<PostgresAction>(schema = "public") { table = "solicitudes_cuidado" }
                 val vet = listOf("solicitudes_vet", "vinculos_vet", "solicitudes_prestador").map { t -> c.postgresChangeFlow<PostgresAction>(schema = "public") { table = t } }
                 launch { merge(*vet.toTypedArray()).debounce(500).collect { _vet.tryEmit(Unit) } }
+                // Avisos nuevos para esta cuenta (RF-29) mientras la app está abierta
+                val notificaciones = c.postgresChangeFlow<PostgresAction>(schema = "public") { table = "notificaciones" }
+                launch { notificaciones.debounce(300).collect { avisos.revisar() } }
                 // Varios cambios seguidos se agrupan en una sola sincronización
                 launch { merge(*flujos.toTypedArray()).debounce(1_500).collect { sync.solicitar() } }
                 launch {

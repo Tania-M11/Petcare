@@ -16,6 +16,8 @@ import io.github.jan.supabase.auth.status.SessionStatus
 import io.github.jan.supabase.auth.user.UserInfo
 import io.github.jan.supabase.exceptions.HttpRequestException
 import io.github.jan.supabase.postgrest.from
+import io.github.jan.supabase.postgrest.postgrest
+import io.github.jan.supabase.storage.storage
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -67,17 +69,52 @@ class RepositorioCuentaSupabase @Inject constructor(
         }
         .distinctUntilChanged()
 
-    override suspend fun registrar(nombre: String, correo: String, clave: String) = traducir {
-        supabase.auth.signUpWith(Email) {
-            email = correo.trim().lowercase()
-            password = clave
-            data = buildJsonObject {
-                put("nombre", nombre.trim())
-                // La base de datos rechaza el registro sin esta marca (al_crear_cuenta)
-                put("acepto_privacidad", true)
+    override suspend fun registrar(nombre: String, correo: String, clave: String): Boolean {
+        var entro = false
+        traducir {
+            // Si la confirmación de correo está activa, el enlace vuelve a la app (petcare://auth)
+            supabase.auth.signUpWith(Email, redirectUrl = REDIRECCION) {
+                email = correo.trim().lowercase()
+                password = clave
+                data = buildJsonObject {
+                    put("nombre", nombre.trim())
+                    // La base de datos rechaza el registro sin esta marca (al_crear_cuenta)
+                    put("acepto_privacidad", true)
+                }
             }
+            entro = supabase.auth.currentSessionOrNull() != null
+            if (entro) cargarUsuario()
         }
-        cargarUsuario()
+        return entro
+    }
+
+    override suspend fun recuperarClave(correo: String) = traducir {
+        supabase.auth.resetPasswordForEmail(email = correo.trim().lowercase(), redirectUrl = "$REDIRECCION/recuperar")
+    }
+
+    override suspend fun cambiarClave(nueva: String) = traducir {
+        supabase.auth.updateUser { password = nueva }
+    }
+
+    override suspend fun eliminarCuenta() {
+        traducir {
+            val id = supabase.auth.currentUserOrNull()?.id ?: throw CuentaException("Tu sesión terminó. Vuelve a entrar.")
+            // La base de datos no puede borrar archivos: primero los de cada carpeta propia
+            for (bucket in listOf("mascotas", "documentos", "certificados", "galeria")) borrarCarpeta(bucket, id)
+            supabase.postgrest.rpc("eliminar_mi_cuenta")
+        }
+        supabase.auth.clearSession()
+        _usuario.value = null
+        local.borrarTodo()
+    }
+
+    /** Borra todo lo que hay bajo [prefijo] (las subcarpetas son las mascotas). */
+    private suspend fun borrarCarpeta(bucket: String, prefijo: String) {
+        val b = supabase.storage.from(bucket)
+        val items = b.list(prefijo)
+        val archivos = items.filter { it.id != null }.map { "$prefijo/${it.name}" }
+        items.filter { it.id == null }.forEach { borrarCarpeta(bucket, "$prefijo/${it.name}") }
+        archivos.chunked(100).forEach { b.delete(it) }
     }
 
     override suspend fun iniciarSesion(correo: String, clave: String) = traducir {
@@ -191,4 +228,15 @@ class RepositorioCuentaSupabase @Inject constructor(
             throw CuentaException("Algo salió mal. Intenta de nuevo.", e)
         }
     }
+
+    companion object {
+        /** Enlaces de los correos (confirmar cuenta y recuperar contraseña) vuelven a la app. */
+        const val REDIRECCION = "petcare://auth"
+    }
+}
+
+/** El enlace de recuperación abrió la app: hay que pedir la contraseña nueva. */
+@Singleton
+class RecuperacionClave @Inject constructor() {
+    val pendiente = MutableStateFlow(false)
 }

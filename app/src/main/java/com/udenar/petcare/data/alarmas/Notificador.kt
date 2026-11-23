@@ -26,6 +26,36 @@ class Notificador @Inject constructor(@ApplicationContext private val contexto: 
                 description = "Comidas, medicinas, vacunas, baños y demás cuidados de tus mascotas"
             },
         )
+        gestor.createNotificationChannel(
+            NotificationChannel(CANAL_SOLICITUDES, "Solicitudes", NotificationManager.IMPORTANCE_HIGH).apply {
+                description = "Citas con veterinarios, cotizaciones de servicios, reseñas y verificación"
+            },
+        )
+        gestor.createNotificationChannel(
+            NotificationChannel(CANAL_CUIDADORES, "Cuidadores", NotificationManager.IMPORTANCE_DEFAULT).apply {
+                description = "Quién pide cuidar tus mascotas y las respuestas a tus solicitudes"
+            },
+        )
+    }
+
+    /** Aviso del servidor (RF-29): al tocarlo abre el modo y la pestaña correctos. */
+    fun mostrarAvisoRemoto(a: com.udenar.petcare.data.avisos.Aviso) {
+        val abrir = Intent(contexto, MainActivity::class.java)
+            .setFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP)
+            .setData("petcare://aviso/${a.id}".toUri())
+            .putExtra(EXTRA_MODO, a.modo.name)
+            .putExtra(EXTRA_DESTINO, a.destino.name)
+        val n = NotificationCompat.Builder(contexto, a.canal)
+            .setSmallIcon(R.drawable.ic_notificacion)
+            .setColor(0xFFF08A4B.toInt())
+            .setContentTitle(a.titulo)
+            .setContentText(a.cuerpo)
+            .setStyle(NotificationCompat.BigTextStyle().bigText(a.cuerpo))
+            .setCategory(NotificationCompat.CATEGORY_MESSAGE)
+            .setAutoCancel(true)
+            .setContentIntent(PendingIntent.getActivity(contexto, a.id.hashCode(), abrir, PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT))
+            .build()
+        publicar("aviso_${a.id}", n)
     }
 
     /** Toma pendiente con acciones Hecho / Posponer / Omitir. [etiqueta] = id del registro. */
@@ -92,6 +122,10 @@ class Notificador @Inject constructor(@ApplicationContext private val contexto: 
 
     companion object {
         const val CANAL_RECORDATORIOS = "recordatorios"
+        const val CANAL_SOLICITUDES = "solicitudes"
+        const val CANAL_CUIDADORES = "cuidadores"
+        const val EXTRA_MODO = "aviso_modo"
+        const val EXTRA_DESTINO = "aviso_destino"
         private const val ID = 1
     }
 }

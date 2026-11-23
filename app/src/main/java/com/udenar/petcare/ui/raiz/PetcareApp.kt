@@ -26,6 +26,7 @@ fun PetcareApp(viewModel: RaizViewModel = hiltViewModel()) {
     val sesion by viewModel.sesion.collectAsStateWithLifecycle()
     val usuario by viewModel.usuario.collectAsStateWithLifecycle()
     val modo by viewModel.modo.collectAsStateWithLifecycle()
+    val recuperando by viewModel.recuperandoClave.collectAsStateWithLifecycle()
     // Recién registrado: primero la pregunta, luego las pestañas
     val preguntar = sesion == EstadoSesion.CON_SESION && usuario?.guiaRespondida == false
     Crossfade(if (preguntar) null else sesion, label = "sesion") { estado ->
@@ -40,7 +41,7 @@ fun PetcareApp(viewModel: RaizViewModel = hiltViewModel()) {
                 Image(painterResource(R.drawable.logo_petcare), contentDescription = "PetCare", modifier = Modifier.height(40.dp))
             }
             EstadoSesion.SIN_SESION -> NavegacionAcceso()
-            EstadoSesion.CON_SESION -> Crossfade(modo, label = "modo") { m ->
+            EstadoSesion.CON_SESION -> if (recuperando) com.udenar.petcare.ui.acceso.NuevaClaveScreen() else Crossfade(modo, label = "modo") { m ->
                 when (m) {
                     com.udenar.petcare.domain.modelo.ModoUso.VETERINARIO -> com.udenar.petcare.ui.profesional.RaizProfesional()
                     com.udenar.petcare.domain.modelo.ModoUso.PRESTADOR -> com.udenar.petcare.ui.profesional.RaizPrestador()

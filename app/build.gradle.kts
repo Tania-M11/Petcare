@@ -9,6 +9,10 @@ plugins {
     alias(libs.plugins.androidx.room)
 }
 
+// Push con FCM (RF-29): solo si se agregó app/google-services.json (proyecto de Firebase).
+// Sin él la app compila igual y los avisos llegan por Realtime y por la revisión periódica.
+if (file("google-services.json").exists()) apply(plugin = "com.google.gms.google-services")
+
 // Claves de Supabase: se leen de local.properties (que NO se sube a GitHub).
 val localProperties = Properties().apply {
     val file = rootProject.file("local.properties")
@@ -26,7 +30,7 @@ android {
         minSdk = 26 // RNF-06
         targetSdk = 37
         versionCode = 1
-        versionName = "0.1"
+        versionName = "1.0"
 
         // Ejecutor propio: arranca la app de pruebas de Hilt en el teléfono
         testInstrumentationRunner = "com.udenar.petcare.HiltTestRunner"
@@ -101,6 +105,11 @@ dependencies {
     // Paseos con GPS (RF-12)
     implementation(libs.maplibre.android)
     implementation(libs.play.services.location)
+
+    // Avisos push (RF-29)
+    implementation(platform(libs.firebase.bom))
+    implementation(libs.firebase.messaging)
+    implementation(libs.kotlinx.coroutines.play.services)
     implementation(libs.ktor.client.okhttp)
 
     // Inyección de dependencias (Hilt)

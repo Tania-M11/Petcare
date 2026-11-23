@@ -23,7 +23,21 @@ class RaizViewModel @Inject constructor(
     private val veterinarios: com.udenar.petcare.domain.profesionales.RepositorioVeterinarios,
     private val modoRepo: com.udenar.petcare.domain.profesionales.RepositorioModo,
     private val prestadores: com.udenar.petcare.domain.profesionales.RepositorioPrestadores,
+    private val avisos: com.udenar.petcare.data.avisos.CentroAvisos,
+    private val push: com.udenar.petcare.data.avisos.PushFcm,
+    private val apertura: com.udenar.petcare.data.avisos.AperturaAvisos,
+    recuperacion: com.udenar.petcare.data.cuenta.RecuperacionClave,
 ) : ViewModel() {
+
+    /** El enlace de recuperación abrió la app: pedir la contraseña nueva. */
+    val recuperandoClave: StateFlow<Boolean> = recuperacion.pendiente
+
+    init {
+        // Un aviso tocado cambia primero al modo que corresponde (RF-29); cada estructura abre su pestaña
+        viewModelScope.launch {
+            apertura.pendiente.collect { a -> if (a != null && a.modo != modoRepo.modo.value) modoRepo.cambiar(a.modo) }
+        }
+    }
 
     /** Modo activo (RF-30); se recuerda en el teléfono y funciona sin conexión. */
     val modo: StateFlow<com.udenar.petcare.domain.modelo.ModoUso> = modoRepo.modo
@@ -45,6 +59,12 @@ class RaizViewModel @Inject constructor(
                         }
                     }
                 }
+                // Avisos de solicitudes: push (si hay Firebase), revisión periódica y los nuevos ya
+                avisos.programar()
+                viewModelScope.launch {
+                    avisos.revisar()
+                    push.registrar()
+                }
                 // Al abrir la app (o en un teléfono nuevo) se sube lo pendiente y se baja lo nuevo
                 sync.solicitar()
                 // Mientras la app esté abierta, los cambios de otros miembros llegan en vivo
@@ -52,6 +72,7 @@ class RaizViewModel @Inject constructor(
             } else if (it == EstadoSesion.SIN_SESION) {
                 viewModelScope.launch { tiempoReal.detener() }
                 modoRepo.cambiar(com.udenar.petcare.domain.modelo.ModoUso.PERSONAL)
+                avisos.reiniciar()
             }
         }
         .stateIn(viewModelScope, SharingStarted.Eagerly, EstadoSesion.CARGANDO)

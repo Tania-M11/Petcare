@@ -37,6 +37,21 @@ fun PetcareRaiz() {
     val entrada by nav.currentBackStackEntryAsState()
     val actual = PestanaPersonal.entries.firstOrNull { entrada?.destination?.hasRoute(it.ruta::class) == true }
 
+    // Aviso tocado (RF-29): abre la pestaña que corresponde
+    val aperturaVm: com.udenar.petcare.ui.raiz.AperturaViewModel = androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel()
+    val apertura by aperturaVm.pendiente.collectAsStateWithLifecycle()
+    androidx.compose.runtime.LaunchedEffect(apertura) {
+        aperturaVm.tomar(com.udenar.petcare.domain.modelo.ModoUso.PERSONAL)?.let { a ->
+            nav.irAPestana(
+                when (a.destino) {
+                    com.udenar.petcare.data.avisos.DestinoAviso.MASCOTAS -> PestanaPersonal.MASCOTAS
+                    com.udenar.petcare.data.avisos.DestinoAviso.SERVICIOS, com.udenar.petcare.data.avisos.DestinoAviso.SOLICITUDES -> PestanaPersonal.SERVICIOS
+                    com.udenar.petcare.data.avisos.DestinoAviso.PERFIL -> PestanaPersonal.PERFIL
+                    com.udenar.petcare.data.avisos.DestinoAviso.HOY -> PestanaPersonal.HOY
+                },
+            )
+        }
+    }
     val avisos = remember { SnackbarHostState() }
     val alcance = rememberCoroutineScope()
     val avisar: (String) -> Unit = { msj ->

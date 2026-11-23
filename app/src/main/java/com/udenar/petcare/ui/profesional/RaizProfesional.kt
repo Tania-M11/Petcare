@@ -146,6 +146,13 @@ fun RaizProfesional(viewModel: ModoVetViewModel = hiltViewModel()) {
     val nav = rememberNavController()
     val entrada by nav.currentBackStackEntryAsState()
     val actual = PestanaVet.entries.firstOrNull { entrada?.destination?.hasRoute(it.ruta::class) == true }
+    val aperturaVm: com.udenar.petcare.ui.raiz.AperturaViewModel = hiltViewModel()
+    val apertura by aperturaVm.pendiente.collectAsStateWithLifecycle()
+    androidx.compose.runtime.LaunchedEffect(apertura) {
+        aperturaVm.tomar(ModoUso.VETERINARIO)?.let { a ->
+            nav.irA(if (a.destino == com.udenar.petcare.data.avisos.DestinoAviso.PERFIL) PestanaVet.PERFIL else PestanaVet.SOLICITUDES)
+        }
+    }
     val avisos = remember { SnackbarHostState() }
     val alcance = rememberCoroutineScope()
     val avisar: (String) -> Unit = { m ->

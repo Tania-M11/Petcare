@@ -78,6 +78,7 @@ class TrabajoSincronizacion @AssistedInject constructor(
     private val supabase: SupabaseClient,
     private val recordatorios: ProgramadorRecordatorios,
     private val compartir: com.udenar.petcare.domain.compartir.RepositorioCompartir,
+    private val avisos: com.udenar.petcare.data.avisos.CentroAvisos,
 ) : CoroutineWorker(contexto, params) {
 
     override suspend fun doWork(): Result {
@@ -89,6 +90,7 @@ class TrabajoSincronizacion @AssistedInject constructor(
             sincronizador.sincronizar()
             // Lo que llegó de otros teléfonos también suena aquí (y se retira lo ya resuelto)
             recordatorios.reprogramar()
+            avisos.revisar()
             Result.success()
         } catch (e: CancellationException) {
             throw e

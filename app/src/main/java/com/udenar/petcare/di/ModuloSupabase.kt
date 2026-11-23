@@ -23,7 +23,11 @@ object ModuloSupabase {
         supabaseUrl = BuildConfig.SUPABASE_URL,
         supabaseKey = BuildConfig.SUPABASE_PUBLISHABLE_KEY,
     ) {
-        install(Auth)
+        install(Auth) {
+            // Los enlaces de los correos vuelven a la app (MainActivity)
+            scheme = "petcare"
+            host = "auth"
+        }
         install(Postgrest)
         install(Storage)
         install(io.github.jan.supabase.realtime.Realtime)

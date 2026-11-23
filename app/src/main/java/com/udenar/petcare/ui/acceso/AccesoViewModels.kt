@@ -21,6 +21,9 @@ data class FormularioAcceso(
     val aceptoPrivacidad: Boolean = false,
     val errores: Map<Campo, String> = emptyMap(),
     val errorGeneral: String? = null,
+    /** Mensaje informativo (correo enviado, revisa tu bandeja…). */
+    val aviso: String? = null,
+    val clave2: String = "",
     val cargando: Boolean = false,
 )
 
@@ -32,6 +35,7 @@ abstract class FormularioViewModel : ViewModel() {
     fun nombre(v: String) = _form.update { it.copy(nombre = v, errores = it.errores - Campo.NOMBRE, errorGeneral = null) }
     fun correo(v: String) = _form.update { it.copy(correo = v, errores = it.errores - Campo.CORREO, errorGeneral = null) }
     fun clave(v: String) = _form.update { it.copy(clave = v, errores = it.errores - Campo.CLAVE, errorGeneral = null) }
+    fun clave2(v: String) = _form.update { it.copy(clave2 = v, errores = it.errores - Campo.CLAVE, errorGeneral = null) }
     fun privacidad(v: Boolean) = _form.update { it.copy(aceptoPrivacidad = v, errores = it.errores - Campo.PRIVACIDAD) }
 
     protected fun enviar(errores: Map<Campo, String>, accion: suspend () -> Unit) {
@@ -59,7 +63,13 @@ class RegistroViewModel @Inject constructor(private val cuenta: RepositorioCuent
     fun registrar() {
         val f = _form.value
         enviar(ValidadorCuenta.registro(f.nombre, f.correo, f.clave, f.aceptoPrivacidad)) {
-            cuenta.registrar(f.nombre, f.correo, f.clave)
+            val entro = cuenta.registrar(f.nombre, f.correo, f.clave)
+            // Con la confirmación de correo activa, primero hay que abrir el enlace
+            if (!entro) {
+                _form.update {
+                    it.copy(aviso = "Te enviamos un correo a ${f.correo.trim()}. Ábrelo en este teléfono para confirmar tu cuenta.")
+                }
+            }
         }
     }
 }
@@ -71,5 +81,35 @@ class InicioSesionViewModel @Inject constructor(private val cuenta: RepositorioC
         enviar(ValidadorCuenta.inicioSesion(f.correo, f.clave)) {
             cuenta.iniciarSesion(f.correo, f.clave)
         }
+    }
+}
+
+@HiltViewModel
+class RecuperarClaveViewModel @Inject constructor(private val cuenta: RepositorioCuenta) : FormularioViewModel() {
+    fun enviar() {
+        val f = _form.value
+        enviar(ValidadorCuenta.recuperar(f.correo)) {
+            cuenta.recuperarClave(f.correo)
+            // Mismo mensaje exista o no la cuenta (no se revela quién está registrado)
+            _form.update { it.copy(aviso = "Si hay una cuenta con ${f.correo.trim()}, te enviamos un enlace para crear una contraseña nueva. Ábrelo en este teléfono.") }
+        }
+    }
+}
+
+@HiltViewModel
+class NuevaClaveViewModel @Inject constructor(
+    private val cuenta: RepositorioCuenta,
+    private val recuperacion: com.udenar.petcare.data.cuenta.RecuperacionClave,
+) : FormularioViewModel() {
+    fun guardar() {
+        val f = _form.value
+        enviar(ValidadorCuenta.nuevaClave(f.clave, f.clave2)) {
+            cuenta.cambiarClave(f.clave)
+            recuperacion.pendiente.value = false
+        }
+    }
+
+    fun cancelar() {
+        recuperacion.pendiente.value = false
     }
 }

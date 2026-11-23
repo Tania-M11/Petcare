@@ -10,6 +10,7 @@ import kotlinx.serialization.Serializable
 @Serializable private data object RutaBienvenida
 @Serializable private data object RutaRegistro
 @Serializable private data object RutaInicioSesion
+@Serializable private data object RutaRecuperar
 
 /** Flujo sin sesión: Bienvenida → Registro / Inicio de sesión. */
 @Composable
@@ -26,7 +27,10 @@ fun NavegacionAcceso() {
             RegistroScreen(onVolver = { nav.popBackStack() }, onIrAEntrar = { nav.cambiarA(RutaInicioSesion) })
         }
         composable<RutaInicioSesion> {
-            InicioSesionScreen(onVolver = { nav.popBackStack() }, onIrARegistro = { nav.cambiarA(RutaRegistro) })
+            InicioSesionScreen(onVolver = { nav.popBackStack() }, onIrARegistro = { nav.cambiarA(RutaRegistro) }, onOlvide = { nav.navigate(RutaRecuperar) })
+        }
+        composable<RutaRecuperar> {
+            RecuperarClaveScreen(onVolver = { nav.popBackStack() })
         }
     }
 }

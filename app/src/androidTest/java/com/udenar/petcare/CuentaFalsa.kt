@@ -28,10 +28,32 @@ class CuentaFalsa @Inject constructor() : RepositorioCuenta {
     /** Correos que ya "existen" en el servidor falso. */
     val existentes = mutableSetOf("ana@petcare.test")
 
-    override suspend fun registrar(nombre: String, correo: String, clave: String) {
+    /** true = el servidor pide confirmar el correo antes de entrar. */
+    var exigeConfirmacion = false
+    val correosRecuperacion = mutableListOf<String>()
+    var claveCambiada: String? = null
+    var cuentaEliminada = false
+
+    override suspend fun registrar(nombre: String, correo: String, clave: String): Boolean {
         if (correo.trim().lowercase() in existentes) throw CuentaException("Ya existe una cuenta con ese correo.")
+        if (exigeConfirmacion) return false
         usuario.value = Usuario("2", nombre.trim(), correo.trim().lowercase(), guiaRespondida = false)
         sesion.value = EstadoSesion.CON_SESION
+        return true
+    }
+
+    override suspend fun recuperarClave(correo: String) {
+        correosRecuperacion += correo.trim().lowercase()
+    }
+
+    override suspend fun cambiarClave(nueva: String) {
+        claveCambiada = nueva
+    }
+
+    override suspend fun eliminarCuenta() {
+        cuentaEliminada = true
+        usuario.value = null
+        sesion.value = EstadoSesion.SIN_SESION
     }
 
     override suspend fun iniciarSesion(correo: String, clave: String) {

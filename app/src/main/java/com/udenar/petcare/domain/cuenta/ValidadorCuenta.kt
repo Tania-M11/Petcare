@@ -23,6 +23,15 @@ object ValidadorCuenta {
         if (clave.isEmpty()) put(Campo.CLAVE, "Escribe tu contraseña")
     }
 
+    fun recuperar(correo: String): Map<Campo, String> = buildMap { correo(correo)?.let { put(Campo.CORREO, it) } }
+
+    fun nuevaClave(clave: String, repetida: String): Map<Campo, String> = buildMap {
+        when {
+            clave.length < CLAVE_MINIMA -> put(Campo.CLAVE, "Usa al menos $CLAVE_MINIMA caracteres")
+            clave != repetida -> put(Campo.CLAVE, "Las contraseñas no coinciden")
+        }
+    }
+
     private fun correo(correo: String): String? = when {
         correo.isBlank() -> "Escribe tu correo"
         !CORREO.matches(correo.trim()) -> "Este correo no parece válido"
