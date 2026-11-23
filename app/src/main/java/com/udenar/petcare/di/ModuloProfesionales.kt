@@ -16,4 +16,6 @@ abstract class ModuloProfesionales {
     @Binds abstract fun veterinarios(impl: VeterinariosSupabase): RepositorioVeterinarios
 
     @Binds abstract fun modo(impl: ModoLocal): RepositorioModo
+
+    @Binds abstract fun atencion(impl: com.udenar.petcare.data.profesionales.AtencionVetSupabase): com.udenar.petcare.domain.profesionales.RepositorioAtencionVet
 }

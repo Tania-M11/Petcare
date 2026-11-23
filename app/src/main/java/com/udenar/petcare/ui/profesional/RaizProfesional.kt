@@ -176,14 +176,12 @@ fun RaizProfesional(viewModel: ModoVetViewModel = hiltViewModel()) {
                 .padding(relleno)
                 .consumeWindowInsets(relleno),
         ) {
-            composable<RutaSolicitudesVet> {
-                PestanaVacia("Solicitudes", "Aún no tienes solicitudes", "Cuando un dueño te pida una cita, aparecerá aquí para que la aceptes o la rechaces.")
-            }
-            composable<RutaAgendaVet> {
-                PestanaVacia("Agenda", "Tu agenda está libre", "Las citas que aceptes se ordenarán aquí por día y hora.")
-            }
-            composable<RutaPacientesVet> {
-                PestanaVacia("Pacientes", "Sin pacientes vinculados", "Al aceptar una cita, la mascota queda vinculada y podrás ver y completar su ficha clínica.")
+            composable<RutaSolicitudesVet> { SolicitudesVetScreen(avisar, onFicha = { nav.navigate(RutaFichaPaciente(it)) }) }
+            composable<RutaAgendaVet> { AgendaVetScreen(avisar, onFicha = { nav.navigate(RutaFichaPaciente(it)) }) }
+            composable<RutaPacientesVet> { PacientesVetScreen(onFicha = { nav.navigate(RutaFichaPaciente(it)) }) }
+            composable<RutaFichaPaciente> {
+                val perfil by viewModel.perfil.collectAsStateWithLifecycle()
+                FichaPacienteScreen(miId = perfil?.id, onVolver = { nav.popBackStack() }, avisar = avisar)
             }
             composable<RutaPerfilVet> {
                 PerfilVetScreen(viewModel, onEditar = { nav.navigate(RutaEditarVet) }, avisar = avisar)
@@ -202,20 +200,6 @@ private fun NavHostController.irA(p: PestanaVet) = navigate(p.ruta) {
     popUpTo(graph.findStartDestination().id) { saveState = true }
     launchSingleTop = true
     restoreState = true
-}
-
-@Composable
-private fun PestanaVacia(titulo: String, vacio: String, texto: String) {
-    Column(
-        Modifier
-            .fillMaxSize()
-            .verticalScroll(rememberScrollState())
-            .padding(horizontal = 20.dp, vertical = 12.dp),
-        verticalArrangement = Arrangement.spacedBy(20.dp),
-    ) {
-        Text(titulo, style = MaterialTheme.typography.headlineLarge)
-        EstadoVacio(R.drawable.chopper_doctor, vacio, texto, fondoBlob = listOf(Pc.CieloClaro, Pc.LavandaClara))
-    }
 }
 
 /** Perfil público, verificación (RF-23) y vuelta al modo personal. */

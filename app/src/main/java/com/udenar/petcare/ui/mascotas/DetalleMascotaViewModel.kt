@@ -60,6 +60,7 @@ class DetalleMascotaViewModel @Inject constructor(
     private val recordatorios: com.udenar.petcare.domain.cuidados.ProgramadorRecordatorios,
     private val documentosRepo: com.udenar.petcare.domain.documentos.RepositorioDocumentos,
     private val paseosRepo: com.udenar.petcare.domain.paseos.RepositorioPaseos,
+    private val atencion: com.udenar.petcare.domain.profesionales.RepositorioAtencionVet,
 ) : ViewModel() {
 
     val paseos: StateFlow<List<com.udenar.petcare.domain.paseos.Paseo>> by lazy {
@@ -101,6 +102,22 @@ class DetalleMascotaViewModel @Inject constructor(
     /** Personas que cuidan esta mascota (solo la ve el dueño; requiere internet). */
     private val _miembros = MutableStateFlow<List<Miembro>?>(null)
     val miembros: StateFlow<List<Miembro>?> = _miembros.asStateFlow()
+
+    private val _vets = kotlinx.coroutines.flow.MutableStateFlow<List<com.udenar.petcare.domain.profesionales.VetVinculado>?>(null)
+    /** Veterinarios vinculados (RF-26); null = sin conexión. */
+    val vets: StateFlow<List<com.udenar.petcare.domain.profesionales.VetVinculado>?> = _vets.asStateFlow()
+
+    fun cargarVets() = viewModelScope.launch { _vets.value = runCatching { atencion.vetsDe(id) }.getOrNull() }
+
+    fun desvincularVet(v: com.udenar.petcare.domain.profesionales.VetVinculado, avisar: (String) -> Unit) = viewModelScope.launch {
+        try {
+            atencion.desvincular(id, v.id)
+            avisar("${v.nombre} ya no ve la ficha")
+        } catch (e: com.udenar.petcare.domain.profesionales.ProfesionalException) {
+            avisar(e.message ?: "No se pudo desvincular")
+        }
+        cargarVets()
+    }
 
     fun cargarMiembros() = viewModelScope.launch {
         _miembros.value = runCatching { compartir.miembros(id) }.getOrNull()

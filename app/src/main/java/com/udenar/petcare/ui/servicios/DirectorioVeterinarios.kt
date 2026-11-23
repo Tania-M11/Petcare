@@ -258,7 +258,7 @@ private val LOCALE = Locale.forLanguageTag("es-CO")
 
 /** Detalle del veterinario: contacto directo, cómo llegar e insignia (RF-24). */
 @Composable
-fun DetalleVeterinarioScreen(onVolver: () -> Unit, avisar: (String) -> Unit, viewModel: DetalleVetViewModel = hiltViewModel()) {
+fun DetalleVeterinarioScreen(onVolver: () -> Unit, onSolicitar: () -> Unit, avisar: (String) -> Unit, viewModel: DetalleVetViewModel = hiltViewModel()) {
     val perfil by viewModel.perfil.collectAsStateWithLifecycle()
     val error by viewModel.error.collectAsStateWithLifecycle()
     val contexto = LocalContext.current
@@ -298,7 +298,7 @@ fun DetalleVeterinarioScreen(onVolver: () -> Unit, avisar: (String) -> Unit, vie
             v.whatsapp?.let { w -> BotonSecundario("WhatsApp", onClick = { abrir(Contacto.enlaceWhatsapp(w, "Hola, te encontré en PetCare.")) }, modifier = Modifier.weight(1f)) }
         }
         BotonSecundario("Cómo llegar", onClick = { abrir(Contacto.enlaceComoLlegar(v.lat, v.lon, v.clinica ?: v.nombre)) })
-        BotonPrincipal("Solicitar servicio", onClick = { avisar("Muy pronto podrás pedir una cita desde aquí") })
+        BotonPrincipal("Solicitar servicio", onClick = onSolicitar, modifier = Modifier.testTag("solicitar_servicio"))
 
         Seccion("Atiende") {
             Text(v.especies.joinToString(", ") { it.etiqueta }, style = MaterialTheme.typography.bodyMedium)

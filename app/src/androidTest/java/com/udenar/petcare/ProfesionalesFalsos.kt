@@ -58,10 +58,62 @@ class ModoMemoria @Inject constructor() : RepositorioModo {
     }
 }
 
+/** Solicitudes y fichas en memoria para las pruebas de interfaz. */
+@Singleton
+class AtencionVetFalsa @Inject constructor() : com.udenar.petcare.domain.profesionales.RepositorioAtencionVet {
+    val solicitudes = mutableListOf<com.udenar.petcare.domain.profesionales.SolicitudVet>()
+    val pacientes = mutableListOf<com.udenar.petcare.domain.modelo.Mascota>()
+    val visitas = mutableListOf<String>()
+
+    override suspend fun solicitar(
+        mascotaId: String, veterinarioId: String, servicio: com.udenar.petcare.domain.profesionales.ServicioVet,
+        modalidad: com.udenar.petcare.domain.profesionales.Modalidad, fecha: java.time.LocalDateTime, mensaje: String?,
+    ): String {
+        val id = "s${solicitudes.size + 1}"
+        solicitudes += com.udenar.petcare.domain.profesionales.SolicitudVet(
+            id, mascotaId, "Max", com.udenar.petcare.domain.modelo.Especie.PERRO, "Ana María", null, veterinarioId, "Laura Gómez",
+            servicio, modalidad, fecha, mensaje = mensaje,
+        )
+        return id
+    }
+
+    private fun cambiar(id: String, f: (com.udenar.petcare.domain.profesionales.SolicitudVet) -> com.udenar.petcare.domain.profesionales.SolicitudVet) {
+        val i = solicitudes.indexOfFirst { it.id == id }
+        solicitudes[i] = f(solicitudes[i])
+    }
+
+    override suspend fun misSolicitudes() = solicitudes.toList()
+    override suspend fun cancelar(id: String) = cambiar(id) { it.copy(estado = com.udenar.petcare.domain.profesionales.EstadoSolicitudVet.CANCELADA) }
+    override suspend fun vetsDe(mascotaId: String) = emptyList<com.udenar.petcare.domain.profesionales.VetVinculado>()
+    override suspend fun bandeja() = solicitudes.toList()
+    override suspend fun resolver(id: String, aceptar: Boolean, fecha: java.time.LocalDateTime?, motivo: String?) = cambiar(id) {
+        if (aceptar) it.copy(estado = com.udenar.petcare.domain.profesionales.EstadoSolicitudVet.ACEPTADA, fechaConfirmada = fecha ?: it.fechaPreferida)
+        else it.copy(estado = com.udenar.petcare.domain.profesionales.EstadoSolicitudVet.RECHAZADA, motivoRechazo = motivo)
+    }
+    override suspend fun completar(id: String) = cambiar(id) { it.copy(estado = com.udenar.petcare.domain.profesionales.EstadoSolicitudVet.COMPLETADA) }
+    override suspend fun pacientes() = pacientes.map { com.udenar.petcare.domain.profesionales.Paciente(it) }
+    override suspend fun ficha(mascotaId: String) = com.udenar.petcare.domain.profesionales.FichaClinica(
+        pacientes.first { it.id == mascotaId }, emptyList(),
+        visitas.map { com.udenar.petcare.domain.salud.Visita(it, mascotaId, java.time.LocalDate.now(), it) }, emptyList(), emptyList(),
+    )
+    override suspend fun registrarVisita(mascotaId: String, fecha: java.time.LocalDate, motivo: String, tratamiento: String?, medicamentos: String?, notas: String?) {
+        visitas += motivo
+    }
+    override suspend fun registrarCuidado(mascotaId: String, cuidado: com.udenar.petcare.domain.profesionales.NuevoCuidadoClinico) = Unit
+    override suspend fun registrarPeso(mascotaId: String, gramos: Int) = Unit
+    override suspend fun subirDocumento(mascotaId: String, nombre: String, tipo: com.udenar.petcare.domain.documentos.TipoDocumento, bytes: ByteArray, mime: String) = Unit
+    override suspend fun descargarDocumento(ruta: String) = ByteArray(0)
+    override suspend fun desvincular(mascotaId: String, veterinarioId: String) {
+        pacientes.removeAll { it.id == mascotaId }
+    }
+}
+
 @Module
 @TestInstallIn(components = [SingletonComponent::class], replaces = [ModuloProfesionales::class])
 abstract class ModuloProfesionalesPrueba {
     @Binds abstract fun veterinarios(f: VeterinariosFalso): RepositorioVeterinarios
 
     @Binds abstract fun modo(m: ModoMemoria): RepositorioModo
+
+    @Binds abstract fun atencion(a: AtencionVetFalsa): com.udenar.petcare.domain.profesionales.RepositorioAtencionVet
 }

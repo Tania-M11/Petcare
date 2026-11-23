@@ -34,6 +34,11 @@ class TiempoReal @Inject constructor(
     /** Avisa cuando llegan o cambian solicitudes para cuidar (para refrescar Hoy). */
     val cambiosSolicitudes: SharedFlow<Unit> = _solicitudes.asSharedFlow()
 
+    private val _vet = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
+
+    /** Avisa cuando cambian solicitudes a veterinarios o vínculos (bandeja, agenda y "Mis solicitudes"). */
+    val cambiosVet: SharedFlow<Unit> = _vet.asSharedFlow()
+
     private var trabajo: Job? = null
     private var canal: RealtimeChannel? = null
 
@@ -47,6 +52,8 @@ class TiempoReal @Inject constructor(
                 val tablas = listOf("mascotas", "eventos_cuidado", "registros_cuidado", "pesos", "paseos", "miembros_mascota")
                 val flujos = tablas.map { t -> c.postgresChangeFlow<PostgresAction>(schema = "public") { table = t } }
                 val solicitudes = c.postgresChangeFlow<PostgresAction>(schema = "public") { table = "solicitudes_cuidado" }
+                val vet = listOf("solicitudes_vet", "vinculos_vet").map { t -> c.postgresChangeFlow<PostgresAction>(schema = "public") { table = t } }
+                launch { merge(*vet.toTypedArray()).debounce(500).collect { _vet.tryEmit(Unit) } }
                 // Varios cambios seguidos se agrupan en una sola sincronización
                 launch { merge(*flujos.toTypedArray()).debounce(1_500).collect { sync.solicitar() } }
                 launch {

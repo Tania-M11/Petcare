@@ -138,7 +138,23 @@ fun PetcareRaiz() {
             composable<RutaDirectorioVet> {
                 com.udenar.petcare.ui.servicios.DirectorioVeterinariosScreen(onVolver = { nav.popBackStack() }, onAbrir = { nav.navigate(RutaDetalleVet(it)) }, avisar = avisar)
             }
-            composable<RutaDetalleVet> { com.udenar.petcare.ui.servicios.DetalleVeterinarioScreen(onVolver = { nav.popBackStack() }, avisar = avisar) }
+            composable<RutaDetalleVet> { entrada ->
+                com.udenar.petcare.ui.servicios.DetalleVeterinarioScreen(
+                    onVolver = { nav.popBackStack() },
+                    onSolicitar = { nav.navigate(RutaSolicitarVet(entrada.toRoute<RutaDetalleVet>().id)) },
+                    avisar = avisar,
+                )
+            }
+            composable<RutaSolicitarVet> {
+                com.udenar.petcare.ui.servicios.SolicitarVetScreen(
+                    onVolver = { nav.popBackStack() },
+                    onEnviada = {
+                        avisar("Solicitud enviada. Te avisaremos cuando responda.")
+                        nav.popBackStack(RutaServicios, inclusive = false)
+                    },
+                    avisar = avisar,
+                )
+            }
             composable<RutaIntenciones> {
                 IntencionesScreen(onListo = { nav.popBackStack() }, onVolver = { nav.popBackStack() })
             }

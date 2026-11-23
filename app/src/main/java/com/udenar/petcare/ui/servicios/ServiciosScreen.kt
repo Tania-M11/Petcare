@@ -42,6 +42,8 @@ fun ServiciosScreen(avisar: (String) -> Unit, onVeterinarios: () -> Unit, modifi
             Text("Servicios", style = MaterialTheme.typography.headlineLarge)
         }
 
+        MisSolicitudes(avisar = avisar)
+
         // Buscador en píldora (se activa con los directorios)
         Row(
             Modifier

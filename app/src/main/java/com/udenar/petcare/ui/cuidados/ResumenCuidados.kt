@@ -147,6 +147,9 @@ private fun FilaCuidado(r: ResumenCuidado, onClick: () -> Unit) {
                 r.proxima?.let { "Próxima: ${it.format(CORTA)}" }?.takeIf { r.evento.ancla == Ancla.ULTIMA_VEZ || r.evento.tipo == com.udenar.petcare.domain.cuidados.TipoCuidado.VACUNA },
             )
             Text(partes.joinToString(" · "), style = MaterialTheme.typography.bodySmall, color = Pc.TintaSuave)
+            if (r.evento.creadoPor?.rol == "VETERINARIO") {
+                Text("🩺 Registrado por veterinario · ${r.evento.creadoPor.nombre.orEmpty()}", style = MaterialTheme.typography.labelSmall, color = Pc.CieloOscuro)
+            }
         }
         when {
             r.vencimiento == Vencimiento.VENCIDO -> Chip("Vencido", fondo = Pc.Durazno, color = MaterialTheme.colorScheme.error)

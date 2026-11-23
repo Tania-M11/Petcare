@@ -241,6 +241,9 @@ fun TarjetaVisitas(visitas: List<Visita>, onNueva: () -> Unit, onAbrir: (Visita)
                     color = Pc.TintaSuave,
                 )
                 v.tratamiento?.let { Text("Tratamiento: $it", style = MaterialTheme.typography.bodySmall) }
+                if (v.registradoPor?.rol == "VETERINARIO") {
+                    Text("🩺 Registrado por veterinario · ${v.registradoPor.nombre.orEmpty()}", style = MaterialTheme.typography.labelSmall, color = Pc.CieloOscuro)
+                }
             }
         }
     }

@@ -91,6 +91,7 @@ fun DetalleMascotaScreen(
     val estadoCuidado by viewModel.estadoCuidado.collectAsStateWithLifecycle()
     val historial by viewModel.historial.collectAsStateWithLifecycle()
     val miembros by viewModel.miembros.collectAsStateWithLifecycle()
+    val vets by viewModel.vets.collectAsStateWithLifecycle()
     val recordatoriosActivos by viewModel.recordatoriosActivos.collectAsStateWithLifecycle()
     val documentos by viewModel.documentos.collectAsStateWithLifecycle()
     val paseos by viewModel.paseos.collectAsStateWithLifecycle()
@@ -111,6 +112,7 @@ fun DetalleMascotaScreen(
         if (!mascota.porSubir && mascota.esPropietario) {
             viewModel.cargarCodigo()
             viewModel.cargarMiembros()
+            viewModel.cargarVets()
         }
     }
 
@@ -221,6 +223,7 @@ fun DetalleMascotaScreen(
                             onRegenerar = { viewModel.regenerarCodigo(avisar) }, onDesactivar = { viewModel.desactivarCodigo(avisar) },
                         )
                         TarjetaPersonas(miembros, onQuitar = { viewModel.quitar(it, avisar) })
+                        TarjetaVetsVinculados(vets, onDesvincular = { viewModel.desvincularVet(it, avisar) })
                     } else {
                         FichaSoloLectura(mascota)
                         TextButton(onClick = { confirmarSalir = true }, modifier = Modifier.fillMaxWidth().testTag("dejar_de_cuidar")) {
@@ -459,6 +462,34 @@ private fun TarjetaPersonas(miembros: List<com.udenar.petcare.domain.compartir.M
             title = { Text("¿Quitar a ${m.nombre}?", style = MaterialTheme.typography.headlineSmall) },
             text = { Text("Dejará de ver la mascota y de recibir sus recordatorios.") },
             confirmButton = { TextButton(onClick = { onQuitar(m); quitar = null }) { Text("Quitar", color = MaterialTheme.colorScheme.error) } },
+            dismissButton = { TextButton(onClick = { quitar = null }) { Text("Cancelar") } },
+        )
+    }
+}
+
+/** Veterinarios vinculados por una cita aceptada (RF-26): ven la ficha clínica hasta que se desvinculen. */
+@Composable
+private fun TarjetaVetsVinculados(vets: List<com.udenar.petcare.domain.profesionales.VetVinculado>?, onDesvincular: (com.udenar.petcare.domain.profesionales.VetVinculado) -> Unit) {
+    if (vets.isNullOrEmpty()) return
+    var quitar by remember { mutableStateOf<com.udenar.petcare.domain.profesionales.VetVinculado?>(null) }
+    Seccion("Veterinarios con acceso") {
+        vets.forEach { v ->
+            Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.testTag("vet_vinculado_${v.nombre}")) {
+                Column(Modifier.weight(1f)) {
+                    Text(v.nombre + if (v.verificado) " ✓" else "", style = MaterialTheme.typography.titleSmall)
+                    Text(listOfNotNull(v.clinica, "ve la ficha clínica").joinToString(" · "), style = MaterialTheme.typography.bodySmall, color = Pc.TintaSuave)
+                }
+                TextButton(onClick = { quitar = v }) { Text("Desvincular", color = MaterialTheme.colorScheme.error) }
+            }
+        }
+    }
+    quitar?.let { v ->
+        AlertDialog(
+            onDismissRequest = { quitar = null },
+            containerColor = Pc.Crema,
+            title = { Text("¿Desvincular a ${v.nombre}?", style = MaterialTheme.typography.headlineSmall) },
+            text = { Text("Dejará de ver la ficha clínica. Lo que registró se queda en el historial.") },
+            confirmButton = { TextButton(onClick = { onDesvincular(v); quitar = null }) { Text("Desvincular", color = MaterialTheme.colorScheme.error) } },
             dismissButton = { TextButton(onClick = { quitar = null }) { Text("Cancelar") } },
         )
     }
