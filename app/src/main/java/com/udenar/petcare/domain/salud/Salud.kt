@@ -39,6 +39,9 @@ interface RepositorioSalud {
     fun observarPesos(mascotaId: String): Flow<List<RegistroPeso>>
     fun observarVisitas(mascotaId: String): Flow<List<Visita>>
 
+    /** Pesos de todas las mascotas (recomendaciones de Hoy). */
+    fun observarTodosPesos(): Flow<List<RegistroPeso>>
+
     /** Registra un peso; si es el más reciente, también actualiza el peso de la ficha. */
     suspend fun registrarPeso(mascotaId: String, fecha: LocalDate, gramos: Int, notas: String? = null)
     suspend fun eliminarPeso(id: String)

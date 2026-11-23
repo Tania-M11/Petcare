@@ -163,7 +163,7 @@ fun RaizProfesional(viewModel: ModoVetViewModel = hiltViewModel()) {
     }
     Scaffold(
         containerColor = Pc.Crema,
-        snackbarHost = { SnackbarHost(avisos) },
+        snackbarHost = { SnackbarHost(avisos) { datos -> com.udenar.petcare.ui.componentes.AvisoChopper(datos.visuals.message) } },
         topBar = {
             if (actual != null) {
                 Row(

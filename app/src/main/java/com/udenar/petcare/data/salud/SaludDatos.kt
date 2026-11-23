@@ -65,6 +65,9 @@ interface PesoDao {
     @Query("SELECT * FROM pesos WHERE mascotaId = :mascotaId AND eliminado = 0 ORDER BY fecha DESC, registradoEn DESC")
     fun observarDe(mascotaId: String): Flow<List<PesoEntidad>>
 
+    @Query("SELECT * FROM pesos WHERE eliminado = 0 ORDER BY fecha DESC, registradoEn DESC")
+    fun observarTodos(): Flow<List<PesoEntidad>>
+
     @Query("SELECT MAX(fecha) FROM pesos WHERE mascotaId = :mascotaId AND eliminado = 0")
     suspend fun ultimaFecha(mascotaId: String): String?
 

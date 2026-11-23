@@ -63,7 +63,7 @@ fun PetcareRaiz() {
 
     Scaffold(
         containerColor = Pc.Crema,
-        snackbarHost = { SnackbarHost(avisos) },
+        snackbarHost = { SnackbarHost(avisos) { datos -> com.udenar.petcare.ui.componentes.AvisoChopper(datos.visuals.message) } },
         // La barra solo se ve en las 4 pestañas (no en pantallas completas como Intenciones)
         bottomBar = { if (actual != null) BarraInferior(PestanaPersonal.entries, actual = actual, onElegir = { nav.irAPestana(it) }) },
     ) { relleno ->
@@ -82,6 +82,8 @@ fun PetcareRaiz() {
                     onPasear = { mascotaId -> nav.navigate(RutaPaseo(mascotaId)) },
                     onPerfilVeterinario = { nav.navigate(RutaFormVeterinario) },
                     onPerfilPrestador = { nav.navigate(RutaFormPrestador) },
+                    onVeterinarios = { nav.navigate(RutaDirectorioVet) },
+                    onEditarMascota = { nav.navigate(RutaFormMascota(it)) },
                     avisar = avisar,
                 )
             }
@@ -98,6 +100,7 @@ fun PetcareRaiz() {
                 FormMascotaScreen(
                     onVolver = { nav.popBackStack() },
                     onGuardada = { id ->
+                        avisar("¡Listo! La ficha quedó guardada 🐾")
                         nav.popBackStack()
                         // Si era nueva (se abrió desde la lista), se muestra su ficha
                         if (nav.currentDestination?.hasRoute(RutaDetalleMascota::class) != true) nav.navigate(RutaDetalleMascota(id))
@@ -122,7 +125,12 @@ fun PetcareRaiz() {
                     avisar = avisar,
                 )
             }
-            composable<RutaFormCuidado> { FormCuidadoScreen(onListo = { nav.popBackStack() }) }
+            composable<RutaFormCuidado> {
+                FormCuidadoScreen(onListo = {
+                    avisar("¡Listo! Cuidados actualizados ✓")
+                    nav.popBackStack()
+                })
+            }
             composable<RutaCuidarCodigo> { com.udenar.petcare.ui.compartir.CuidarConCodigoScreen(onVolver = { nav.popBackStack() }) }
             composable<RutaPaseo> { com.udenar.petcare.ui.paseos.PaseoScreen(onVolver = { nav.popBackStack() }, avisar = avisar) }
             composable<RutaDetallePaseo> {
@@ -138,7 +146,12 @@ fun PetcareRaiz() {
                     onQuieroCuidar = { codigo -> nav.navigate(RutaCuidarCodigo(codigo)) { popUpTo<RutaResultadoQr> { inclusive = true } } },
                 )
             }
-            composable<RutaFormVisita> { com.udenar.petcare.ui.mascotas.FormVisitaScreen(onListo = { nav.popBackStack() }) }
+            composable<RutaFormVisita> {
+                com.udenar.petcare.ui.mascotas.FormVisitaScreen(onListo = {
+                    avisar("¡Visita guardada en su historial! 🩺")
+                    nav.popBackStack()
+                })
+            }
             composable<RutaServicios> {
                 ServiciosScreen(avisar = avisar, onVeterinarios = { nav.navigate(RutaDirectorioVet) }, onPrestadores = { nav.navigate(RutaDirectorioPres) })
             }

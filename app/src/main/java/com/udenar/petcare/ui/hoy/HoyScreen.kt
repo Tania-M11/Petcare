@@ -36,6 +36,7 @@ import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -80,6 +81,8 @@ fun HoyScreen(
     onPasear: (mascotaId: String?) -> Unit,
     onPerfilVeterinario: () -> Unit,
     onPerfilPrestador: () -> Unit,
+    onVeterinarios: () -> Unit,
+    onEditarMascota: (String) -> Unit,
     avisar: (String) -> Unit,
     modifier: Modifier = Modifier,
     viewModel: HoyViewModel = hiltViewModel(),
@@ -94,8 +97,30 @@ fun HoyScreen(
     val mes by viewModel.mes.collectAsStateWithLifecycle()
     val resumenMes by viewModel.resumenMes.collectAsStateWithLifecycle()
     val solicitudes by viewModel.solicitudes.collectAsStateWithLifecycle()
+    val recomendaciones by viewModel.recomendaciones.collectAsStateWithLifecycle()
     var verMes by remember { mutableStateOf(false) }
     var nuevo by remember { mutableStateOf(false) }
+    // Mascota elegida desde una recomendación ("Crear recordatorio")
+    var preMascota by remember { mutableStateOf<String?>(null) }
+    val vibrar = androidx.compose.ui.platform.LocalHapticFeedback.current
+    // Confeti al terminar todo lo de hoy
+    var confeti by remember { mutableStateOf(0) }
+    val esHoy = estado.seleccionado == estado.hoy
+    val totalHoy = if (esHoy) agenda?.size ?: 0 else 0
+    val pendientesHoy = if (esHoy) agenda?.count { it.toma.pendiente } ?: 0 else 0
+    var pendientesAntes by remember { mutableStateOf<Int?>(null) }
+    LaunchedEffect(pendientesHoy, totalHoy, esHoy) {
+        if (esHoy && totalHoy > 0 && pendientesHoy == 0 && (pendientesAntes ?: 0) > 0) {
+            confeti++
+            vibrar.performHapticFeedback(androidx.compose.ui.hapticfeedback.HapticFeedbackType.LongPress)
+        }
+        if (agenda != null && esHoy) pendientesAntes = pendientesHoy
+    }
+    fun marcarHecho(item: ItemAgenda) {
+        vibrar.performHapticFeedback(androidx.compose.ui.hapticfeedback.HapticFeedbackType.TextHandleMove)
+        viewModel.marcar(item.toma, item.toma.evento.tipo.estadoHecho)
+        if (esHoy) avisar(com.udenar.petcare.domain.recomendaciones.Chopper.alMarcar(item.toma.evento.titulo, item.mascota.nombre, (pendientesHoy - 1).coerceAtLeast(0)))
+    }
 
     // Permiso de notificaciones (Android 13+): se revisa al volver a la app
     val contexto = LocalContext.current
@@ -120,12 +145,19 @@ fun HoyScreen(
             verticalArrangement = Arrangement.spacedBy(20.dp),
         ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Column(Modifier.weight(1f)) {
-                    Image(painterResource(R.drawable.logo_petcare), contentDescription = "PetCare", modifier = Modifier.height(26.dp))
-                    Text("Hola,", style = MaterialTheme.typography.bodyLarge, color = Pc.TintaSuave, modifier = Modifier.padding(top = 14.dp))
-                    Text(nombre.ifBlank { "¡Hola!" }, style = MaterialTheme.typography.headlineLarge)
-                }
+                Image(painterResource(R.drawable.logo_petcare), contentDescription = "PetCare", modifier = Modifier.height(26.dp).weight(1f, fill = false))
+                Spacer(Modifier.weight(1f))
                 BotonCircular(Icons.Rounded.CalendarMonth, "Ver mes", onClick = { verMes = true }, modifier = Modifier.testTag("ver_mes"))
+            }
+
+            // Chopper saluda según la hora y cuenta cómo va el día; el anillo se llena al marcar
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                val saludo = com.udenar.petcare.domain.recomendaciones.Chopper.saludo(
+                    nombre, viewModel.horaActual(), if (esHoy) totalHoy else 0, pendientesHoy,
+                    mascotas.filter { filtro == null || it.id == filtro }.map { it.nombre }, estado.hoy,
+                )
+                com.udenar.petcare.ui.componentes.BurbujaChopper(saludo.texto, saludo.pose, Modifier.weight(1f))
+                if (mascotas.isNotEmpty()) com.udenar.petcare.ui.componentes.AnilloProgreso(totalHoy - pendientesHoy, totalHoy, tam = 84.dp)
             }
 
             Column {
@@ -186,7 +218,35 @@ fun HoyScreen(
                 )
             }
 
-            if (alertas.isNotEmpty() && estado.seleccionado == estado.hoy) TarjetaAlertas(alertas, onAbrir = onAbrirMascota)
+            // Recomendaciones: qué atender, con el porqué y un botón para hacerlo
+            if (recomendaciones.isNotEmpty() && esHoy) {
+                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    TituloSeccion("Para ti")
+                    androidx.compose.foundation.lazy.LazyRow(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                        items(recomendaciones.take(8).size) { i ->
+                            val r = recomendaciones[i]
+                            com.udenar.petcare.ui.componentes.TarjetaRecomendacion(
+                                r,
+                                onAccion = {
+                                    val id = r.mascotaId
+                                    when (r.accion) {
+                                        com.udenar.petcare.domain.recomendaciones.AccionSugerida.BUSCAR_VETERINARIO -> onVeterinarios()
+                                        com.udenar.petcare.domain.recomendaciones.AccionSugerida.PASEAR -> onPasear(id)
+                                        com.udenar.petcare.domain.recomendaciones.AccionSugerida.COMPLETAR_FICHA -> id?.let(onEditarMascota)
+                                        com.udenar.petcare.domain.recomendaciones.AccionSugerida.NUEVO_CUIDADO -> {
+                                            preMascota = id
+                                            nuevo = true
+                                        }
+                                        else -> id?.let(onAbrirMascota)
+                                    }
+                                },
+                                onDescartar = { viewModel.descartar(r.id) },
+                            )
+                        }
+                    }
+                    Text("Sugerencias para organizarte; no reemplazan la opinión de un veterinario.", style = MaterialTheme.typography.labelSmall, color = Pc.TintaSuave)
+                }
+            }
 
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 val lista = agenda
@@ -213,19 +273,23 @@ fun HoyScreen(
                         fondoBlob = listOf(Pc.SolClaro, Pc.Durazno),
                     )
                     else -> lista.forEach { item ->
-                        TarjetaToma(
-                            item = item,
-                            hoy = estado.hoy,
-                            sePuedeMarcar = viewModel.sePuedeMarcar(item.toma),
-                            onHecho = { viewModel.marcar(item.toma, item.toma.evento.tipo.estadoHecho) },
-                            onOmitir = { viewModel.marcar(item.toma, EstadoRegistro.OMITIDA) },
-                            onDeshacer = { viewModel.deshacer(item.toma) },
-                        )
+                        DeslizarParaHecho(habilitado = item.toma.pendiente && viewModel.sePuedeMarcar(item.toma), onHecho = { marcarHecho(item) }) {
+                            TarjetaToma(
+                                item = item,
+                                hoy = estado.hoy,
+                                sePuedeMarcar = viewModel.sePuedeMarcar(item.toma),
+                                onHecho = { marcarHecho(item) },
+                                onOmitir = { viewModel.marcar(item.toma, EstadoRegistro.OMITIDA) },
+                                onDeshacer = { viewModel.deshacer(item.toma) },
+                            )
+                        }
                     }
                 }
             }
             Spacer(Modifier.height(72.dp))
         }
+
+        com.udenar.petcare.ui.componentes.Confeti(confeti, Modifier.matchParentSize())
 
         if (mascotas.isNotEmpty()) {
             Row(
@@ -260,11 +324,11 @@ fun HoyScreen(
 
     if (nuevo) {
         val propias = mascotas.filter { it.esPropietario }
-        var mascotaElegida by remember { mutableStateOf(if (propias.size == 1) propias.first().id else filtro?.takeIf { f -> propias.any { it.id == f } }) }
-        ModalBottomSheet(onDismissRequest = { nuevo = false }, containerColor = Pc.Crema) {
+        var mascotaElegida by remember { mutableStateOf(preMascota ?: if (propias.size == 1) propias.first().id else filtro?.takeIf { f -> propias.any { it.id == f } }) }
+        ModalBottomSheet(onDismissRequest = { nuevo = false; preMascota = null }, containerColor = Pc.Crema) {
             Column(Modifier.padding(horizontal = 16.dp).padding(bottom = 16.dp).navigationBarsPadding()) {
                 val elegida = mascotaElegida
-                var queHacer by remember { mutableStateOf(if (propias.isEmpty()) "paseo" else null) }
+                var queHacer by remember { mutableStateOf(if (propias.isEmpty()) "paseo" else if (preMascota != null) "cuidado" else null) }
                 if (queHacer == null) {
                     Text("¿Qué quieres registrar?", style = MaterialTheme.typography.headlineSmall, modifier = Modifier.padding(start = 12.dp, bottom = 8.dp))
                     listOf("paseo" to "🦮  Un paseo (con GPS o sin él)", "cuidado" to "➕  Un cuidado nuevo (comida, medicina, baño…)").forEach { (clave, texto) ->
@@ -357,4 +421,36 @@ private fun FiltroMascotas(mascotas: List<Mascota>, filtro: String?, onFiltro: (
             }
         }
     }
+}
+
+/** Deslizar una toma hacia la derecha la marca como hecha (además del botón). */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun DeslizarParaHecho(habilitado: Boolean, onHecho: () -> Unit, contenido: @Composable () -> Unit) {
+    if (!habilitado) {
+        contenido()
+        return
+    }
+    val estado = androidx.compose.material3.rememberSwipeToDismissBoxState(
+        confirmValueChange = { valor ->
+            if (valor == androidx.compose.material3.SwipeToDismissBoxValue.StartToEnd) onHecho()
+            false // la tarjeta vuelve a su lugar y muestra "Hecho"
+        },
+    )
+    androidx.compose.material3.SwipeToDismissBox(
+        state = estado,
+        enableDismissFromEndToStart = false,
+        backgroundContent = {
+            Row(
+                Modifier
+                    .fillMaxSize()
+                    .clip(MaterialTheme.shapes.large)
+                    .background(Pc.MentaClara)
+                    .padding(horizontal = 24.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text("✓ Hecho", style = MaterialTheme.typography.titleMedium, color = Pc.Tinta)
+            }
+        },
+    ) { contenido() }
 }

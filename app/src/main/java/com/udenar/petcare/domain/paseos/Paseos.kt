@@ -47,6 +47,9 @@ data class ResumenPaseo(
 
 interface RepositorioPaseos {
     fun observar(mascotaId: String): Flow<List<Paseo>>
+
+    /** Paseos de todas las mascotas desde [desde] (recomendaciones). */
+    fun observarDesde(desde: java.time.Instant): Flow<List<Paseo>>
     suspend fun obtener(id: String): Paseo?
 
     /** Un registro por mascota (comparten la ruta). */

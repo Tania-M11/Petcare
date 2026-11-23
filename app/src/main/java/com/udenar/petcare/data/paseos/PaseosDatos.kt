@@ -63,6 +63,9 @@ interface PaseoDao {
 
     @Query("SELECT * FROM paseos WHERE id = :id") suspend fun porId(id: String): PaseoEntidad?
 
+    @Query("SELECT * FROM paseos WHERE eliminado = 0 AND inicio >= :desde ORDER BY inicio DESC")
+    fun observarDesde(desde: String): Flow<List<PaseoEntidad>>
+
     @Upsert suspend fun guardar(p: PaseoEntidad)
 
     @Query("SELECT * FROM paseos WHERE pendiente = 1") suspend fun pendientes(): List<PaseoEntidad>
@@ -143,6 +146,8 @@ class RepositorioPaseosLocal @Inject constructor(
 ) : RepositorioPaseos {
 
     override fun observar(mascotaId: String): Flow<List<Paseo>> = dao.observarDe(mascotaId).map { l -> l.map { it.comoDominio() } }
+
+    override fun observarDesde(desde: Instant): Flow<List<Paseo>> = dao.observarDesde(desde.toString()).map { l -> l.map { it.comoDominio() } }
 
     override suspend fun obtener(id: String): Paseo? = dao.porId(id)?.takeIf { !it.eliminado }?.comoDominio()
 

@@ -64,6 +64,9 @@ class HoyViewModel @Inject constructor(
     private val veterinarios: com.udenar.petcare.domain.profesionales.RepositorioVeterinarios,
     private val modo: com.udenar.petcare.domain.profesionales.RepositorioModo,
     private val prestadores: com.udenar.petcare.domain.profesionales.RepositorioPrestadores,
+    salud: com.udenar.petcare.domain.salud.RepositorioSalud,
+    paseosRepo: com.udenar.petcare.domain.paseos.RepositorioPaseos,
+    private val descartes: com.udenar.petcare.data.local.Descartes,
 ) : ViewModel() {
 
     /** Paso "Sube tu certificado": la verificación vive en el modo veterinario. */
@@ -144,6 +147,21 @@ class HoyViewModel @Inject constructor(
             }
         }.sortedBy { it.tipo }
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
+
+    /** Recomendaciones de organización y seguimiento (Fase 6.5), sin las descartadas. */
+    val recomendaciones: StateFlow<List<com.udenar.petcare.domain.recomendaciones.Recomendacion>> = combine(
+        mascotas, cuidados.observarEventos(), cuidados.observarRegistros(), salud.observarTodosPesos(),
+        combine(paseosRepo.observarDesde(java.time.Instant.now(reloj).minus(java.time.Duration.ofDays(30))), descartes.ids, ::Pair),
+    ) { lista, eventos, registros, pesos, (paseos, descartadas) ->
+        com.udenar.petcare.domain.recomendaciones.MotorRecomendaciones.generar(
+            com.udenar.petcare.domain.recomendaciones.ContextoRecomendaciones(LocalDate.now(reloj), lista, eventos, registros, pesos, paseos, reloj.zone),
+        ).filter { it.id !in descartadas }
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
+
+    fun descartar(id: String) = descartes.descartar(id)
+
+    /** Hora local para el saludo de Chopper. */
+    fun horaActual(): Int = java.time.LocalTime.now(reloj).hour
 
     /** Mes visible en el calendario. */
     private val _mes = MutableStateFlow(YearMonth.now(reloj))

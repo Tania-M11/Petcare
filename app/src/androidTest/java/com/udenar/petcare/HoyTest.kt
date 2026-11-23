@@ -64,7 +64,8 @@ class HoyTest {
 
     @Test
     fun filtrarPorMascotaYAlertaDeVacuna() {
-        compose.onNodeWithText("💉 Rabia de Max", substring = true).assertExists()
+        // La vacuna próxima aparece como recomendación con su porqué
+        compose.waitUntil(5_000) { compose.onAllNodesWithTextExists("Se acerca: Rabia") }
         compose.onNodeWithTag("filtro_Luna").performClick()
         compose.waitUntil(5_000) { compose.onAllNodesWithTextExists("2 pendientes") }
         compose.onAllNodesWithTag("hecho_Desayuno").fetchSemanticsNodes().let { assert(it.isEmpty()) }
