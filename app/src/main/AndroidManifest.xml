@@ -77,6 +77,13 @@
         <!-- Recordatorios: alarma que suena, botones de la notificación y eventos del sistema -->
         <receiver android:name=".data.alarmas.ReceptorAlarma" android:exported="false" />
         <receiver android:name=".data.alarmas.ReceptorAccion" android:exported="false" />
+        <!-- Widget de Hoy (Glance) -->
+        <receiver android:name=".ui.widget.ReceptorWidgetHoy" android:exported="false">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data android:name="android.appwidget.provider" android:resource="@xml/widget_hoy" />
+        </receiver>
         <receiver android:name=".data.alarmas.ReceptorSistema" android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.BOOT_COMPLETED" />

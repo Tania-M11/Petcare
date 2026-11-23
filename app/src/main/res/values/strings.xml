@@ -1,4 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">PetCare</string>
+    <string name="widget_hoy_descripcion">Lo que falta hoy con tus mascotas, con botón Hecho</string>
 </resources>

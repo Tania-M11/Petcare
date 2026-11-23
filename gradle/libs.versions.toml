@@ -25,6 +25,7 @@ maplibre = "13.7.1"
 firebaseBom = "35.2.0"
 mlkitSegmentacion = "16.0.0-beta1"
 mlkitTexto = "19.0.1"
+glance = "1.2.0"
 googleServices = "4.6.0"
 playLocation = "21.4.0"
 testExtJunit = "1.3.0"
@@ -32,6 +33,8 @@ testExtJunit = "1.3.0"
 espresso = "3.8.0-alpha04"
 
 [libraries]
+androidx-glance-appwidget = { group = "androidx.glance", name = "glance-appwidget", version.ref = "glance" }
+androidx-glance-material3 = { group = "androidx.glance", name = "glance-material3", version.ref = "glance" }
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
 androidx-lifecycle-runtime-ktx = { group = "androidx.lifecycle", name = "lifecycle-runtime-ktx", version.ref = "lifecycle" }
 androidx-lifecycle-runtime-compose = { group = "androidx.lifecycle", name = "lifecycle-runtime-compose", version.ref = "lifecycle" }

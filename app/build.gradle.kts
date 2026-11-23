@@ -114,6 +114,9 @@ dependencies {
     // Fase 6: foto guiada (recorte) y escanear etiquetas
     implementation(libs.mlkit.segmentacion)
     implementation(libs.mlkit.texto)
+    // Widget de Hoy en la pantalla de inicio (Fase 6.8)
+    implementation(libs.androidx.glance.appwidget)
+    implementation(libs.androidx.glance.material3)
     implementation(libs.ktor.client.okhttp)
 
     // Inyección de dependencias (Hilt)
