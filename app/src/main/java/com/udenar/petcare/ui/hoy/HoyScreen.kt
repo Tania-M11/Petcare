@@ -79,6 +79,7 @@ fun HoyScreen(
     onNuevoCuidado: (mascotaId: String, clase: String) -> Unit,
     onPasear: (mascotaId: String?) -> Unit,
     onPerfilVeterinario: () -> Unit,
+    onPerfilPrestador: () -> Unit,
     avisar: (String) -> Unit,
     modifier: Modifier = Modifier,
     viewModel: HoyViewModel = hiltViewModel(),
@@ -160,6 +161,7 @@ fun HoyScreen(
                             else -> when {
                                 paso.disponibleEn != null -> avisar("\"${paso.titulo}\" llega en ${paso.disponibleEn}")
                                 paso.id == Guia.CERTIFICADO && viewModel.tienePerfilVet -> viewModel.abrirModoVeterinario()
+                                paso.intencion == com.udenar.petcare.domain.guia.Intencion.SERVICIOS -> onPerfilPrestador()
                                 else -> onPerfilVeterinario()
                             }
                         }

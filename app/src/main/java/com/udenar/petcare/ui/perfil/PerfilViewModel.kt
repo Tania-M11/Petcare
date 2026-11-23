@@ -29,11 +29,15 @@ class PerfilViewModel @Inject constructor(
     private val planificador: PlanificadorAlarmas,
     private val veterinarios: com.udenar.petcare.domain.profesionales.RepositorioVeterinarios,
     private val modo: com.udenar.petcare.domain.profesionales.RepositorioModo,
+    prestadoresRepo: com.udenar.petcare.domain.profesionales.RepositorioPrestadores,
 ) : ViewModel() {
 
     val perfilVet: StateFlow<com.udenar.petcare.domain.profesionales.PerfilVeterinario?> = veterinarios.miPerfil
 
     fun modoVeterinario() = modo.cambiar(com.udenar.petcare.domain.modelo.ModoUso.VETERINARIO)
+
+    val perfilPres: StateFlow<com.udenar.petcare.domain.profesionales.PerfilPrestador?> = prestadoresRepo.miPerfil
+    fun modoPrestador() = modo.cambiar(com.udenar.petcare.domain.modelo.ModoUso.PRESTADOR)
 
     /** Android 12+: permiso de alarmas a la hora exacta (se revisa al volver a la pantalla). */
     private val _horaExacta = MutableStateFlow(relojAlarmas.puedeExactas())

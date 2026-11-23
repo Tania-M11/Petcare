@@ -49,6 +49,9 @@ object Guia {
     const val PERFIL_VET = "perfil_vet"
     const val CONSULTORIO = "consultorio"
     const val CERTIFICADO = "certificado"
+    const val CATEGORIAS = "categorias"
+    const val PRECIOS = "precios"
+    const val HORARIO = "horario"
 
     private val PASOS = listOf(
         PasoGuia(CREAR_MASCOTA, Intencion.MASCOTAS, "Agrega a tu primera mascota", "Su ficha, foto y especie", DestinoPaso.MASCOTAS, null),
@@ -59,9 +62,9 @@ object Guia {
         PasoGuia("perfil_vet", Intencion.VETERINARIO, "Completa tu perfil profesional", "Especies, servicios y horario", DestinoPaso.PERFIL, null),
         PasoGuia("consultorio", Intencion.VETERINARIO, "Ubica tu consultorio en el mapa", "Para que te encuentren cerca", DestinoPaso.PERFIL, null),
         PasoGuia("certificado", Intencion.VETERINARIO, "Sube tu certificado", "Así obtienes la insignia Verificado", DestinoPaso.PERFIL, null),
-        PasoGuia("categorias", Intencion.SERVICIOS, "Elige qué servicios ofreces", "Paseo, baño y peluquería o cuidado", DestinoPaso.PERFIL, "la parte 4.4"),
-        PasoGuia("precios", Intencion.SERVICIOS, "Agrega tus precios", "Fijos, desde o a cotizar", DestinoPaso.PERFIL, "la parte 4.4"),
-        PasoGuia("horario", Intencion.SERVICIOS, "Define tu horario", "Cuándo recibes solicitudes", DestinoPaso.PERFIL, "la parte 4.4"),
+        PasoGuia("categorias", Intencion.SERVICIOS, "Elige qué servicios ofreces", "Paseo, baño y peluquería o cuidado", DestinoPaso.PERFIL, null),
+        PasoGuia("precios", Intencion.SERVICIOS, "Agrega tus precios", "Fijos, desde o a cotizar", DestinoPaso.PERFIL, null),
+        PasoGuia("horario", Intencion.SERVICIOS, "Define tu horario", "Cuándo recibes solicitudes", DestinoPaso.PERFIL, null),
     )
 
     /** Pasos de las intenciones elegidas, en el orden de la lista de intenciones. */

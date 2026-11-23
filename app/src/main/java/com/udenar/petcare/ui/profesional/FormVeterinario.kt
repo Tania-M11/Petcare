@@ -308,9 +308,16 @@ fun FormVeterinarioScreen(onVolver: () -> Unit, onGuardado: (activado: Boolean) 
     }
 }
 
-/** Pantalla completa para poner el pin sobre el consultorio. */
+/** Pantalla completa para poner el pin sobre el consultorio o el lugar donde se atiende. */
 @Composable
-private fun DialogoUbicacion(inicial: Coordenada?, onElegir: (Coordenada) -> Unit, onCerrar: () -> Unit, avisar: (String) -> Unit) {
+fun DialogoUbicacion(
+    inicial: Coordenada?,
+    onElegir: (Coordenada) -> Unit,
+    onCerrar: () -> Unit,
+    avisar: (String) -> Unit,
+    titulo: String = "Ubica tu consultorio",
+    ayuda: String = "Mueve el mapa hasta que el pin quede sobre la entrada.",
+) {
     val contexto = LocalContext.current
     var centro by remember { mutableStateOf(inicial ?: com.udenar.petcare.ui.mapas.CENTRO_INICIAL) }
     var irA by remember { mutableStateOf<Coordenada?>(null) }
@@ -330,9 +337,9 @@ private fun DialogoUbicacion(inicial: Coordenada?, onElegir: (Coordenada) -> Uni
         ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 BotonCircular(Icons.Rounded.Close, "Cerrar", onClick = onCerrar)
-                Text("Ubica tu consultorio", style = MaterialTheme.typography.headlineSmall, modifier = Modifier.padding(start = 12.dp))
+                Text(titulo, style = MaterialTheme.typography.headlineSmall, modifier = Modifier.padding(start = 12.dp))
             }
-            Text("Mueve el mapa hasta que el pin quede sobre la entrada.", style = MaterialTheme.typography.bodyMedium, color = Pc.TintaSuave)
+            Text(ayuda, style = MaterialTheme.typography.bodyMedium, color = Pc.TintaSuave)
             Box(
                 Modifier
                     .fillMaxWidth()

@@ -69,6 +69,7 @@ fun PerfilScreen(
     avisar: (String) -> Unit,
     irAIntenciones: () -> Unit,
     onPerfilVeterinario: () -> Unit,
+    onPerfilPrestador: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: PerfilViewModel = hiltViewModel(),
 ) {
@@ -91,6 +92,7 @@ fun PerfilScreen(
     var confirmarSalida by remember { mutableStateOf(false) }
     var trabajar by remember { mutableStateOf(false) }
     val perfilVet by viewModel.perfilVet.collectAsStateWithLifecycle()
+    val perfilPres by viewModel.perfilPres.collectAsStateWithLifecycle()
 
     Column(
         modifier
@@ -129,6 +131,18 @@ fun PerfilScreen(
             }
         }
 
+        if (perfilPres?.activo == true) {
+            TarjetaIlustrada(
+                titulo = "Modo prestador",
+                texto = "Tus solicitudes, agenda, clientes y servicios.",
+                chip = "Cambiar de modo",
+                ilustracion = R.drawable.chopper_amigos,
+                degradado = listOf(Pc.SolClaro, Pc.Sol),
+                colorTexto = Pc.Tinta,
+                onClick = viewModel::modoPrestador,
+                modifier = Modifier.testTag("tarjeta_modo_pres"),
+            )
+        }
         if (perfilVet?.activo == true) {
             // RF-30: cambiar de modo sin cerrar sesión
             TarjetaIlustrada(
@@ -140,7 +154,8 @@ fun PerfilScreen(
                 onClick = viewModel::modoVeterinario,
                 modifier = Modifier.testTag("tarjeta_modo_vet"),
             )
-        } else {
+        }
+        if (perfilVet?.activo != true || perfilPres?.activo != true) {
             TarjetaIlustrada(
                 titulo = "Trabaja con PetCare",
                 texto = "¿Eres veterinario o cuidas mascotas? Activa tu perfil profesional.",
@@ -249,7 +264,11 @@ fun PerfilScreen(
                     Text("Sigues teniendo tus mascotas: el perfil profesional se suma a tu cuenta.", style = MaterialTheme.typography.bodySmall, color = Pc.TintaSuave)
                     FilaOpcion(
                         icono = Icons.Rounded.MedicalServices,
-                        titulo = if (perfilVet != null) "Reactivar mi perfil de veterinario" else "Soy veterinario/a",
+                        titulo = when {
+                            perfilVet?.activo == true -> "Editar mi perfil de veterinario"
+                            perfilVet != null -> "Reactivar mi perfil de veterinario"
+                            else -> "Soy veterinario/a"
+                        },
                         subtitulo = "Aparece en el directorio y recibe pacientes",
                         fondoIcono = Pc.CieloClaro,
                         colorIcono = Pc.CieloOscuro,
@@ -261,14 +280,19 @@ fun PerfilScreen(
                     )
                     FilaOpcion(
                         icono = Icons.Rounded.ContentCut,
-                        titulo = "Ofrezco servicios",
+                        titulo = when {
+                            perfilPres?.activo == true -> "Editar mi perfil de servicios"
+                            perfilPres != null -> "Reactivar mi perfil de servicios"
+                            else -> "Ofrezco servicios"
+                        },
                         subtitulo = "Paseo, baño y peluquería o cuidado temporal",
                         fondoIcono = Pc.SolClaro,
                         colorIcono = Pc.Naranja,
                         onClick = {
                             trabajar = false
-                            avisar("Los perfiles de prestador llegan muy pronto")
+                            onPerfilPrestador()
                         },
+                        modifier = Modifier.testTag("trabajar_pres"),
                     )
                 }
             },

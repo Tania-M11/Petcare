@@ -22,6 +22,7 @@ class RaizViewModel @Inject constructor(
     private val tiempoReal: com.udenar.petcare.data.sync.TiempoReal,
     private val veterinarios: com.udenar.petcare.domain.profesionales.RepositorioVeterinarios,
     private val modoRepo: com.udenar.petcare.domain.profesionales.RepositorioModo,
+    private val prestadores: com.udenar.petcare.domain.profesionales.RepositorioPrestadores,
 ) : ViewModel() {
 
     /** Modo activo (RF-30); se recuerda en el teléfono y funciona sin conexión. */
@@ -35,6 +36,11 @@ class RaizViewModel @Inject constructor(
                     // Si el perfil ya no está activo (lo ocultó en otro teléfono), vuelve al modo personal
                     runCatching { veterinarios.cargarMiPerfil() }.onSuccess { p ->
                         if (p?.activo != true && modoRepo.modo.value == com.udenar.petcare.domain.modelo.ModoUso.VETERINARIO) {
+                            modoRepo.cambiar(com.udenar.petcare.domain.modelo.ModoUso.PERSONAL)
+                        }
+                    }
+                    runCatching { prestadores.cargarMiPerfil() }.onSuccess { p ->
+                        if (p?.activo != true && modoRepo.modo.value == com.udenar.petcare.domain.modelo.ModoUso.PRESTADOR) {
                             modoRepo.cambiar(com.udenar.petcare.domain.modelo.ModoUso.PERSONAL)
                         }
                     }

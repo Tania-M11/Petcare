@@ -29,7 +29,7 @@ import com.udenar.petcare.ui.theme.Pc
 
 /** Pestaña Servicios: puerta a los directorios de veterinarios y prestadores (fase 4). */
 @Composable
-fun ServiciosScreen(avisar: (String) -> Unit, onVeterinarios: () -> Unit, modifier: Modifier = Modifier) {
+fun ServiciosScreen(avisar: (String) -> Unit, onVeterinarios: () -> Unit, onPrestadores: () -> Unit, modifier: Modifier = Modifier) {
     Column(
         modifier
             .fillMaxSize()
@@ -79,7 +79,8 @@ fun ServiciosScreen(avisar: (String) -> Unit, onVeterinarios: () -> Unit, modifi
             ilustracion = R.drawable.chopper_doctor,
             degradado = listOf(Pc.SolClaro, Pc.Sol),
             colorTexto = Pc.Tinta,
-            onClick = { avisar("El directorio de prestadores llega muy pronto") },
+            onClick = onPrestadores,
+            modifier = Modifier.testTag("tarjeta_prestadores"),
         )
     }
 }

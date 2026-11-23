@@ -58,6 +58,34 @@ class ModoMemoria @Inject constructor() : RepositorioModo {
     }
 }
 
+/** Prestadores en memoria: catálogo fijo y directorio que llena cada prueba. */
+@Singleton
+class PrestadoresFalso @Inject constructor() : com.udenar.petcare.domain.profesionales.RepositorioPrestadores {
+    override val miPerfil = MutableStateFlow<com.udenar.petcare.domain.profesionales.PerfilPrestador?>(null)
+    val directorio = mutableListOf<com.udenar.petcare.domain.profesionales.PerfilPrestador>()
+    private val catalogo = listOf(
+        com.udenar.petcare.domain.profesionales.Categoria("PASEADOR", "Paseadores de mascotas", "🦮", 1),
+        com.udenar.petcare.domain.profesionales.Categoria("BANO_PELUQUERIA", "Baño y peluquería", "✂️", 2),
+        com.udenar.petcare.domain.profesionales.Categoria("CUIDADO_TEMPORAL", "Cuidado temporal de mascotas", "🏠", 3),
+    )
+
+    override suspend fun cargarMiPerfil() = miPerfil.value
+    override suspend fun guardar(perfil: com.udenar.petcare.domain.profesionales.PerfilPrestador) {
+        require(com.udenar.petcare.domain.profesionales.ValidadorPrestador.errores(perfil).isEmpty())
+        miPerfil.value = perfil
+    }
+    override suspend fun categorias() = catalogo
+    override suspend fun subirFoto(bytes: ByteArray) = "https://ejemplo.test/foto.jpg"
+    override suspend fun borrarFoto(url: String) = Unit
+    override suspend fun buscar(filtro: com.udenar.petcare.domain.profesionales.FiltroPrestadores, lat: Double?, lon: Double?) = directorio.filter { p ->
+        p.activo && (filtro.categoria == null || filtro.categoria in p.categorias) &&
+            (filtro.especie == null || filtro.especie in p.especies) && (filtro.modalidad == null || filtro.modalidad in p.modalidades) &&
+            (filtro.ciudad.isBlank() || p.ciudad.equals(filtro.ciudad.trim(), ignoreCase = true)) &&
+            (filtro.zona.isBlank() || p.zona.orEmpty().contains(filtro.zona.trim(), ignoreCase = true))
+    }.sortedWith(compareByDescending<com.udenar.petcare.domain.profesionales.PerfilPrestador> { it.recibiendo }.thenBy { it.nombre })
+    override suspend fun obtener(id: String) = directorio.firstOrNull { it.id == id }
+}
+
 /** Solicitudes y fichas en memoria para las pruebas de interfaz. */
 @Singleton
 class AtencionVetFalsa @Inject constructor() : com.udenar.petcare.domain.profesionales.RepositorioAtencionVet {
@@ -114,6 +142,8 @@ abstract class ModuloProfesionalesPrueba {
     @Binds abstract fun veterinarios(f: VeterinariosFalso): RepositorioVeterinarios
 
     @Binds abstract fun modo(m: ModoMemoria): RepositorioModo
+
+    @Binds abstract fun prestadores(p: PrestadoresFalso): com.udenar.petcare.domain.profesionales.RepositorioPrestadores
 
     @Binds abstract fun atencion(a: AtencionVetFalsa): com.udenar.petcare.domain.profesionales.RepositorioAtencionVet
 }

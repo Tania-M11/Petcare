@@ -66,6 +66,7 @@ fun PetcareRaiz() {
                     onNuevoCuidado = { mascotaId, clase -> nav.navigate(RutaFormCuidado(mascotaId, clase)) },
                     onPasear = { mascotaId -> nav.navigate(RutaPaseo(mascotaId)) },
                     onPerfilVeterinario = { nav.navigate(RutaFormVeterinario) },
+                    onPerfilPrestador = { nav.navigate(RutaFormPrestador) },
                     avisar = avisar,
                 )
             }
@@ -123,9 +124,23 @@ fun PetcareRaiz() {
                 )
             }
             composable<RutaFormVisita> { com.udenar.petcare.ui.mascotas.FormVisitaScreen(onListo = { nav.popBackStack() }) }
-            composable<RutaServicios> { ServiciosScreen(avisar = avisar, onVeterinarios = { nav.navigate(RutaDirectorioVet) }) }
+            composable<RutaServicios> {
+                ServiciosScreen(avisar = avisar, onVeterinarios = { nav.navigate(RutaDirectorioVet) }, onPrestadores = { nav.navigate(RutaDirectorioPres) })
+            }
+            composable<RutaDirectorioPres> {
+                com.udenar.petcare.ui.servicios.DirectorioPrestadoresScreen(onVolver = { nav.popBackStack() }, onAbrir = { nav.navigate(RutaDetallePrestador(it)) }, avisar = avisar)
+            }
+            composable<RutaDetallePrestador> { com.udenar.petcare.ui.servicios.DetallePrestadorScreen(onVolver = { nav.popBackStack() }, avisar = avisar) }
+            composable<RutaFormPrestador> {
+                com.udenar.petcare.ui.profesional.FormPrestadorScreen(
+                    onVolver = { nav.popBackStack() },
+                    // Al activarlo, la raíz cambia sola al modo prestador
+                    onGuardado = { activado -> if (!activado) nav.popBackStack() },
+                    avisar = avisar,
+                )
+            }
             composable<RutaPerfil> {
-                PerfilScreen(avisar = avisar, irAIntenciones = { nav.navigate(RutaIntenciones) }, onPerfilVeterinario = { nav.navigate(RutaFormVeterinario) })
+                PerfilScreen(avisar = avisar, irAIntenciones = { nav.navigate(RutaIntenciones) }, onPerfilVeterinario = { nav.navigate(RutaFormVeterinario) }, onPerfilPrestador = { nav.navigate(RutaFormPrestador) })
             }
             composable<RutaFormVeterinario> {
                 com.udenar.petcare.ui.profesional.FormVeterinarioScreen(

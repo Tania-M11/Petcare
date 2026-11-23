@@ -101,8 +101,11 @@ enum class PestanaVet(override val ruta: Any, override val etiqueta: String, ove
 class ModoVetViewModel @Inject constructor(
     private val veterinarios: RepositorioVeterinarios,
     private val modo: RepositorioModo,
+    prestadores: com.udenar.petcare.domain.profesionales.RepositorioPrestadores,
 ) : ViewModel() {
     val perfil: StateFlow<PerfilVeterinario?> = veterinarios.miPerfil
+    val perfilPres = prestadores.miPerfil
+    fun modoPrestador() = modo.cambiar(ModoUso.PRESTADOR)
     private val _subiendo = MutableStateFlow(false)
     val subiendo = _subiendo.asStateFlow()
 
@@ -271,6 +274,10 @@ private fun PerfilVetScreen(viewModel: ModoVetViewModel, onEditar: () -> Unit, a
                 .padding(6.dp),
         ) {
             FilaOpcion(Icons.Rounded.Edit, "Editar perfil", "Especies, servicios, horario y ubicación", Pc.CieloClaro, Pc.CieloOscuro, onClick = onEditar, modifier = Modifier.testTag("editar_perfil_vet"))
+            val pres by viewModel.perfilPres.collectAsStateWithLifecycle()
+            if (pres?.activo == true) {
+                FilaOpcion(Icons.Rounded.SwapHoriz, "Cambiar a modo prestador", "Solicitudes, agenda y clientes", Pc.SolClaro, Pc.Naranja, onClick = viewModel::modoPrestador)
+            }
             FilaOpcion(Icons.Rounded.SwapHoriz, "Volver a modo personal", "Tus mascotas y cuidados", Pc.Durazno, Pc.Naranja, onClick = viewModel::volverAPersonal, modifier = Modifier.testTag("volver_personal"))
             FilaOpcion(Icons.Rounded.VisibilityOff, "Ocultar mi perfil", "Dejas de aparecer en el directorio", Pc.LavandaClara, Pc.Lavanda, onClick = { confirmarOcultar = true })
         }

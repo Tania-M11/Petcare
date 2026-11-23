@@ -117,7 +117,13 @@ private const val FUENTE_PUNTOS = "puntos"
 
 /** Mapa con marcadores que se pueden tocar (directorios). Encuadra todos los puntos. */
 @Composable
-fun MapaMarcadores(puntos: List<PuntoMapa>, onElegir: (String) -> Unit, modifier: Modifier = Modifier) {
+fun MapaMarcadores(
+    puntos: List<PuntoMapa>,
+    onElegir: (String) -> Unit,
+    modifier: Modifier = Modifier,
+    colorDestacado: Int = 0xFF5B89BA.toInt(),
+    colorNormal: Int = 0xFFA98EE0.toInt(),
+) {
     var listo by remember { mutableStateOf<Pair<MapLibreMap, Style>?>(null) }
     val elegir by rememberUpdatedState(onElegir)
     MapaLibre(modifier, centro = puntos.firstOrNull()?.posicion ?: CENTRO_INICIAL, zoom = 13.0) { m, s ->
@@ -125,7 +131,7 @@ fun MapaMarcadores(puntos: List<PuntoMapa>, onElegir: (String) -> Unit, modifier
         s.addLayer(
             CircleLayer("capa_puntos", FUENTE_PUNTOS).withProperties(
                 circleRadius(10f),
-                circleColor(Expression.switchCase(Expression.get("destacado"), Expression.color(0xFF5B89BA.toInt()), Expression.color(0xFFA98EE0.toInt()))),
+                circleColor(Expression.switchCase(Expression.get("destacado"), Expression.color(colorDestacado), Expression.color(colorNormal))),
                 circleStrokeColor("#FFFFFF"), circleStrokeWidth(3f),
             ),
         )

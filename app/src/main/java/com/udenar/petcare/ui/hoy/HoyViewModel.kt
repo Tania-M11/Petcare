@@ -63,6 +63,7 @@ class HoyViewModel @Inject constructor(
     tiempoReal: com.udenar.petcare.data.sync.TiempoReal,
     private val veterinarios: com.udenar.petcare.domain.profesionales.RepositorioVeterinarios,
     private val modo: com.udenar.petcare.domain.profesionales.RepositorioModo,
+    private val prestadores: com.udenar.petcare.domain.profesionales.RepositorioPrestadores,
 ) : ViewModel() {
 
     /** Paso "Sube tu certificado": la verificación vive en el modo veterinario. */
@@ -161,7 +162,7 @@ class HoyViewModel @Inject constructor(
     private val notificacionesActivas = MutableStateFlow(false)
 
     /** Guía de Primeros pasos; null si no aplica (sin intenciones o ya cerrada). */
-    val guia: StateFlow<ProgresoGuia?> = combine(cuenta.usuario, notificacionesActivas, mascotas, cuidados.observarEventos(), combine(envieSolicitud, veterinarios.miPerfil, ::Pair)) { u, notif, lista, eventos, (envie, vet) ->
+    val guia: StateFlow<ProgresoGuia?> = combine(cuenta.usuario, notificacionesActivas, mascotas, cuidados.observarEventos(), combine(envieSolicitud, veterinarios.miPerfil, prestadores.miPerfil, ::Triple)) { u, notif, lista, eventos, (envie, vet, pres) ->
         if (u == null || u.guiaRespondida != true || u.intenciones.isEmpty() || Guia.CERRADA in u.pasosOmitidos) {
             null
         } else {
@@ -177,6 +178,11 @@ class HoyViewModel @Inject constructor(
                     add(Guia.PERFIL_VET)
                     add(Guia.CONSULTORIO)
                     if (vet.verificacion != com.udenar.petcare.domain.profesionales.Verificacion.SIN_CERTIFICADO) add(Guia.CERTIFICADO)
+                }
+                if (pres != null) {
+                    if (pres.categorias.isNotEmpty()) add(Guia.CATEGORIAS)
+                    if (pres.servicios.isNotEmpty()) add(Guia.PRECIOS)
+                    if (pres.horario.isNotEmpty()) add(Guia.HORARIO)
                 }
             }
             Guia.progreso(u.intenciones, hechos, u.pasosOmitidos)

@@ -41,7 +41,11 @@ fun PetcareApp(viewModel: RaizViewModel = hiltViewModel()) {
             }
             EstadoSesion.SIN_SESION -> NavegacionAcceso()
             EstadoSesion.CON_SESION -> Crossfade(modo, label = "modo") { m ->
-                if (m == com.udenar.petcare.domain.modelo.ModoUso.VETERINARIO) com.udenar.petcare.ui.profesional.RaizProfesional() else PetcareRaiz()
+                when (m) {
+                    com.udenar.petcare.domain.modelo.ModoUso.VETERINARIO -> com.udenar.petcare.ui.profesional.RaizProfesional()
+                    com.udenar.petcare.domain.modelo.ModoUso.PRESTADOR -> com.udenar.petcare.ui.profesional.RaizPrestador()
+                    else -> PetcareRaiz()
+                }
             }
         }
     }
