@@ -41,6 +41,7 @@ interface Pestana {
 @Serializable data object RutaFormPrestador
 @Serializable data object RutaDirectorioPres
 @Serializable data class RutaDetallePrestador(val id: String)
+@Serializable data class RutaSolicitarPrestador(val id: String)
 
 /** Las 4 pestañas del modo personal (plan, sección 3). El calendario vive dentro de Hoy. */
 enum class PestanaPersonal(override val ruta: Any, override val etiqueta: String, override val icono: ImageVector, override val etiquetaPrueba: String) : Pestana {

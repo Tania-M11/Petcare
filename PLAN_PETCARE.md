@@ -159,6 +159,6 @@ Reglas: una parte por sesión · compila y se prueba en el teléfono antes de se
 | | 4.2 | Perfil veterinario + verificación; directorio y mapa (`supabase/12_veterinarios.sql`; el panel cambia `verificacion` a VERIFICADO/RECHAZADO) | ✅ |
 | | 4.3 | Solicitudes a veterinario, vínculo y registros clínicos (`supabase/13_solicitudes_vet.sql`) | ✅ |
 | | 4.4 | Perfil de prestador (categorías, servicios, horario, galería); directorio y mapa (`supabase/14_prestadores.sql`; categorías nuevas = una fila en `categorias_servicio`) | ✅ |
-| | 4.5 | Cotizaciones y datos compartidos con el prestador | |
+| | 4.5 | Cotizaciones y datos compartidos con el prestador (`supabase/15_cotizaciones.sql`) | ✅ |
 | **5 Cierre** | 5.1 | Notificaciones push y reseñas (+ reportar) | |
 | | 5.2 | Eliminar cuenta, recuperar contraseña (pospuesta por Tania), confirmación de correo y protección de contraseñas filtradas, pulido y pruebas con varias cuentas | |

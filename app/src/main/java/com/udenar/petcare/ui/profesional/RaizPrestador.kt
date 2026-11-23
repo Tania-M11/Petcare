@@ -131,7 +131,7 @@ class ModoPrestadorViewModel @Inject constructor(
     fun desactivar(avisar: (String) -> Unit) = guardar(avisar, { it.copy(activo = false) }) { modo.cambiar(ModoUso.PERSONAL) }
 }
 
-/** Estructura del modo prestador (RF-30). Solicitudes, agenda y clientes se llenan con las cotizaciones (4.5). */
+/** Estructura del modo prestador (RF-30, RF-35): solicitudes, agenda, clientes y perfil. */
 @Composable
 fun RaizPrestador(viewModel: ModoPrestadorViewModel = hiltViewModel()) {
     val nav = rememberNavController()
@@ -158,9 +158,10 @@ fun RaizPrestador(viewModel: ModoPrestadorViewModel = hiltViewModel()) {
         bottomBar = { if (actual != null) BarraInferior(PestanaPres.entries, actual, onElegir = { nav.irA(it) }) },
     ) { relleno ->
         NavHost(nav, startDestination = RutaPerfilPres, modifier = Modifier.padding(relleno).consumeWindowInsets(relleno)) {
-            composable<RutaSolicitudesPres> { PestanaVaciaPres("Solicitudes", "Aún no tienes solicitudes", "Cuando un dueño te pida una cotización, aparecerá aquí para que respondas con tu precio.") }
-            composable<RutaAgendaPres> { PestanaVaciaPres("Agenda", "Tu agenda está libre", "Los servicios que acuerdes se ordenarán aquí por día y hora.") }
-            composable<RutaClientesPres> { PestanaVaciaPres("Clientes", "Aún no tienes clientes", "Aquí verás el historial de servicios que hayas completado.") }
+            composable<RutaSolicitudesPres> { SolicitudesPresScreen(onAbrir = { nav.navigate(RutaSolicitudPres(it)) }) }
+            composable<RutaAgendaPres> { AgendaPresScreen(onAbrir = { nav.navigate(RutaSolicitudPres(it)) }) }
+            composable<RutaClientesPres> { ClientesPresScreen(onAbrir = { nav.navigate(RutaSolicitudPres(it)) }) }
+            composable<RutaSolicitudPres> { DetalleSolicitudPresScreen(onVolver = { nav.popBackStack() }, avisar = avisar) }
             composable<RutaPerfilPres> { PerfilPrestadorScreen(viewModel, onEditar = { nav.navigate(RutaEditarPres) }, avisar = avisar) }
             composable<RutaEditarPres> {
                 FormPrestadorScreen(onVolver = { nav.popBackStack() }, onGuardado = {
@@ -176,17 +177,6 @@ private fun NavHostController.irA(p: PestanaPres) = navigate(p.ruta) {
     popUpTo(graph.findStartDestination().id) { saveState = true }
     launchSingleTop = true
     restoreState = true
-}
-
-@Composable
-private fun PestanaVaciaPres(titulo: String, vacio: String, texto: String) {
-    Column(
-        Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = 20.dp, vertical = 12.dp),
-        verticalArrangement = Arrangement.spacedBy(20.dp),
-    ) {
-        Text(titulo, style = MaterialTheme.typography.headlineLarge)
-        EstadoVacio(R.drawable.chopper_amigos, vacio, texto, fondoBlob = listOf(Pc.SolClaro, Pc.Durazno))
-    }
 }
 
 @Composable

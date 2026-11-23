@@ -52,7 +52,7 @@ class TiempoReal @Inject constructor(
                 val tablas = listOf("mascotas", "eventos_cuidado", "registros_cuidado", "pesos", "paseos", "miembros_mascota")
                 val flujos = tablas.map { t -> c.postgresChangeFlow<PostgresAction>(schema = "public") { table = t } }
                 val solicitudes = c.postgresChangeFlow<PostgresAction>(schema = "public") { table = "solicitudes_cuidado" }
-                val vet = listOf("solicitudes_vet", "vinculos_vet").map { t -> c.postgresChangeFlow<PostgresAction>(schema = "public") { table = t } }
+                val vet = listOf("solicitudes_vet", "vinculos_vet", "solicitudes_prestador").map { t -> c.postgresChangeFlow<PostgresAction>(schema = "public") { table = t } }
                 launch { merge(*vet.toTypedArray()).debounce(500).collect { _vet.tryEmit(Unit) } }
                 // Varios cambios seguidos se agrupan en una sola sincronización
                 launch { merge(*flujos.toTypedArray()).debounce(1_500).collect { sync.solicitar() } }

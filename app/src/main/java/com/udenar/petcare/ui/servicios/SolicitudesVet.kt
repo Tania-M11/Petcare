@@ -221,15 +221,36 @@ fun SolicitarVetScreen(onVolver: () -> Unit, onEnviada: () -> Unit, avisar: (Str
 class MisSolicitudesViewModel @Inject constructor(
     private val atencion: RepositorioAtencionVet,
     tiempoReal: com.udenar.petcare.data.sync.TiempoReal,
+    private val cotizaciones: com.udenar.petcare.domain.profesionales.RepositorioCotizaciones,
+    private val reloj: Clock,
 ) : ViewModel() {
     val solicitudes = MutableStateFlow<List<SolicitudVet>>(emptyList())
+    val cotizacionesPres = MutableStateFlow<List<com.udenar.petcare.domain.profesionales.SolicitudPrestador>>(emptyList())
+    val hoy: LocalDate get() = LocalDate.now(reloj)
+
+    private fun accionPres(avisar: (String) -> Unit, ok: String, bloque: suspend () -> Unit) = viewModelScope.launch {
+        try {
+            bloque()
+            avisar(ok)
+        } catch (e: ProfesionalException) {
+            avisar(e.message ?: "No se pudo completar")
+        }
+        cargar()
+    }
+
+    fun confirmarPres(id: String, avisar: (String) -> Unit) = accionPres(avisar, "¡Listo! El servicio quedó acordado y te lo recordaremos") { cotizaciones.confirmar(id) }
+    fun cancelarPres(id: String, avisar: (String) -> Unit) = accionPres(avisar, "Solicitud cancelada") { cotizaciones.cancelar(id, null) }
+    fun dejarDeCompartir(id: String, avisar: (String) -> Unit) = accionPres(avisar, "El prestador ya no ve tus datos compartidos") { cotizaciones.dejarDeCompartir(id) }
 
     init {
         cargar()
         viewModelScope.launch { tiempoReal.cambiosVet.collect { cargar() } }
     }
 
-    fun cargar() = viewModelScope.launch { runCatching { atencion.misSolicitudes() }.onSuccess { solicitudes.value = it } }
+    fun cargar() = viewModelScope.launch {
+        runCatching { atencion.misSolicitudes() }.onSuccess { solicitudes.value = it }
+        runCatching { cotizaciones.misSolicitudes() }.onSuccess { cotizacionesPres.value = it }
+    }
 
     fun cancelar(id: String, avisar: (String) -> Unit) = viewModelScope.launch {
         try {
@@ -246,14 +267,28 @@ class MisSolicitudesViewModel @Inject constructor(
 @Composable
 fun MisSolicitudes(avisar: (String) -> Unit, viewModel: MisSolicitudesViewModel = hiltViewModel()) {
     val todas by viewModel.solicitudes.collectAsStateWithLifecycle()
+    val pres by viewModel.cotizacionesPres.collectAsStateWithLifecycle()
     var abierta by remember { mutableStateOf<SolicitudVet?>(null) }
+    var abiertaPres by remember { mutableStateOf<com.udenar.petcare.domain.profesionales.SolicitudPrestador?>(null) }
     // Al volver a Servicios (p. ej. después de enviar una) se refresca
     LaunchedEffect(Unit) { viewModel.cargar() }
-    val visibles = todas.filter { it.estado.activa }.ifEmpty { todas.take(2) }
-    if (visibles.isEmpty()) return
+    val visibles = todas.filter { it.estado.activa }
+    val visiblesPres = pres.filter { it.estado.abierta }
+    val recientes = if (visibles.isEmpty() && visiblesPres.isEmpty()) todas.take(1) to pres.take(1) else visibles to visiblesPres
+    if (recientes.first.isEmpty() && recientes.second.isEmpty()) return
     Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
         TituloSeccion("Mis solicitudes")
-        visibles.forEach { s -> FilaSolicitud(s, titulo = "${s.mascotaNombre} · ${s.veterinarioNombre}", onClick = { abierta = s }) }
+        recientes.second.forEach { s -> FilaSolicitudPres(s, titulo = "${s.resumen.nombre} · ${s.prestadorNombre}", onClick = { abiertaPres = s }) }
+        recientes.first.forEach { s -> FilaSolicitud(s, titulo = "${s.mascotaNombre} · ${s.veterinarioNombre}", onClick = { abierta = s }) }
+    }
+    abiertaPres?.let { s ->
+        DialogoSolicitudPresDueno(
+            s, viewModel.hoy,
+            onCerrar = { abiertaPres = null },
+            onConfirmar = { abiertaPres = null; viewModel.confirmarPres(s.id, avisar) },
+            onCancelar = { abiertaPres = null; viewModel.cancelarPres(s.id, avisar) },
+            onDejarDeCompartir = { abiertaPres = null; viewModel.dejarDeCompartir(s.id, avisar) },
+        )
     }
     abierta?.let { s ->
         AlertDialog(

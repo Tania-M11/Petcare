@@ -265,7 +265,7 @@ private val FECHA_CORTA = DateTimeFormatter.ofPattern("d MMM", LOCALE)
 
 /** Perfil completo del prestador (RF-33). */
 @Composable
-fun DetallePrestadorScreen(onVolver: () -> Unit, avisar: (String) -> Unit, viewModel: DetallePrestadorViewModel = hiltViewModel()) {
+fun DetallePrestadorScreen(onVolver: () -> Unit, onSolicitar: () -> Unit, avisar: (String) -> Unit, viewModel: DetallePrestadorViewModel = hiltViewModel()) {
     val perfil by viewModel.perfil.collectAsStateWithLifecycle()
     val categorias by viewModel.categorias.collectAsStateWithLifecycle()
     val error by viewModel.error.collectAsStateWithLifecycle()
@@ -307,7 +307,11 @@ fun DetallePrestadorScreen(onVolver: () -> Unit, avisar: (String) -> Unit, viewM
             p.whatsapp?.let { w -> BotonSecundario("WhatsApp", onClick = { abrir(Contacto.enlaceWhatsapp(w, "Hola, te encontré en PetCare.")) }, modifier = Modifier.weight(1f)) }
         }
         BotonSecundario("Cómo llegar", onClick = { abrir(Contacto.enlaceComoLlegar(p.lat, p.lon, p.nombre)) })
-        BotonPrincipal("Solicitar cotización", onClick = { avisar(if (p.recibiendo) "Muy pronto podrás pedir una cotización desde aquí" else "${p.nombre} no está recibiendo solicitudes por ahora") })
+        BotonPrincipal(
+            "Solicitar cotización",
+            onClick = { if (p.recibiendo) onSolicitar() else avisar("${p.nombre} no está recibiendo solicitudes por ahora") },
+            modifier = Modifier.testTag("solicitar_cotizacion"),
+        )
 
         Text(p.descripcion, style = MaterialTheme.typography.bodyMedium)
         Seccion("Servicios") {

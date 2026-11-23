@@ -130,7 +130,23 @@ fun PetcareRaiz() {
             composable<RutaDirectorioPres> {
                 com.udenar.petcare.ui.servicios.DirectorioPrestadoresScreen(onVolver = { nav.popBackStack() }, onAbrir = { nav.navigate(RutaDetallePrestador(it)) }, avisar = avisar)
             }
-            composable<RutaDetallePrestador> { com.udenar.petcare.ui.servicios.DetallePrestadorScreen(onVolver = { nav.popBackStack() }, avisar = avisar) }
+            composable<RutaDetallePrestador> { entrada ->
+                com.udenar.petcare.ui.servicios.DetallePrestadorScreen(
+                    onVolver = { nav.popBackStack() },
+                    onSolicitar = { nav.navigate(RutaSolicitarPrestador(entrada.toRoute<RutaDetallePrestador>().id)) },
+                    avisar = avisar,
+                )
+            }
+            composable<RutaSolicitarPrestador> {
+                com.udenar.petcare.ui.servicios.SolicitarPrestadorScreen(
+                    onVolver = { nav.popBackStack() },
+                    onEnviada = {
+                        avisar("Solicitud enviada. Te avisaremos cuando responda.")
+                        nav.popBackStack(RutaServicios, inclusive = false)
+                    },
+                    avisar = avisar,
+                )
+            }
             composable<RutaFormPrestador> {
                 com.udenar.petcare.ui.profesional.FormPrestadorScreen(
                     onVolver = { nav.popBackStack() },

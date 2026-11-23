@@ -86,6 +86,59 @@ class PrestadoresFalso @Inject constructor() : com.udenar.petcare.domain.profesi
     override suspend fun obtener(id: String) = directorio.firstOrNull { it.id == id }
 }
 
+/** Cotizaciones en memoria; [detalle] imita las reglas del servidor sobre lo compartido (RF-36). */
+@Singleton
+class CotizacionesFalsas @Inject constructor() : com.udenar.petcare.domain.profesionales.RepositorioCotizaciones {
+    val solicitudes = mutableListOf<com.udenar.petcare.domain.profesionales.SolicitudPrestador>()
+    val salud = mutableMapOf<String, com.udenar.petcare.domain.profesionales.SaludCompartida>()
+    val contacto = mutableMapOf<String, com.udenar.petcare.domain.profesionales.ContactoCompartido>()
+
+    override suspend fun solicitar(
+        mascotaId: String, prestadorId: String, categoriaId: String, servicioId: String?, modalidad: com.udenar.petcare.domain.profesionales.ModalidadPrestador,
+        inicio: java.time.LocalDateTime, fin: java.time.LocalDateTime?, descripcion: String, mensaje: String?,
+        salud: com.udenar.petcare.domain.profesionales.SaludCompartida?, contacto: com.udenar.petcare.domain.profesionales.ContactoCompartido?,
+    ): String {
+        val id = "c${solicitudes.size + 1}"
+        solicitudes += com.udenar.petcare.domain.profesionales.SolicitudPrestador(
+            id, mascotaId, "Ana María", prestadorId, "Paseos Felices", categoriaId, "Paseo de 1 hora",
+            com.udenar.petcare.domain.profesionales.ModoPrecio.FIJO, 15000, modalidad, inicio, fin, descripcion, mensaje,
+            resumen = com.udenar.petcare.domain.profesionales.ResumenMascota("Max", com.udenar.petcare.domain.modelo.Especie.PERRO),
+        )
+        salud?.let { this.salud[id] = it }
+        contacto?.let { this.contacto[id] = it }
+        return id
+    }
+
+    fun cambiar(id: String, f: (com.udenar.petcare.domain.profesionales.SolicitudPrestador) -> com.udenar.petcare.domain.profesionales.SolicitudPrestador) {
+        val i = solicitudes.indexOfFirst { it.id == id }
+        solicitudes[i] = f(solicitudes[i])
+    }
+
+    private fun estado(id: String, e: com.udenar.petcare.domain.profesionales.EstadoSolicitudPres) = cambiar(id) { it.copy(estado = e) }
+
+    override suspend fun misSolicitudes() = solicitudes.toList()
+    override suspend fun confirmar(id: String) = estado(id, com.udenar.petcare.domain.profesionales.EstadoSolicitudPres.ACEPTADA)
+    override suspend fun dejarDeCompartir(id: String) {
+        salud.remove(id); contacto.remove(id)
+    }
+    override suspend fun bandeja() = solicitudes.toList()
+    override suspend fun cotizar(id: String, propuesta: com.udenar.petcare.domain.profesionales.Propuesta) = cambiar(id) {
+        it.copy(estado = com.udenar.petcare.domain.profesionales.EstadoSolicitudPres.COTIZADA, cotizacionPrecio = propuesta.precioCop,
+            cotizacionObservaciones = propuesta.observaciones, propuestaInicio = propuesta.inicio)
+    }
+    override suspend fun aceptar(id: String) = estado(id, com.udenar.petcare.domain.profesionales.EstadoSolicitudPres.ACEPTADA)
+    override suspend fun rechazar(id: String, motivo: String?) = estado(id, com.udenar.petcare.domain.profesionales.EstadoSolicitudPres.RECHAZADA)
+    override suspend fun completar(id: String) = estado(id, com.udenar.petcare.domain.profesionales.EstadoSolicitudPres.COMPLETADA)
+    override suspend fun cancelar(id: String, motivo: String?) = estado(id, com.udenar.petcare.domain.profesionales.EstadoSolicitudPres.CANCELADA)
+    override suspend fun detalle(id: String): com.udenar.petcare.domain.profesionales.DetalleSolicitudPres {
+        val s = solicitudes.first { it.id == id }
+        return com.udenar.petcare.domain.profesionales.DetalleSolicitudPres(
+            s, salud[id]?.takeIf { s.estado.abierta },
+            contacto[id]?.takeIf { s.estado == com.udenar.petcare.domain.profesionales.EstadoSolicitudPres.ACEPTADA },
+        )
+    }
+}
+
 /** Solicitudes y fichas en memoria para las pruebas de interfaz. */
 @Singleton
 class AtencionVetFalsa @Inject constructor() : com.udenar.petcare.domain.profesionales.RepositorioAtencionVet {
@@ -144,6 +197,8 @@ abstract class ModuloProfesionalesPrueba {
     @Binds abstract fun modo(m: ModoMemoria): RepositorioModo
 
     @Binds abstract fun prestadores(p: PrestadoresFalso): com.udenar.petcare.domain.profesionales.RepositorioPrestadores
+
+    @Binds abstract fun cotizaciones(c: CotizacionesFalsas): com.udenar.petcare.domain.profesionales.RepositorioCotizaciones
 
     @Binds abstract fun atencion(a: AtencionVetFalsa): com.udenar.petcare.domain.profesionales.RepositorioAtencionVet
 }
