@@ -1,6 +1,17 @@
 package com.udenar.petcare.ui.componentes
 
+import androidx.annotation.DrawableRes
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.selection.selectable
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.semantics.Role
+import com.udenar.petcare.R
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
@@ -16,7 +27,6 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil3.compose.AsyncImage
-import com.udenar.petcare.domain.mascotas.emoji
 import com.udenar.petcare.domain.modelo.Especie
 import com.udenar.petcare.ui.theme.Pc
 import java.io.File
@@ -31,7 +41,43 @@ fun Especie.colores() = when (this) {
     Especie.OTRO -> listOf(Pc.Durazno, Pc.LavandaClara)
 }
 
-/** Foto de la mascota (archivo local) o, si no hay, el emoji de su especie sobre un degradado. */
+/** Ilustración de cada especie (carpeta icons/, convertidas a WebP de 256 px). */
+@DrawableRes
+fun Especie.ilustracion(): Int = when (this) {
+    Especie.PERRO -> R.drawable.especie_perro
+    Especie.GATO -> R.drawable.especie_gato
+    Especie.AVE -> R.drawable.especie_ave
+    Especie.CONEJO -> R.drawable.especie_conejo
+    Especie.ROEDOR -> R.drawable.especie_roedor
+    Especie.REPTIL -> R.drawable.especie_reptil
+    Especie.PEZ -> R.drawable.especie_pez
+    Especie.EQUINO -> R.drawable.especie_equino
+    Especie.OTRO -> R.drawable.especie_otro
+}
+
+/** Opción de especie con su ilustración (mismo estilo que ChipOpcion). */
+@Composable
+fun ChipEspecie(especie: Especie, seleccionado: Boolean, onClick: () -> Unit, modifier: Modifier = Modifier) {
+    Row(
+        modifier
+            .clip(RoundedCornerShape(50))
+            .background(if (seleccionado) Pc.Durazno else Pc.Blanco)
+            .border(1.5.dp, if (seleccionado) Pc.Naranja else Pc.Linea, RoundedCornerShape(50))
+            .selectable(selected = seleccionado, role = Role.RadioButton, onClick = onClick)
+            .padding(start = 8.dp, end = 14.dp, top = 5.dp, bottom = 5.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Image(painterResource(especie.ilustracion()), contentDescription = null, modifier = Modifier.size(28.dp))
+        Text(
+            especie.etiqueta,
+            style = MaterialTheme.typography.labelLarge,
+            color = if (seleccionado) Pc.Tinta else Pc.TintaSuave,
+            modifier = Modifier.padding(start = 6.dp),
+        )
+    }
+}
+
+/** Foto de la mascota (archivo local) o, si no hay, la ilustración de su especie sobre un degradado. */
 @Composable
 fun AvatarMascota(
     especie: Especie,
@@ -55,7 +101,7 @@ fun AvatarMascota(
                 modifier = Modifier.size(tam),
             )
         } else {
-            Text(especie.emoji, fontSize = (tam.value * 0.46f).sp)
+            Image(painterResource(especie.ilustracion()), contentDescription = null, modifier = Modifier.size(tam * 0.72f))
         }
     }
 }

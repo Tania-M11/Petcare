@@ -57,7 +57,6 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.udenar.petcare.domain.mascotas.CampoMascota
 import com.udenar.petcare.domain.mascotas.FichaMascota
 import com.udenar.petcare.domain.mascotas.UnidadPeso
-import com.udenar.petcare.domain.mascotas.emoji
 import com.udenar.petcare.domain.modelo.Especie
 import com.udenar.petcare.domain.modelo.Sexo
 import com.udenar.petcare.domain.modelo.Tamano
@@ -140,8 +139,8 @@ fun FormMascotaScreen(
             Text("Especie", style = MaterialTheme.typography.labelLarge, color = Pc.TintaSuave)
             FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Especie.entries.forEach { e ->
-                    ChipOpcion(
-                        "${e.emoji} ${e.etiqueta}",
+                    com.udenar.petcare.ui.componentes.ChipEspecie(
+                        e,
                         seleccionado = f.especie == e,
                         onClick = { viewModel.editar(CampoMascota.ESPECIE) { it.copy(especie = e) } },
                         modifier = Modifier.testTag("especie_${e.name}"),
