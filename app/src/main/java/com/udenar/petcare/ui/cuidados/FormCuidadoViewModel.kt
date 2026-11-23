@@ -80,7 +80,31 @@ class FormCuidadoViewModel @Inject constructor(
     estado: SavedStateHandle,
     private val repo: RepositorioCuidados,
     private val reloj: Clock,
+    private val pegatinas: com.udenar.petcare.data.fotos.Pegatinas,
+    private val lector: com.udenar.petcare.data.fotos.LectorEtiquetas,
 ) : ViewModel() {
+
+    /** Escanear etiqueta (Fase 6.3): lo leído se ofrece como opciones; nada se llena solo. */
+    val lectura = MutableStateFlow<com.udenar.petcare.domain.escaneo.LecturaEtiqueta?>(null)
+    val leyendo = MutableStateFlow(false)
+
+    fun archivoCamara() = pegatinas.nuevoArchivoCamara()
+
+    fun escanear(uri: android.net.Uri) {
+        leyendo.value = true
+        viewModelScope.launch {
+            try {
+                val texto = lector.leer(uri)
+                val l = com.udenar.petcare.domain.escaneo.AnalizadorEtiqueta.analizar(texto, hoy)
+                lectura.value = l
+                if (l.nombres.isEmpty() && l.fechas.isEmpty() && l.lote == null) _form.update { it.copy(mensaje = "No pude leer la etiqueta. Prueba con más luz y de cerca.") }
+            } catch (_: Exception) {
+                _form.update { it.copy(mensaje = "No pude leer la etiqueta. Prueba con más luz y de cerca.") }
+            } finally {
+                leyendo.value = false
+            }
+        }
+    }
 
     private val ruta = estado.toRoute<RutaFormCuidado>()
     val hoy: LocalDate get() = LocalDate.now(reloj)

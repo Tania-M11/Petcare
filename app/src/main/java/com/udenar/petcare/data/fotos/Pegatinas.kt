@@ -129,3 +129,16 @@ class Pegatinas @Inject constructor(@ApplicationContext private val contexto: Co
         private const val LADO_FINAL = 512
     }
 }
+
+/** Lee el texto de una foto con ML Kit (en el teléfono, sin internet) — Fase 6.3. */
+@Singleton
+class LectorEtiquetas @Inject constructor(@ApplicationContext private val contexto: Context) {
+    suspend fun leer(uri: Uri): String = withContext(Dispatchers.Default) {
+        val lector = com.google.mlkit.vision.text.TextRecognition.getClient(com.google.mlkit.vision.text.latin.TextRecognizerOptions.DEFAULT_OPTIONS)
+        try {
+            lector.process(InputImage.fromFilePath(contexto, uri)).await().text
+        } finally {
+            lector.close()
+        }
+    }
+}

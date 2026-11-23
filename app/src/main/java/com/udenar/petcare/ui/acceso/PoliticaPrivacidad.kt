@@ -22,6 +22,8 @@ private val SECCIONES = listOf(
         "Solo para que la app funcione: recordatorios, historial, compartir el cuidado con las personas que tú autorices y conectar con veterinarios o prestadores que tú elijas.",
     "Con quién se comparten" to
         "Con nadie más sin tu decisión. Los cuidadores ven lo que su rol permite; un prestador solo ve lo que marques al pedir un servicio y deja de verlo al terminar.",
+    "Servicios externos" to
+        "Los mapas usan OpenFreeMap. Si diste permiso de ubicación, para sugerir el mejor momento del paseo se consulta el clima en Open-Meteo con tu ubicación aproximada (unos 1 km), sin tu nombre ni datos de tus mascotas. Las fotos y etiquetas se procesan en tu teléfono.",
     "Tus derechos" to
         "Puedes conocer, actualizar, corregir y pedir que se borren tus datos en cualquier momento desde tu Perfil.",
     "Importante" to

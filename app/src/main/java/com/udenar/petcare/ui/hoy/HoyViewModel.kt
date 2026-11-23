@@ -67,7 +67,13 @@ class HoyViewModel @Inject constructor(
     salud: com.udenar.petcare.domain.salud.RepositorioSalud,
     paseosRepo: com.udenar.petcare.domain.paseos.RepositorioPaseos,
     private val descartes: com.udenar.petcare.data.local.Descartes,
+    private val servicioClima: com.udenar.petcare.data.clima.ServicioClima,
 ) : ViewModel() {
+
+    /** Clima para la sugerencia de paseo (null = sin permiso de ubicación o sin internet). */
+    private val clima = MutableStateFlow<com.udenar.petcare.domain.recomendaciones.Clima?>(null)
+
+    fun revisarClima() = viewModelScope.launch { clima.value = servicioClima.actual() }
 
     /** Paso "Sube tu certificado": la verificación vive en el modo veterinario. */
     val tienePerfilVet: Boolean get() = veterinarios.miPerfil.value?.activo == true
@@ -151,11 +157,15 @@ class HoyViewModel @Inject constructor(
     /** Recomendaciones de organización y seguimiento (Fase 6.5), sin las descartadas. */
     val recomendaciones: StateFlow<List<com.udenar.petcare.domain.recomendaciones.Recomendacion>> = combine(
         mascotas, cuidados.observarEventos(), cuidados.observarRegistros(), salud.observarTodosPesos(),
-        combine(paseosRepo.observarDesde(java.time.Instant.now(reloj).minus(java.time.Duration.ofDays(30))), descartes.ids, ::Pair),
-    ) { lista, eventos, registros, pesos, (paseos, descartadas) ->
-        com.udenar.petcare.domain.recomendaciones.MotorRecomendaciones.generar(
-            com.udenar.petcare.domain.recomendaciones.ContextoRecomendaciones(LocalDate.now(reloj), lista, eventos, registros, pesos, paseos, reloj.zone),
-        ).filter { it.id !in descartadas }
+        combine(paseosRepo.observarDesde(java.time.Instant.now(reloj).minus(java.time.Duration.ofDays(30))), descartes.ids, clima, ::Triple),
+    ) { lista, eventos, registros, pesos, (paseos, descartadas, c) ->
+        val hoyLocal = LocalDate.now(reloj)
+        (
+            listOfNotNull(com.udenar.petcare.domain.recomendaciones.MotorRecomendaciones.clima(c, lista, hoyLocal, java.time.LocalTime.now(reloj).hour)) +
+                com.udenar.petcare.domain.recomendaciones.MotorRecomendaciones.generar(
+                    com.udenar.petcare.domain.recomendaciones.ContextoRecomendaciones(hoyLocal, lista, eventos, registros, pesos, paseos, reloj.zone),
+                )
+            ).filter { it.id !in descartadas }.sortedBy { it.tono.ordinal }
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
     fun descartar(id: String) = descartes.descartar(id)

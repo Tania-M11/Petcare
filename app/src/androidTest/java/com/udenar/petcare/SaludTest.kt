@@ -60,7 +60,10 @@ class SaludTest {
         // Cambiar el peso en la ficha ya dejó un registro (4 kg); se agrega otro
         compose.onNodeWithTag("seccion_Salud").performClick()
         compose.onNodeWithTag("registrar_peso").performScrollTo().performClick()
-        compose.onNodeWithText("Peso medido").performTextInput("4,5")
+        // Parte del último peso (4 kg): cinco toques en + llegan a 4,5 kg
+        compose.waitUntil(5_000) { compose.onAllNodesWithTagExists("stepper_mas") }
+        repeat(5) { compose.onNodeWithTag("stepper_mas").performClick() }
+        compose.onNodeWithText("desde el último pesaje", substring = true).assertExists()
         compose.onNodeWithText("Guardar").performClick()
         compose.waitUntil(5_000) { compose.onAllNodesWithTagExists("grafica_peso") }
         assertEquals(4500, mascotas.obtener("m1")!!.pesoGramos)

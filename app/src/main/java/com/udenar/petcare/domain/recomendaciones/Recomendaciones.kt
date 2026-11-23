@@ -55,7 +55,39 @@ data class ContextoRecomendaciones(
     val zona: ZoneId,
 )
 
+/** Clima actual aproximado (Open-Meteo) para sugerir el momento del paseo. */
+data class Clima(val temperatura: Double, val lloviendo: Boolean)
+
 object MotorRecomendaciones {
+    /**
+     * Sugerencia de paseo según el clima (solo si hay perros). No es un consejo de salud:
+     * habla de comodidad (calor, lluvia) y de llevar agua.
+     */
+    fun clima(c: Clima?, mascotas: List<Mascota>, hoy: LocalDate, hora: Int): Recomendacion? {
+        val perros = mascotas.filter { it.especie == Especie.PERRO }
+        if (c == null || perros.isEmpty() || hora !in 6..20) return null
+        val quien = if (perros.size == 1) perros[0].nombre else "tus perros"
+        val grados = c.temperatura.roundToInt()
+        return when {
+            c.lloviendo -> Recomendacion(
+                "clima_lluvia_$hoy", null, Tono.SUGERENCIA, "🌧️", "Está lloviendo ($grados °C)",
+                "Quizá hoy sea mejor un paseo corto o un rato de juego en casa con $quien.",
+                "Según el pronóstico de Open-Meteo para tu zona.", AccionSugerida.PASEAR, "Registrar paseo",
+            )
+            grados >= 28 -> Recomendacion(
+                "clima_calor_$hoy", null, Tono.ATENCION, "☀️", "Hace calor: $grados °C",
+                "Para pasear a $quien, mejor temprano o al atardecer, por la sombra y con agua.",
+                "Según el pronóstico de Open-Meteo para tu zona.", AccionSugerida.PASEAR, "Registrar paseo",
+            )
+            grados in 14..25 -> Recomendacion(
+                "clima_bueno_$hoy", null, Tono.CELEBRACION, "🌤️", "Buen clima para pasear ($grados °C)",
+                "Un buen momento para salir con $quien.",
+                "Según el pronóstico de Open-Meteo para tu zona.", AccionSugerida.PASEAR, "Pasear",
+            )
+            else -> null
+        }
+    }
+
     private val LOCALE = Locale.forLanguageTag("es-CO")
     private val FECHA = DateTimeFormatter.ofPattern("d 'de' MMMM", LOCALE)
     private val DIA = DateTimeFormatter.ofPattern("EEEE", LOCALE)

@@ -102,3 +102,21 @@ class RecomendacionesTest {
         assertEquals("¡Bien! Cena de Max ✓ — quedan 2", Chopper.alMarcar("Cena", "Max", 2))
     }
 }
+
+class ClimaTest {
+    private val hoy = java.time.LocalDate.of(2026, 11, 23)
+    private val max = com.udenar.petcare.domain.modelo.Mascota("m1", "Max", com.udenar.petcare.domain.modelo.Especie.PERRO)
+    private val luna = com.udenar.petcare.domain.modelo.Mascota("m2", "Luna", com.udenar.petcare.domain.modelo.Especie.GATO)
+    private fun c(t: Double, lluvia: Boolean = false) = com.udenar.petcare.domain.recomendaciones.Clima(t, lluvia)
+
+    @org.junit.Test
+    fun sugerenciasDeClimaSoloConPerrosYDeDia() {
+        val m = com.udenar.petcare.domain.recomendaciones.MotorRecomendaciones
+        org.junit.Assert.assertEquals("Hace calor: 30 °C", m.clima(c(30.2), listOf(max), hoy, 13)!!.titulo)
+        org.junit.Assert.assertEquals("Está lloviendo (17 °C)", m.clima(c(17.0, true), listOf(max), hoy, 9)!!.titulo)
+        org.junit.Assert.assertEquals(com.udenar.petcare.domain.recomendaciones.Tono.CELEBRACION, m.clima(c(20.0), listOf(max), hoy, 9)!!.tono)
+        org.junit.Assert.assertNull(m.clima(c(20.0), listOf(luna), hoy, 9)) // sin perros
+        org.junit.Assert.assertNull(m.clima(c(20.0), listOf(max), hoy, 23)) // de noche
+        org.junit.Assert.assertNull(m.clima(null, listOf(max), hoy, 9)) // sin permiso o sin internet
+    }
+}

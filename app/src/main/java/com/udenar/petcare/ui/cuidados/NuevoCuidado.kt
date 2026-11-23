@@ -91,6 +91,7 @@ fun NuevoCuidadoScreen(onListo: () -> Unit, onGuardado: () -> Unit = onListo, vi
             Paso("nombre", { f.titulo.isNotBlank() }) {
                 PreguntaChopper("¿Qué medicamento es?", "Escríbelo tal como te lo indicó su veterinario", PoseChopper.DOCTOR)
                 CampoTexto(f.titulo, { v -> viewModel.editar(CampoCuidado.TITULO) { it.copy(titulo = v.take(80)) } }, "Nombre del medicamento", modifier = Modifier.testTag("titulo_cuidado"))
+                Escanear(viewModel, f)
                 CampoTexto(f.detalle["dosis"].orEmpty(), { viewModel.detalle("dosis", it) }, "Dosis indicada (opcional)")
                 Text("PetCare no valida ni sugiere dosis: solo te recuerda darla.", style = MaterialTheme.typography.bodySmall, color = Pc.TintaSuave)
             },
@@ -124,6 +125,7 @@ fun NuevoCuidadoScreen(onListo: () -> Unit, onGuardado: () -> Unit = onListo, vi
             Paso("nombre", { f.titulo.isNotBlank() }) {
                 PreguntaChopper("¿Qué vacuna es?", "Como aparece en su carné", PoseChopper.DOCTOR)
                 CampoTexto(f.titulo, { v -> viewModel.editar(CampoCuidado.TITULO) { it.copy(titulo = v.take(80)) } }, "Nombre de la vacuna", modifier = Modifier.testTag("titulo_cuidado"))
+                Escanear(viewModel, f)
             },
             Paso("aplicada", saltable = true) {
                 PreguntaChopper("¿Cuándo se la aplicaron?", "Si aún no, puedes saltar este paso", PoseChopper.DOCTOR)
@@ -150,6 +152,7 @@ fun NuevoCuidadoScreen(onListo: () -> Unit, onGuardado: () -> Unit = onListo, vi
             Paso("producto", { f.titulo.isNotBlank() }) {
                 PreguntaChopper("¿Qué producto usas?", null, PoseChopper.DOCTOR)
                 CampoTexto(f.titulo, { v -> viewModel.editar(CampoCuidado.TITULO) { it.copy(titulo = v.take(80)) } }, "Producto", modifier = Modifier.testTag("titulo_cuidado"))
+                Escanear(viewModel, f)
             },
             Paso("ultima", saltable = true) {
                 PreguntaChopper("¿Cuándo fue la última vez?", "Desde ese día cuento la próxima", PoseChopper.ORGANIZADOR)
@@ -325,4 +328,53 @@ private fun FechaRapida(etiqueta: String, fecha: LocalDate?, hoy: LocalDate, per
         desde = if (pasado) null else hoy, hasta = if (pasado) hoy else null,
         permitirBorrar = permitirNinguna, textoVacio = if (permitirNinguna) "No sé / no aplica" else "Elegir",
     )
+}
+
+/** "Escanear etiqueta": foto → texto leído en el teléfono → la persona elige cada dato con un toque. */
+@Composable
+private fun Escanear(viewModel: FormCuidadoViewModel, f: FormCuidado) {
+    val lectura by viewModel.lectura.collectAsStateWithLifecycle()
+    val leyendo by viewModel.leyendo.collectAsStateWithLifecycle()
+    var uri by remember { mutableStateOf<android.net.Uri?>(null) }
+    val camara = androidx.activity.compose.rememberLauncherForActivityResult(androidx.activity.result.contract.ActivityResultContracts.TakePicture()) { ok ->
+        if (ok) uri?.let(viewModel::escanear)
+    }
+    com.udenar.petcare.ui.componentes.BotonSecundario(
+        if (leyendo) "Leyendo la etiqueta…" else "📷 Escanear etiqueta o carné",
+        onClick = {
+            if (!leyendo) {
+                val (_, u) = viewModel.archivoCamara()
+                uri = u
+                camara.launch(u)
+            }
+        },
+        modifier = Modifier.testTag("escanear_etiqueta"),
+    )
+    lectura?.let { l ->
+        Column(Modifier.fillMaxWidth().clip(MaterialTheme.shapes.large).background(Pc.Blanco).padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            if (l.nombres.isNotEmpty()) {
+                Text("¿Cuál es el nombre?", style = MaterialTheme.typography.titleSmall)
+                FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    l.nombres.forEach { n -> ChipOpcion(n, f.titulo == n, onClick = { viewModel.editar(CampoCuidado.TITULO) { it.copy(titulo = n.take(80)) } }) }
+                }
+            }
+            l.lote?.let { lote ->
+                ChipOpcion("Lote: $lote", f.detalle["lote"] == lote, onClick = { viewModel.detalle("lote", lote) })
+            }
+            if (l.fechas.isNotEmpty()) {
+                Text("Fechas encontradas (toca para usarlas)", style = MaterialTheme.typography.titleSmall)
+                FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    l.fechas.forEach { d ->
+                        val pasada = !d.isAfter(viewModel.hoy)
+                        ChipOpcion(
+                            (if (pasada) "Aplicada: " else "Próxima: ") + DescripcionCuidados.fecha(d) + " ${d.year}",
+                            if (pasada) f.fechaAnterior == d else f.fecha == d,
+                            onClick = { if (pasada) viewModel.editar { it.copy(fechaAnterior = d) } else viewModel.editar(CampoCuidado.FECHA) { it.copy(fecha = d) } },
+                        )
+                    }
+                }
+                Text("Revisa que cada fecha corresponda; la etiqueta también trae la de vencimiento del producto.", style = MaterialTheme.typography.bodySmall, color = Pc.TintaSuave)
+            }
+        }
+    }
 }

@@ -129,6 +129,7 @@ fun HoyScreen(
     LifecycleResumeEffect(Unit) {
         viewModel.notificaciones(notificacionesActivas())
         viewModel.cargarSolicitudes()
+        viewModel.revisarClima()
         onPauseOrDispose { }
     }
     val pedirPermiso = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { ok ->

@@ -147,7 +147,8 @@ fun TarjetaPeso(pesos: List<RegistroPeso>, hoy: LocalDate, onRegistrar: (LocalDa
         }
     }
     if (abierto) {
-        var texto by remember { mutableStateOf("") }
+        // Parte del último peso: con − / + basta para la mayoría de los pesajes
+        var texto by remember { mutableStateOf(pesos.firstOrNull()?.let { FichaMascota.pesoEditable(it.gramos).first } ?: "") }
         var unidad by remember { mutableStateOf(UnidadPeso.KG) }
         var fecha by remember { mutableStateOf(hoy) }
         var error by remember { mutableStateOf<String?>(null) }
@@ -161,6 +162,22 @@ fun TarjetaPeso(pesos: List<RegistroPeso>, hoy: LocalDate, onRegistrar: (LocalDa
                         CampoTexto(texto, { texto = it; error = null }, "Peso medido", teclado = KeyboardType.Decimal, error = error, modifier = Modifier.weight(1f))
                         ChipOpcion("kg", unidad == UnidadPeso.KG, onClick = { unidad = UnidadPeso.KG })
                         ChipOpcion("g", unidad == UnidadPeso.G, onClick = { unidad = UnidadPeso.G })
+                    }
+                    val actual = FichaMascota.gramos(texto, unidad)
+                    if (unidad == UnidadPeso.KG) {
+                        com.udenar.petcare.ui.componentes.Stepper(
+                            (actual ?: 0) / 1000.0,
+                            { v -> texto = "%.1f".format(java.util.Locale.forLanguageTag("es-CO"), v); error = null },
+                            paso = 0.1, unidad = "kg",
+                        )
+                    }
+                    val anterior = pesos.firstOrNull()
+                    if (anterior != null && actual != null && actual > 0 && actual != anterior.gramos) {
+                        val dif = actual - anterior.gramos
+                        Text(
+                            (if (dif > 0) "▲ " else "▼ ") + FichaMascota.peso(kotlin.math.abs(dif)) + " desde el último pesaje",
+                            style = MaterialTheme.typography.bodyMedium, color = Pc.TintaSuave,
+                        )
                     }
                     SelectorFecha("Fecha", fecha, { it?.let { f -> fecha = f } }, hasta = hoy)
                 }
