@@ -171,3 +171,47 @@ Reglas: una parte por sesión · compila y se prueba en el teléfono antes de se
 4. **Push con la app cerrada (opcional):** crear un proyecto en Firebase con el paquete `com.udenar.petcare`, poner `google-services.json` en `app/` y guardar el JSON de una cuenta de servicio en el secreto `FCM_SERVICE_ACCOUNT` de Edge Functions. Sin esto los avisos llegan igual con la app abierta y cada 15 minutos.
 5. **Storage:** borrar los 3 archivos de prueba huérfanos (2 en `mascotas`, 1 en `galeria`).
 
+
+---
+
+## 8. Fase 6 — PetCare más vivo: diseño, formularios guiados y acompañamiento inteligente
+
+**Diagnóstico (23-nov).** La app cumple la spec, pero se siente genérica: los formularios son listas largas de campos en columnas blancas (FormMascota, FormCuidado, FormVisita, perfil de veterinario y de prestador, cotización), la información se muestra como texto plano y casi nada responde a lo que el usuario hace. Marcar campos como "opcional" no lo resuelve: el problema es la forma de preguntar.
+
+**Principios**
+
+1. **Una pregunta a la vez.** Cada formulario se convierte en un recorrido corto, con tarjetas grandes e ilustradas, avance automático, barra de progreso y un resumen editable al final. Nada de pantallas con 15 campos.
+2. **Primero lo que ya sabemos.** Prellenar con la última vez, con la ficha, con la cámara o con lo que el usuario dice en una frase. Escribir es el último recurso.
+3. **Cada acción tiene respuesta.** Animaciones cortas, vibración suave, Chopper reacciona, el progreso del día se llena.
+4. **Ver para entender.** Gráficos simples (peso, cumplimiento, paseos) en lugar de listas.
+5. **Guiar sin recetar.** La restricción ética de la spec sigue vigente: la app nunca sugiere dosis, porciones, tratamientos, diagnósticos ni frecuencias médicas. Las "recomendaciones inteligentes" son de **organización y seguimiento** (qué falta registrar, qué vence, qué cambió) y, cuando algo cambia en la salud, la única sugerencia es **hablar con el veterinario**, con un botón para pedir la cita.
+
+**Herramientas del mercado que se usan**
+
+| Necesidad | Herramienta | Por qué |
+|---|---|---|
+| Gráficos | **Vico** (gráficos nativos para Compose) | Ligera, animada, se adapta al tema de la app |
+| Escanear carné, etiqueta de vacuna, fórmula | **ML Kit Text Recognition v2** (en el teléfono, gratis, sin internet) | Prellena producto, lote y fechas desde una foto |
+| Avatar recortado de la mascota | **ML Kit Subject Segmentation** | Recorta a la mascota de la foto y la muestra como "pegatina", con el estilo de los íconos de `icons/` |
+| Animaciones | **Compose Animation** + **Lottie** (confeti, logros) y movimiento suave de Chopper | Celebrar sin distraer |
+| Widget en el inicio del teléfono | **Jetpack Glance** | Próximas tomas con botón **Hecho** sin abrir la app |
+| Clima para paseos | **Open-Meteo** (gratis, sin clave) | "Hace 29 °C: mejor pasear temprano o al atardecer" |
+| Registro por voz o texto libre y resumen semanal | **Claude** (Anthropic, modelo `claude-opus-5-5`) desde una Edge Function de Supabase, con salida estructurada | Convierte "Max comió a las 8 y le di la pastilla" en registros para confirmar. Solo ordena lo que la persona dijo; nunca aconseja. **Opcional:** requiere una clave de la API de Anthropic (≈ 1 centavo de dólar por registro hablado) |
+| Voz | **SpeechRecognizer** de Android | Dictar en vez de escribir |
+
+**Partes**
+
+| Fase | Parte | Contenido | Estado |
+|---|---|---|---|
+| **6 Mejora** | 6.1 | **Sistema de diseño vivo:** componente `AsistentePasos` (una pregunta por pantalla, progreso, atrás/saltar, resumen editable), tarjetas de opción grandes con ilustración, selectores rápidos (hora con chips y rueda, peso con stepper, fecha "hoy / ayer / otra"), color propio por mascota, transiciones animadas, vibración y modo oscuro. **Hoy rediseñado:** anillo de progreso del día, línea de tiempo por horas, deslizar para marcar **Hecho** y celebración al completar el día | |
+| | 6.2 | **Formularios guiados del dueño:** nueva mascota como historia (foto → especie con ilustraciones → nombre → edad aproximada con slider → listo), nuevo cuidado (¿qué? → ¿cuándo? → ¿hasta cuándo? → resumen en lenguaje natural "Todos los días a las 8:00 y 19:00"), visita, peso y documento. "Igual que la última vez" y autocompletado desde el historial. Plantillas de **qué se suele registrar** por especie (sin frecuencias ni dosis sugeridas) | |
+| | 6.3 | **La cámara llena por ti:** escanear el carné o la etiqueta de la vacuna o del medicamento (ML Kit) para prellenar el formulario; la persona confirma cada dato. Avatar de la mascota recortado automáticamente | |
+| | 6.4 | **Gráficos y progreso:** peso con tendencia y rango del último año, cumplimiento semanal por cuidado (barras), paseos (km y minutos por semana, calendario de actividad), quién registró qué en la familia. Rachas y logros suaves con Chopper ("7 días sin olvidar la cena"). Resumen semanal como notificación local | |
+| | 6.5 | **Recomendaciones inteligentes (reglas explicables, sin IA):** tarjetas "siguiente paso" en Hoy y en la ficha: vacuna o desparasitación vencida o próxima, medicamento que termina pronto, varias tomas omitidas seguidas, sin peso registrado en 3 meses, cambio de peso mayor al 10 % en 30 días → "Coméntalo con tu veterinario" + **Pedir cita**; ficha incompleta (alergias, veterinario de cabecera); clima para el paseo; cumpleaños y aniversario de adopción. Cada tarjeta dice **por qué** aparece y se puede descartar | |
+| | 6.6 | **Asistente con IA (opcional):** botón de micrófono en "Registrar": se dicta o escribe una frase, Claude la convierte en registros y cuidados propuestos, y la persona confirma o corrige antes de guardar. Resumen semanal en lenguaje cercano. Reglas: salida estructurada, nunca consejos médicos, nada se guarda sin confirmación, funciona solo con internet y la app sigue completa sin esta parte | |
+| | 6.7 | **Formularios profesionales y solicitudes por pasos:** perfil de veterinario y de prestador con **vista previa en vivo** de cómo los verán los dueños; pedir cita o cotización en 4 pasos con **fotos opcionales (hasta 3, pendiente de RF-34)**; foto de perfil del veterinario y del prestador | |
+| | 6.8 | **Pendientes y entrega:** ocultar (no solo borrar) registros del veterinario, ícono de la categoría en los marcadores del mapa, widget de Hoy (Glance), APK de entrega firmado con R8, pruebas de interfaz más estables, accesibilidad (TalkBack, contraste, tamaños de toque) y una ronda de pruebas con 3–5 personas reales | |
+
+**Cómo se mide que mejoró:** tiempo para registrar una mascota (meta: menos de 1 minuto), toques para marcar una toma (meta: 1), cuidados registrados por semana, y lo que digan las personas en la ronda de pruebas de 6.8.
+
+**Alcance:** los gráficos de 6.4 amplían la sección 7 de la spec ("solo la gráfica de peso"); se incluyen por decisión de Tania del 23-nov. Lo demás respeta la spec y las restricciones éticas.
