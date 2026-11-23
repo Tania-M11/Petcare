@@ -37,6 +37,7 @@ class CuidadosFormTest {
 
     @Inject lateinit var mascotas: RepositorioMascotas
     @Inject lateinit var cuidados: RepositorioCuidados
+    @Inject lateinit var eventosDao: com.udenar.petcare.data.cuidados.EventoDao
 
     @Before
     fun preparar() {
@@ -118,5 +119,30 @@ class CuidadosFormTest {
         compose.onNodeWithTag("asistente_saltar").performClick() // aún no se la aplicaron
         compose.waitUntil(5_000) { compose.onAllNodesWithTextExists("¿Cuándo es la próxima dosis?") }
         compose.onNodeWithTag("continuar").assertIsNotEnabled()
+    }
+
+    @Test
+    fun ocultarUnCuidadoDelVeterinarioSinBorrarlo(): Unit = runBlocking {
+        cuidados.guardarEvento(
+            com.udenar.petcare.domain.cuidados.EventoCuidado(
+                "v1", "m1", TipoCuidado.MEDICAMENTO, "Gotas oftálmicas",
+                com.udenar.petcare.domain.cuidados.Frecuencia(TipoFrecuencia.DIARIO, horas = listOf(LocalTime.of(9, 0))),
+                fechaInicio = java.time.LocalDate.now(),
+            ),
+        )
+        // El autor lo pone el servidor; aquí se simula que llegó así al sincronizar
+        eventosDao.guardar(eventosDao.porId("v1")!!.copy(creadoPor = "vet", creadoPorNombre = "Dra. Paz", creadoPorRol = "VETERINARIO", pendiente = false))
+        compose.waitUntil(5_000) { compose.onAllNodesWithTagExists("cuidado_Gotas oftálmicas") }
+        compose.onNodeWithTag("cuidado_Gotas oftálmicas").performScrollTo().performClick()
+        compose.waitUntil(5_000) { compose.onAllNodesWithTextExists("Editar cuidado") }
+        compose.waitUntil(5_000) { compose.onAllNodesWithTagExists("ocultar_cuidado") }
+        compose.onNodeWithTag("ocultar_cuidado").performScrollTo().performClick()
+
+        // Sigue guardado, pero oculto: no aparece en la lista hasta pedir verlo
+        compose.waitUntil(5_000) { compose.onAllNodesWithTagExists("ver_ocultos") }
+        assertEquals(true, cuidados.observarEventos().first().single().oculto)
+        assertEquals(false, compose.onAllNodesWithTagExists("cuidado_Gotas oftálmicas"))
+        compose.onNodeWithTag("ver_ocultos").performClick()
+        compose.waitUntil(5_000) { compose.onAllNodesWithTagExists("cuidado_Gotas oftálmicas") }
     }
 }

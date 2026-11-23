@@ -216,6 +216,14 @@ fun FormCuidadoScreen(onListo: () -> Unit, viewModel: FormCuidadoViewModel = hil
 
         f.mensaje?.let { Text(it, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodyMedium) }
         BotonPrincipal(if (f.esNuevo) "Guardar cuidado" else "Guardar cambios", onClick = viewModel::guardar, cargando = f.guardando, habilitado = !f.cargando)
+        if (!f.esNuevo && viewModel.esDelVeterinario) {
+            Text("🩺 Lo registró el veterinario. Puedes ocultarlo: deja de sonar y de verse en la agenda, pero sigue en el historial.", style = MaterialTheme.typography.bodySmall, color = Pc.TintaSuave)
+            com.udenar.petcare.ui.componentes.BotonSecundario(
+                if (viewModel.estaOculto) "Mostrar de nuevo" else "Ocultar",
+                onClick = { viewModel.cambiarOculto(!viewModel.estaOculto) },
+                modifier = Modifier.testTag("ocultar_cuidado"),
+            )
+        }
         if (!f.esNuevo) {
             TextButton(onClick = { confirmarEliminar = true }, modifier = Modifier.align(Alignment.CenterHorizontally)) {
                 Text("Eliminar cuidado", color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.labelLarge)

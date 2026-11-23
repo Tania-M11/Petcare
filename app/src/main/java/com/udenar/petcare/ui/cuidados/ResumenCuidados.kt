@@ -16,6 +16,10 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -107,11 +111,21 @@ fun SeccionCuidados(
                 style = MaterialTheme.typography.bodyMedium, color = Pc.TintaSuave,
             )
         }
+        // Los registros del veterinario que el dueño ocultó no suenan ni se listan (RF-27)
+        var verOcultos by remember { mutableStateOf(false) }
+        val ocultos = resumenes.count { it.evento.oculto }
         GrupoCuidado.entries.forEach { g ->
-            val delGrupo = resumenes.filter { it.evento.tipo.grupo == g }
+            val delGrupo = resumenes.filter { it.evento.tipo.grupo == g && (verOcultos || !it.evento.oculto) }
             if (delGrupo.isEmpty()) return@forEach
             Text(g.titulo, style = MaterialTheme.typography.labelLarge, color = Pc.TintaSuave, modifier = Modifier.padding(top = 4.dp))
             delGrupo.forEach { r -> FilaCuidado(r, onClick = { onAbrir(r.evento) }) }
+        }
+        if (ocultos > 0) {
+            Text(
+                if (verOcultos) "Esconder los ocultos" else "Ver $ocultos ${if (ocultos == 1) "oculto" else "ocultos"}",
+                style = MaterialTheme.typography.labelMedium, color = Pc.TintaSuave,
+                modifier = Modifier.clip(RoundedCornerShape(50)).clickable { verOcultos = !verOcultos }.padding(8.dp).testTag("ver_ocultos"),
+            )
         }
     }
 }
@@ -147,6 +161,7 @@ private fun FilaCuidado(r: ResumenCuidado, onClick: () -> Unit) {
                 r.proxima?.let { "Próxima: ${it.format(CORTA)}" }?.takeIf { r.evento.ancla == Ancla.ULTIMA_VEZ || r.evento.tipo == com.udenar.petcare.domain.cuidados.TipoCuidado.VACUNA },
             )
             Text(partes.joinToString(" · "), style = MaterialTheme.typography.bodySmall, color = Pc.TintaSuave)
+            if (r.evento.oculto) Text("Oculto: no aparece en la agenda", style = MaterialTheme.typography.labelSmall, color = Pc.TintaSuave)
             if (r.evento.creadoPor?.rol == "VETERINARIO") {
                 Text("🩺 Registrado por veterinario · ${r.evento.creadoPor.nombre.orEmpty()}", style = MaterialTheme.typography.labelSmall, color = Pc.CieloOscuro)
             }

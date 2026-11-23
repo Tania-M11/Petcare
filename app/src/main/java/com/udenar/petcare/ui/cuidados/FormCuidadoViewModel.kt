@@ -179,6 +179,18 @@ class FormCuidadoViewModel @Inject constructor(
         }
     }
 
+    /** Registrado por el veterinario vinculado: el dueño puede ocultarlo sin borrarlo (RF-27). */
+    val esDelVeterinario: Boolean get() = original?.creadoPor?.rol == "VETERINARIO"
+    val estaOculto: Boolean get() = original?.oculto == true
+
+    fun cambiarOculto(oculto: Boolean) {
+        val o = original ?: return
+        viewModelScope.launch {
+            repo.guardarEvento(o.copy(oculto = oculto))
+            _form.update { it.copy(listo = true) }
+        }
+    }
+
     fun eliminar() {
         viewModelScope.launch {
             repo.eliminarEvento(_form.value.id)
