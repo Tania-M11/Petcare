@@ -1,8 +1,9 @@
 package com.udenar.petcare
 
+import androidx.compose.ui.test.assertIsEnabled
+import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithTag
-import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextInput
@@ -24,7 +25,7 @@ import org.junit.Test
 import java.time.LocalTime
 import javax.inject.Inject
 
-/** Partes 2.5 y 2.6: formularios de cuidados desde la ficha de la mascota. */
+/** Partes 2.5, 2.6 y 6.2: cuidados nuevos con el recorrido por pasos desde la ficha. */
 @HiltAndroidTest
 class CuidadosFormTest {
 
@@ -53,16 +54,29 @@ class CuidadosFormTest {
     private fun nuevo(clase: String) {
         compose.onNodeWithTag("agregar_cuidado").performScrollTo().performClick()
         compose.onNodeWithTag("clase_$clase").performClick()
-        compose.waitUntil(5_000) { compose.onAllNodesWithTextExists("Nuevo cuidado") }
+        compose.waitUntil(5_000) { compose.onAllNodesWithTagExists("pregunta") }
+    }
+
+    private fun continuar() {
+        compose.waitUntil(5_000) { compose.onAllNodesWithTagExists("continuar") }
+        compose.onNodeWithTag("continuar").performClick()
+    }
+
+    private fun guardar() {
+        compose.waitUntil(5_000) { compose.onAllNodesWithTagExists("guardar_cuidado") }
+        compose.onNodeWithTag("guardar_cuidado").performClick()
     }
 
     @Test
-    fun comidaConSugerenciaYHoraPorDefecto(): Unit = runBlocking {
+    fun comidaConUnToqueYResumenEnPalabras(): Unit = runBlocking {
         nuevo("COMIDA")
-        compose.onNodeWithText("Desayuno").performClick()
-        compose.onNodeWithText("Guardar cuidado").performScrollTo().performClick()
+        compose.onNodeWithTag("opcion_Desayuno").performClick() // avanza solo y propone las 7:00
+        continuar() // hora
+        continuar() // días: todos
+        compose.waitUntil(5_000) { compose.onAllNodesWithTagExists("resumen_cuidado") }
+        compose.waitUntil(5_000) { compose.onAllNodesWithTextExists("Todos los días · 7:00 a. m.") }
+        guardar()
         compose.waitUntil(5_000) { compose.onAllNodesWithTagExists("cuidado_Desayuno") }
-        compose.onNodeWithText("Todos los días · 7:00 a. m.").assertExists()
         val e = cuidados.observarEventos().first().single()
         assertEquals(TipoCuidado.COMIDA, e.tipo)
         assertEquals(TipoFrecuencia.DIARIO, e.frecuencia.tipo)
@@ -72,8 +86,12 @@ class CuidadosFormTest {
     @Test
     fun banoCadaQuinceDiasCuentaDesdeLaUltimaVez(): Unit = runBlocking {
         nuevo("HIGIENE")
-        compose.onNodeWithText("N").performTextInput("15")
-        compose.onNodeWithText("Guardar cuidado").performScrollTo().performClick()
+        compose.onNodeWithTag("higiene_BANO").performClick()
+        compose.waitUntil(5_000) { compose.onAllNodesWithTagExists("stepper_mas") }
+        repeat(14) { compose.onNodeWithTag("stepper_mas").performClick() }
+        continuar() // frecuencia
+        continuar() // próxima vez: hoy
+        guardar()
         compose.waitUntil(5_000) { compose.onAllNodesWithTagExists("cuidado_Baño") }
         val e = cuidados.observarEventos().first().single()
         assertEquals(Ancla.ULTIMA_VEZ, e.ancla)
@@ -81,19 +99,24 @@ class CuidadosFormTest {
     }
 
     @Test
-    fun medicamentoExigeNombreYHora(): Unit = runBlocking {
+    fun medicamentoNoAvanzaSinNombreNiHora(): Unit = runBlocking {
         nuevo("MEDICAMENTO")
-        compose.onNodeWithText("Guardar cuidado").performScrollTo().performClick()
-        compose.onNodeWithText("Escribe un nombre").assertExists()
-        compose.onNodeWithText("Agrega al menos una hora").assertExists()
+        compose.onNodeWithTag("continuar").assertIsNotEnabled()
+        compose.onNodeWithTag("titulo_cuidado").performTextInput("Antibiótico")
+        continuar()
+        compose.onNodeWithTag("continuar").assertIsNotEnabled()
+        compose.onNodeWithTag("hora_8").performClick()
+        compose.onNodeWithTag("continuar").assertIsEnabled()
         assertEquals(0, cuidados.observarEventos().first().size)
     }
 
     @Test
-    fun vacunaConProximaFechaExigida(): Unit = runBlocking {
+    fun vacunaPideLaProximaFecha(): Unit = runBlocking {
         nuevo("VACUNA")
-        compose.onNodeWithText("Nombre de la vacuna").performTextInput("Rabia")
-        compose.onNodeWithText("Guardar cuidado").performScrollTo().performClick()
-        compose.onNodeWithText("Elige la próxima fecha").assertExists()
+        compose.onNodeWithTag("titulo_cuidado").performTextInput("Rabia")
+        continuar()
+        compose.onNodeWithTag("asistente_saltar").performClick() // aún no se la aplicaron
+        compose.waitUntil(5_000) { compose.onAllNodesWithTextExists("¿Cuándo es la próxima dosis?") }
+        compose.onNodeWithTag("continuar").assertIsNotEnabled()
     }
 }

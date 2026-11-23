@@ -96,16 +96,23 @@ fun PetcareRaiz() {
                     onAbrir = { nav.navigate(RutaDetalleMascota(it)) },
                 )
             }
-            composable<RutaFormMascota> {
-                FormMascotaScreen(
-                    onVolver = { nav.popBackStack() },
-                    onGuardada = { id ->
+            composable<RutaFormMascota> { entrada ->
+                val onGuardada: (String) -> Unit = { id ->
+                    nav.popBackStack()
+                    // Si era nueva (se abrió desde la lista), se muestra su ficha
+                    if (nav.currentDestination?.hasRoute(RutaDetalleMascota::class) != true) {
+                        avisar("¡Bienvenida a la familia! 🐾 Ahora crea su primer recordatorio")
+                        nav.navigate(RutaDetalleMascota(id))
+                    } else {
                         avisar("¡Listo! La ficha quedó guardada 🐾")
-                        nav.popBackStack()
-                        // Si era nueva (se abrió desde la lista), se muestra su ficha
-                        if (nav.currentDestination?.hasRoute(RutaDetalleMascota::class) != true) nav.navigate(RutaDetalleMascota(id))
-                    },
-                )
+                    }
+                }
+                // Nueva: recorrido guiado; editar: la ficha completa
+                if (entrada.toRoute<RutaFormMascota>().id == null) {
+                    com.udenar.petcare.ui.mascotas.NuevaMascotaScreen(onVolver = { nav.popBackStack() }, onGuardada = onGuardada)
+                } else {
+                    FormMascotaScreen(onVolver = { nav.popBackStack() }, onGuardada = onGuardada)
+                }
             }
             composable<RutaDetalleMascota> {
                 DetalleMascotaScreen(
@@ -118,6 +125,7 @@ fun PetcareRaiz() {
                     onCarne = { nav.navigate(RutaCarne(it)) },
                     onPasear = { nav.navigate(RutaPaseo(it)) },
                     onPaseo = { nav.navigate(RutaDetallePaseo(it)) },
+                    onVeterinarios = { nav.navigate(RutaDirectorioVet) },
                     onVisita = { idVisita ->
                         val mascotaId = nav.currentBackStackEntry?.toRoute<RutaDetalleMascota>()?.id ?: return@DetalleMascotaScreen
                         nav.navigate(RutaFormVisita(mascotaId, idVisita))
@@ -126,10 +134,15 @@ fun PetcareRaiz() {
                 )
             }
             composable<RutaFormCuidado> {
-                FormCuidadoScreen(onListo = {
-                    avisar("¡Listo! Cuidados actualizados ✓")
+                val nuevo = it.toRoute<RutaFormCuidado>().id == null
+                val listo = {
+                    avisar(if (nuevo) "¡Recordatorio listo! Te aviso a tiempo ⏰" else "¡Listo! Cuidados actualizados ✓")
                     nav.popBackStack()
-                })
+                    Unit
+                }
+                // Nuevo: recorrido guiado por pasos; editar: el formulario completo
+                if (nuevo) com.udenar.petcare.ui.cuidados.NuevoCuidadoScreen(onListo = { nav.popBackStack() }, onGuardado = listo)
+                else FormCuidadoScreen(onListo = listo)
             }
             composable<RutaCuidarCodigo> { com.udenar.petcare.ui.compartir.CuidarConCodigoScreen(onVolver = { nav.popBackStack() }) }
             composable<RutaPaseo> { com.udenar.petcare.ui.paseos.PaseoScreen(onVolver = { nav.popBackStack() }, avisar = avisar) }

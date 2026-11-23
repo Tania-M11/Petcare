@@ -110,6 +110,10 @@ dependencies {
     implementation(platform(libs.firebase.bom))
     implementation(libs.firebase.messaging)
     implementation(libs.kotlinx.coroutines.play.services)
+
+    // Fase 6: foto guiada (recorte) y escanear etiquetas
+    implementation(libs.mlkit.segmentacion)
+    implementation(libs.mlkit.texto)
     implementation(libs.ktor.client.okhttp)
 
     // Inyección de dependencias (Hilt)

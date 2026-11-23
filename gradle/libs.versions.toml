@@ -23,6 +23,8 @@ zxing = "3.5.4"
 codeScanner = "16.1.0"
 maplibre = "13.7.1"
 firebaseBom = "35.2.0"
+mlkitSegmentacion = "16.0.0-beta1"
+mlkitTexto = "19.0.1"
 googleServices = "4.6.0"
 playLocation = "21.4.0"
 testExtJunit = "1.3.0"
@@ -66,6 +68,9 @@ kotlinx-coroutines-play-services = { group = "org.jetbrains.kotlinx", name = "ko
 # Push (RF-29): FCM solo como transporte
 firebase-bom = { group = "com.google.firebase", name = "firebase-bom", version.ref = "firebaseBom" }
 firebase-messaging = { group = "com.google.firebase", name = "firebase-messaging" }
+# Fase 6: recorte de la mascota y lectura de etiquetas, en el teléfono y sin costo
+mlkit-segmentacion = { group = "com.google.android.gms", name = "play-services-mlkit-subject-segmentation", version.ref = "mlkitSegmentacion" }
+mlkit-texto = { group = "com.google.android.gms", name = "play-services-mlkit-text-recognition", version.ref = "mlkitTexto" }
 
 # Supabase (cuentas, base de datos) + motor HTTP
 supabase-bom = { group = "io.github.jan-tennert.supabase", name = "bom", version.ref = "supabase" }

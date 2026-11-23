@@ -2,6 +2,8 @@
 <paths>
     <!-- Imágenes del QR para compartir -->
     <cache-path name="compartidos" path="compartidos/" />
+    <!-- Fotos tomadas con la cámara (foto guiada de la mascota, escanear etiquetas) -->
+    <cache-path name="camara" path="camara/" />
     <!-- Documentos de las mascotas (para abrirlos con otra app) -->
     <files-path name="documentos" path="documentos/" />
 </paths>

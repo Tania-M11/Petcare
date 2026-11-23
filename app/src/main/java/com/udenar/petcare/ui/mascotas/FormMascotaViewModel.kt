@@ -52,6 +52,10 @@ data class FormMascota(
     val foto: String? = null,
     val fotoNueva: String? = null,
     val procesandoFoto: Boolean = false,
+    /** Foto guiada: la foto completa comprimida y la "pegatina" recortada (si se encontró a la mascota). */
+    val fotoCompleta: String? = null,
+    val fotoPegatina: String? = null,
+    val sinRecorte: Boolean = false,
     val errores: Map<CampoMascota, String> = emptyMap(),
     val mensaje: String? = null,
     val guardando: Boolean = false,
@@ -64,7 +68,36 @@ class FormMascotaViewModel @Inject constructor(
     private val repo: RepositorioMascotas,
     private val archivos: ArchivosFotos,
     private val reloj: Clock,
+    private val pegatinas: com.udenar.petcare.data.fotos.Pegatinas,
 ) : ViewModel() {
+
+    fun archivoCamara() = pegatinas.nuevoArchivoCamara()
+
+    /** Foto guiada: comprime la original y prepara la pegatina; elige la pegatina si salió bien. */
+    fun elegirFotoGuiada(uri: Uri, colores: IntArray) {
+        _form.update { it.copy(procesandoFoto = true, fotoPegatina = null, sinRecorte = false) }
+        viewModelScope.launch {
+            try {
+                val completa = archivos.comprimir(uri, _form.value.id).absolutePath
+                _form.update { it.copy(fotoCompleta = completa, foto = completa, fotoNueva = completa) }
+                val pegatina = runCatching { pegatinas.crear(uri, _form.value.id, colores) }.getOrNull()?.absolutePath
+                _form.update {
+                    if (pegatina != null) it.copy(fotoPegatina = pegatina, foto = pegatina, fotoNueva = pegatina, procesandoFoto = false)
+                    else it.copy(sinRecorte = true, procesandoFoto = false)
+                }
+            } catch (_: Exception) {
+                _form.update { it.copy(procesandoFoto = false, mensaje = "No pudimos usar esa imagen. Prueba con otra.") }
+            }
+        }
+    }
+
+    /** Alterna entre la pegatina y la foto completa. */
+    fun usarFoto(ruta: String) = _form.update { it.copy(foto = ruta, fotoNueva = ruta) }
+
+    /** Edad aproximada en años y meses → fecha de nacimiento aproximada. */
+    fun edadAproximada(anos: Int, meses: Int) = editar(CampoMascota.NACIMIENTO) {
+        it.copy(nacimiento = hoy.minusYears(anos.toLong()).minusMonths(meses.toLong()).withDayOfMonth(1), aproximada = true)
+    }
 
     private val idExistente = estado.toRoute<RutaFormMascota>().id
     private var original: Mascota? = null

@@ -12,6 +12,9 @@ object DescripcionCuidados {
     private val HORA = DateTimeFormatter.ofPattern("h:mm a", ES)
 
     /** Java usa espacios finos sin quiebre dentro de "a. m."; se normalizan a espacios comunes. */
+    /** "23 de noviembre". */
+    fun fecha(d: java.time.LocalDate): String = d.format(java.time.format.DateTimeFormatter.ofPattern("d 'de' MMMM", java.util.Locale.forLanguageTag("es-CO")))
+
     fun hora(h: LocalTime): String = HORA.format(h).replace(' ', ' ').replace(' ', ' ')
 
     fun horas(lista: List<LocalTime>): String {

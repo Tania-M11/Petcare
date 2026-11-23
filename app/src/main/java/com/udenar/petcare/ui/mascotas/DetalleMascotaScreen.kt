@@ -81,6 +81,7 @@ fun DetalleMascotaScreen(
     onPasear: (String) -> Unit,
     onPaseo: (String) -> Unit,
     avisar: (String) -> Unit,
+    onVeterinarios: () -> Unit = {},
     viewModel: DetalleMascotaViewModel = hiltViewModel(),
 ) {
     val m by viewModel.mascota.collectAsStateWithLifecycle()
@@ -95,6 +96,8 @@ fun DetalleMascotaScreen(
     val recordatoriosActivos by viewModel.recordatoriosActivos.collectAsStateWithLifecycle()
     val documentos by viewModel.documentos.collectAsStateWithLifecycle()
     val paseos by viewModel.paseos.collectAsStateWithLifecycle()
+    val progreso by viewModel.progreso.collectAsStateWithLifecycle()
+    val recomendacionesMascota by viewModel.recomendaciones.collectAsStateWithLifecycle()
     var seccion by rememberSaveable { mutableIntStateOf(0) }
     var elegirClase by remember { mutableStateOf(false) }
     var confirmarEliminar by remember { mutableStateOf(false) }
@@ -192,6 +195,29 @@ fun DetalleMascotaScreen(
                 }
                 3 -> TarjetaHistorial(historial)
                 else -> {
+                    // Lo que conviene atender ahora con esta mascota
+                    if (recomendacionesMascota.isNotEmpty()) {
+                        androidx.compose.foundation.lazy.LazyRow(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                            items(recomendacionesMascota.size) { i ->
+                                val r = recomendacionesMascota[i]
+                                com.udenar.petcare.ui.componentes.TarjetaRecomendacion(
+                                    r,
+                                    onAccion = {
+                                        when (r.accion) {
+                                            com.udenar.petcare.domain.recomendaciones.AccionSugerida.NUEVO_CUIDADO -> elegirClase = true
+                                            com.udenar.petcare.domain.recomendaciones.AccionSugerida.COMPLETAR_FICHA -> onEditar(mascota.id)
+                                            com.udenar.petcare.domain.recomendaciones.AccionSugerida.PASEAR -> onPasear(mascota.id)
+                                            com.udenar.petcare.domain.recomendaciones.AccionSugerida.REGISTRAR_PESO -> seccion = 2
+                                            com.udenar.petcare.domain.recomendaciones.AccionSugerida.VER_CUIDADOS -> seccion = 1
+                                            else -> onVeterinarios()
+                                        }
+                                    },
+                                    onDescartar = { viewModel.descartar(r.id) },
+                                )
+                            }
+                        }
+                    }
+                    progreso?.takeIf { it.hayDatos }?.let { com.udenar.petcare.ui.componentes.TarjetaProgreso(mascota.nombre, it) }
                     TarjetaEstadoCuidado(estadoCuidado)
                     com.udenar.petcare.ui.componentes.BotonSecundario("Carné y QR", onClick = { onCarne(mascota.id) }, modifier = Modifier.testTag("ver_carne"))
                     mascota.veterinario?.takeIf { !it.vacio }?.let { v -> TarjetaVeterinario(v, contexto) }

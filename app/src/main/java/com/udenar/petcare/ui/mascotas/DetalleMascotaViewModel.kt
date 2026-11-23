@@ -61,6 +61,7 @@ class DetalleMascotaViewModel @Inject constructor(
     private val documentosRepo: com.udenar.petcare.domain.documentos.RepositorioDocumentos,
     private val paseosRepo: com.udenar.petcare.domain.paseos.RepositorioPaseos,
     private val atencion: com.udenar.petcare.domain.profesionales.RepositorioAtencionVet,
+    private val descartes: com.udenar.petcare.data.local.Descartes,
 ) : ViewModel() {
 
     val paseos: StateFlow<List<com.udenar.petcare.domain.paseos.Paseo>> by lazy {
@@ -186,6 +187,27 @@ class DetalleMascotaViewModel @Inject constructor(
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyMap())
 
     /** Línea de tiempo: cuidados hechos u omitidos, pesos y visitas (RF-15). */
+    /** Progreso (Fase 6.4): cumplimiento semanal, racha, paseos, equipo y logros. */
+    val progreso: StateFlow<com.udenar.petcare.domain.recomendaciones.ProgresoMascota?> = combine(
+        cuidados.observarEventos(), cuidados.observarRegistros(), paseosRepo.observar(id), pesos,
+    ) { ev, reg, pas, ps ->
+        com.udenar.petcare.domain.recomendaciones.Progreso.calcular(
+            ev.filter { it.mascotaId == id }, reg.filter { it.mascotaId == id }, pas, ps, LocalDate.now(reloj), reloj.zone,
+        )
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
+
+    /** Recomendaciones solo de esta mascota (las mismas reglas que Hoy). */
+    val recomendaciones: StateFlow<List<com.udenar.petcare.domain.recomendaciones.Recomendacion>> = combine(
+        mascota, cuidados.observarEventos(), cuidados.observarRegistros(), pesos, combine(paseosRepo.observar(id), descartes.ids, ::Pair),
+    ) { m, ev, reg, ps, (pas, descartadas) ->
+        if (m == null) emptyList()
+        else com.udenar.petcare.domain.recomendaciones.MotorRecomendaciones.generar(
+            com.udenar.petcare.domain.recomendaciones.ContextoRecomendaciones(LocalDate.now(reloj), listOf(m), ev, reg, ps, pas, reloj.zone),
+        ).filter { it.id !in descartadas }
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
+
+    fun descartar(r: String) = descartes.descartar(r)
+
     val historial: StateFlow<List<ItemHistorial>> = combine(cuidados.observarEventos(), cuidados.observarRegistros(), pesos, visitas, paseosRepo.observar(id)) { ev, reg, ps, vs, pas ->
         val porId = ev.associateBy { it.id }
         val zona = reloj.zone

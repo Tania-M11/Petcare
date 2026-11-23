@@ -80,7 +80,10 @@ object MotorRecomendaciones {
             lista += paseos(m, c.paseos.filter { it.mascotaId == m.id }, c.hoy, c.zona)
             lista += fechasEspeciales(m, c.hoy)
         }
-        return lista.distinctBy { it.id }.sortedBy { it.tono.ordinal }
+        val orden = listOf("vencido", "cambio", "omitidas", "proximo", "termina", "sin_cuidados", "cumple", "ficha", "sin_peso", "paseo")
+        return lista.distinctBy { it.id }.sortedWith(
+            compareBy<Recomendacion> { it.tono.ordinal }.thenBy { r -> orden.indexOfFirst { r.id.startsWith(it) }.let { i -> if (i < 0) orden.size else i } },
+        )
     }
 
     private fun cuidadosClinicos(m: Mascota, eventos: List<EventoCuidado>, registros: List<RegistroCuidado>, ahora: LocalDateTime, zona: ZoneId) = buildList {

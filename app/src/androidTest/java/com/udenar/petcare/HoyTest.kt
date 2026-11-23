@@ -5,6 +5,8 @@ import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollToNode
+import androidx.compose.ui.test.performScrollTo
 import com.udenar.petcare.domain.cuidados.EventoCuidado
 import com.udenar.petcare.domain.cuidados.Frecuencia
 import com.udenar.petcare.domain.cuidados.RepositorioCuidados
@@ -55,7 +57,7 @@ class HoyTest {
 
     @Test
     fun unToqueMarcaLaTomaConQuienLaHizo() {
-        compose.onNodeWithTag("hecho_Desayuno").performClick()
+        compose.onNodeWithTag("hecho_Desayuno").performScrollTo().performClick()
         compose.waitUntil(5_000) { compose.onAllNodesWithTextExists("2 pendientes") }
         compose.onNodeWithText("Dada por Ana", substring = true).assertExists()
         compose.onNodeWithText("Deshacer").performClick()
@@ -65,8 +67,9 @@ class HoyTest {
     @Test
     fun filtrarPorMascotaYAlertaDeVacuna() {
         // La vacuna próxima aparece como recomendación con su porqué
-        compose.waitUntil(5_000) { compose.onAllNodesWithTextExists("Se acerca: Rabia") }
-        compose.onNodeWithTag("filtro_Luna").performClick()
+        compose.waitUntil(5_000) { compose.onAllNodesWithTagExists("carrusel_recomendaciones") }
+        compose.onNodeWithTag("carrusel_recomendaciones").performScrollToNode(androidx.compose.ui.test.hasText("Se acerca: Rabia"))
+        compose.onNodeWithTag("filtro_Luna").performScrollTo().performClick()
         compose.waitUntil(5_000) { compose.onAllNodesWithTextExists("2 pendientes") }
         compose.onAllNodesWithTag("hecho_Desayuno").fetchSemanticsNodes().let { assert(it.isEmpty()) }
         compose.onNodeWithTag("filtro_Luna").performClick()

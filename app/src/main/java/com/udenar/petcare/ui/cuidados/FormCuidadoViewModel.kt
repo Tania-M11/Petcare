@@ -178,6 +178,12 @@ class FormCuidadoViewModel @Inject constructor(
     }
 
     /** Arma el cuidado con lo que escribió el usuario (la app no completa ni sugiere valores). */
+    /** Cómo quedará el cuidado (para el resumen del recorrido guiado). */
+    fun vistaPrevia(): EventoCuidado = construir(_form.value)
+
+    /** Errores del formulario sin marcarlos (para habilitar "Guardar" en el recorrido). */
+    fun erroresActuales(): Map<CampoCuidado, String> = validar(_form.value)
+
     private fun construir(f: FormCuidado): EventoCuidado {
         val n = n(f) ?: 1
         val detalle = f.detalle.toMutableMap()

@@ -317,7 +317,7 @@ fun FichaPacienteScreen(miId: String?, onVolver: () -> Unit, avisar: (String) ->
                         .fillMaxWidth()
                         .clip(MaterialTheme.shapes.medium)
                         .clickable {
-                            viewModel.abrir(d, contexto.cacheDir, { archivo ->
+                            viewModel.abrir(d, java.io.File(contexto.cacheDir, "compartidos").apply { mkdirs() }, { archivo ->
                                 val uri = FileProvider.getUriForFile(contexto, "${contexto.packageName}.archivos", archivo)
                                 try {
                                     contexto.startActivity(Intent(Intent.ACTION_VIEW).setDataAndType(uri, d.mime).addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION))

@@ -222,7 +222,7 @@ fun HoyScreen(
             if (recomendaciones.isNotEmpty() && esHoy) {
                 Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                     TituloSeccion("Para ti")
-                    androidx.compose.foundation.lazy.LazyRow(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    androidx.compose.foundation.lazy.LazyRow(horizontalArrangement = Arrangement.spacedBy(12.dp), modifier = Modifier.testTag("carrusel_recomendaciones")) {
                         items(recomendaciones.take(8).size) { i ->
                             val r = recomendaciones[i]
                             com.udenar.petcare.ui.componentes.TarjetaRecomendacion(

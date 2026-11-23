@@ -56,7 +56,7 @@ class AccesoTest {
         compose.waitUntil(5_000) { compose.onAllNodesWithTextExists("¿Qué te trae a PetCare?") }
         compose.onNodeWithText("Ahora no").performClick()
         compose.waitUntil(5_000) { compose.onAllNodesWithTagExists("pestana_hoy") }
-        compose.onNodeWithText("Tania").assertExists() // saludo en Hoy
+        compose.onNodeWithText("Tania", substring = true).assertExists() // Chopper saluda en Hoy
     }
 
     @Test
@@ -84,7 +84,7 @@ class AccesoTest {
         compose.onNodeWithText("Contraseña").performTextInput("clave1234")
         compose.onNodeWithText("Entrar").performClick()
         compose.waitUntil(5_000) { compose.onAllNodesWithTagExists("pestana_hoy") }
-        compose.onNodeWithText("Ana").assertExists()
+        compose.onNodeWithText("Ana", substring = true).assertExists()
 
         compose.onNodeWithTag("pestana_perfil").performClick()
         compose.onNodeWithText("ana@petcare.test").assertExists()
