@@ -1,5 +1,7 @@
 package com.udenar.petcare
 
+import androidx.compose.ui.test.performTextReplacement
+import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
@@ -74,10 +76,25 @@ class SaludTest {
     fun visitaConProximaCitaCreaRecordatorioYApareceEnHistorial(): Unit = runBlocking {
         compose.onNodeWithTag("seccion_Salud").performClick()
         compose.onNodeWithTag("agregar_visita").performScrollTo().performClick()
-        compose.waitUntil(5_000) { compose.onAllNodesWithTextExists("Nueva visita") }
-        compose.onNodeWithText("Motivo").performTextInput("Control anual")
-        compose.onNodeWithText("Guardar visita").performScrollTo().performClick()
+        // Recorrido por pasos: motivo → cuándo → indicaciones (se salta) → próxima cita → resumen
+        compose.waitUntil(5_000) { compose.onAllNodesWithTagExists("motivo_Control") }
+        compose.onNodeWithTag("continuar").assertIsNotEnabled()
+        compose.onNodeWithTag("motivo_Control").performClick()
+        compose.onNodeWithTag("motivo_visita").performTextReplacement("Control anual")
+        androidx.test.espresso.Espresso.closeSoftKeyboard()
+        compose.onNodeWithTag("continuar").performClick()
+        compose.waitUntil(5_000) { compose.onAllNodesWithTextExists("¿Cuándo y con quién?") }
+        compose.onNodeWithTag("continuar").performClick()
+        compose.waitUntil(5_000) { compose.onAllNodesWithTagExists("asistente_saltar") }
+        compose.onNodeWithTag("asistente_saltar").performClick() // sin indicaciones
+        compose.waitUntil(5_000) { compose.onAllNodesWithTagExists("proxima_En 1 año") }
+        compose.onNodeWithTag("proxima_En 1 año").performClick()
+        compose.onNodeWithTag("continuar").performClick()
+        compose.waitUntil(5_000) { compose.onAllNodesWithTagExists("guardar_visita") }
+        compose.onNodeWithTag("guardar_visita").performClick()
         compose.waitUntil(5_000) { compose.onAllNodesWithTagExists("visita_Control anual") }
+        // La próxima cita quedó como recordatorio
+        compose.waitUntil(5_000) { runBlocking { cuidados.observarEventos().first().any { it.tipo == com.udenar.petcare.domain.cuidados.TipoCuidado.CITA_VET } } }
 
         compose.onNodeWithTag("seccion_Historial").performClick()
         compose.onNodeWithText("Control anual").assertExists()

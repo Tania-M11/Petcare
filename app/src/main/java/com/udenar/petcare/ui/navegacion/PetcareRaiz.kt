@@ -160,6 +160,16 @@ fun PetcareRaiz() {
                 )
             }
             composable<RutaFormVisita> {
+                if (it.toRoute<RutaFormVisita>().id == null) {
+                    com.udenar.petcare.ui.mascotas.NuevaVisitaScreen(
+                        onCerrar = { nav.popBackStack() },
+                        onGuardada = {
+                            avisar("¡Visita guardada en su historial!")
+                            nav.popBackStack()
+                        },
+                    )
+                    return@composable
+                }
                 com.udenar.petcare.ui.mascotas.FormVisitaScreen(onListo = {
                     avisar("¡Visita guardada en su historial!")
                     nav.popBackStack()
