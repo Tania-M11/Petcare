@@ -1,5 +1,6 @@
 package com.udenar.petcare.domain.recomendaciones
 
+import com.udenar.petcare.domain.modelo.Icono
 import com.udenar.petcare.domain.cuidados.Ancla
 import com.udenar.petcare.domain.cuidados.EstadoRegistro
 import com.udenar.petcare.domain.cuidados.EventoCuidado
@@ -36,7 +37,7 @@ data class Recomendacion(
     val id: String,
     val mascotaId: String?,
     val tono: Tono,
-    val emoji: String,
+    val icono: Icono,
     val titulo: String,
     val mensaje: String,
     /** "¿Por qué la veo?": la regla, contada en lenguaje simple. */
@@ -70,17 +71,17 @@ object MotorRecomendaciones {
         val grados = c.temperatura.roundToInt()
         return when {
             c.lloviendo -> Recomendacion(
-                "clima_lluvia_$hoy", null, Tono.SUGERENCIA, "🌧️", "Está lloviendo ($grados °C)",
+                "clima_lluvia_$hoy", null, Tono.SUGERENCIA, Icono.LLUVIA, "Está lloviendo ($grados °C)",
                 "Quizá hoy sea mejor un paseo corto o un rato de juego en casa con $quien.",
                 "Según el pronóstico de Open-Meteo para tu zona.", AccionSugerida.PASEAR, "Registrar paseo",
             )
             grados >= 28 -> Recomendacion(
-                "clima_calor_$hoy", null, Tono.ATENCION, "☀️", "Hace calor: $grados °C",
+                "clima_calor_$hoy", null, Tono.ATENCION, Icono.SOL, "Hace calor: $grados °C",
                 "Para pasear a $quien, mejor temprano o al atardecer, por la sombra y con agua.",
                 "Según el pronóstico de Open-Meteo para tu zona.", AccionSugerida.PASEAR, "Registrar paseo",
             )
             grados in 14..25 -> Recomendacion(
-                "clima_bueno_$hoy", null, Tono.CELEBRACION, "🌤️", "Buen clima para pasear ($grados °C)",
+                "clima_bueno_$hoy", null, Tono.CELEBRACION, Icono.SOL_NUBE, "Buen clima para pasear ($grados °C)",
                 "Un buen momento para salir con $quien.",
                 "Según el pronóstico de Open-Meteo para tu zona.", AccionSugerida.PASEAR, "Pasear",
             )
@@ -126,7 +127,7 @@ object MotorRecomendaciones {
             when {
                 clinico && r.vencimiento == Vencimiento.VENCIDO -> add(
                     Recomendacion(
-                        "vencido_${e.id}_${r.proxima}", m.id, if (e.tipo == TipoCuidado.VACUNA) Tono.URGENTE else Tono.ATENCION, "💉",
+                        "vencido_${e.id}_${r.proxima}", m.id, if (e.tipo == TipoCuidado.VACUNA) Tono.URGENTE else Tono.ATENCION, Icono.VACUNA,
                         "${e.titulo} de ${m.nombre} está vencida",
                         "Si ya se la aplicaron, márcala como hecha. Si no, agenda la cita con su veterinario.",
                         "Su fecha era el $fecha y no está registrada como aplicada.",
@@ -135,7 +136,7 @@ object MotorRecomendaciones {
                 )
                 clinico && r.vencimiento == Vencimiento.PROXIMO -> add(
                     Recomendacion(
-                        "proximo_${e.id}_${r.proxima}", m.id, Tono.SUGERENCIA, "📅",
+                        "proximo_${e.id}_${r.proxima}", m.id, Tono.SUGERENCIA, Icono.CALENDARIO,
                         "Se acerca: ${e.titulo}",
                         "${m.nombre} la tiene para el $fecha. Es buen momento para apartar la cita.",
                         "Faltan pocos días para la fecha que registraste.",
@@ -144,7 +145,7 @@ object MotorRecomendaciones {
                 )
                 r.terminaPronto -> add(
                     Recomendacion(
-                        "termina_${e.id}_${e.fechaFin}", m.id, Tono.SUGERENCIA, "💊",
+                        "termina_${e.id}_${e.fechaFin}", m.id, Tono.SUGERENCIA, Icono.MEDICAMENTO,
                         "${e.titulo} termina pronto",
                         "El tratamiento de ${m.nombre} termina el ${e.fechaFin?.format(FECHA)}. Si tienes dudas sobre continuarlo, consúltalo con su veterinario.",
                         "Registraste esa fecha como el último día del tratamiento.",
@@ -166,7 +167,7 @@ object MotorRecomendaciones {
                 val medicina = e.tipo == TipoCuidado.MEDICAMENTO
                 add(
                     Recomendacion(
-                        "omitidas_${e.id}_$hoy", m.id, if (medicina) Tono.ATENCION else Tono.SUGERENCIA, if (medicina) "⏰" else "🔔",
+                        "omitidas_${e.id}_$hoy", m.id, if (medicina) Tono.ATENCION else Tono.SUGERENCIA, if (medicina) Icono.ALARMA else Icono.CAMPANA,
                         "$seguidas tomas seguidas sin hacer: ${e.titulo}",
                         if (medicina) "Si se está complicando darla a tiempo, coméntalo con el veterinario de ${m.nombre}. También puedes ajustar las horas del recordatorio."
                         else "¿Las horas de este recordatorio le sirven a tu rutina? Puedes cambiarlas desde la ficha de ${m.nombre}.",
@@ -183,7 +184,7 @@ object MotorRecomendaciones {
         if (ultimo == null || ChronoUnit.DAYS.between(ultimo.fecha, hoy) >= DIAS_SIN_PESO) {
             add(
                 Recomendacion(
-                    "sin_peso_${m.id}_${ultimo?.fecha}", m.id, Tono.SUGERENCIA, "⚖️",
+                    "sin_peso_${m.id}_${ultimo?.fecha}", m.id, Tono.SUGERENCIA, Icono.PESO,
                     "¿Cuánto pesa ${m.nombre} hoy?",
                     "Registrar el peso de vez en cuando ayuda a notar cambios a tiempo.",
                     if (ultimo == null) "Aún no hay ningún peso registrado." else "El último peso es del ${ultimo.fecha.format(FECHA)}.",
@@ -200,7 +201,7 @@ object MotorRecomendaciones {
                 val dias = ChronoUnit.DAYS.between(anterior.fecha, ultimo.fecha)
                 add(
                     Recomendacion(
-                        "cambio_peso_${m.id}_${ultimo.id}", m.id, Tono.ATENCION, if (cambio > 0) "📈" else "📉",
+                        "cambio_peso_${m.id}_${ultimo.id}", m.id, Tono.ATENCION, if (cambio > 0) Icono.SUBE else Icono.BAJA,
                         "${m.nombre} ${if (cambio > 0) "subió" else "bajó"} $porcentaje % de peso",
                         "Un cambio así en $dias días vale la pena comentarlo con su veterinario.",
                         "Comparamos sus dos últimos pesos registrados.",
@@ -215,7 +216,7 @@ object MotorRecomendaciones {
         if (eventos.isEmpty()) {
             add(
                 Recomendacion(
-                    "sin_cuidados_${m.id}", m.id, Tono.SUGERENCIA, "✨",
+                    "sin_cuidados_${m.id}", m.id, Tono.SUGERENCIA, Icono.BRILLOS,
                     "${m.nombre} aún no tiene recordatorios",
                     "Empieza por lo de todos los días: sus comidas o un paseo.",
                     "No hay ningún cuidado registrado para ${m.nombre}.",
@@ -230,7 +231,7 @@ object MotorRecomendaciones {
         if (faltan.isNotEmpty()) {
             add(
                 Recomendacion(
-                    "ficha_${m.id}_${faltan.joinToString("_")}", m.id, Tono.SUGERENCIA, "📝",
+                    "ficha_${m.id}_${faltan.joinToString("_")}", m.id, Tono.SUGERENCIA, Icono.NOTA,
                     "Completa la ficha de ${m.nombre}",
                     "Falta: ${faltan.joinToString(" y ")}. Así quienes la cuidan y su veterinario tienen lo importante a mano.",
                     "Esos datos están vacíos en su ficha.",
@@ -247,7 +248,7 @@ object MotorRecomendaciones {
         if (ultimo == null || ChronoUnit.DAYS.between(ultimo, hoy) >= 7) {
             add(
                 Recomendacion(
-                    "paseo_${m.id}_${hoy.minusDays(hoy.dayOfWeek.value - 1L)}", m.id, Tono.SUGERENCIA, "🦮",
+                    "paseo_${m.id}_${hoy.minusDays(hoy.dayOfWeek.value - 1L)}", m.id, Tono.SUGERENCIA, Icono.PASEO,
                     "¿Salieron a pasear esta semana?",
                     "Registra los paseos de ${m.nombre}, con GPS o a mano, y verás cuánto caminan.",
                     if (ultimo == null) "Aún no hay paseos registrados." else "El último paseo registrado fue el ${ultimo.format(FECHA)}.",
@@ -267,7 +268,7 @@ object MotorRecomendaciones {
         when {
             faltan == 0L -> add(
                 Recomendacion(
-                    "cumple_${m.id}_${hoy.year}", m.id, Tono.CELEBRACION, "🎂",
+                    "cumple_${m.id}_${hoy.year}", m.id, Tono.CELEBRACION, Icono.PASTEL,
                     "¡Hoy ${m.nombre} cumple $anos ${if (anos == 1) "año" else "años"}!",
                     "Un día perfecto para su foto favorita y un paseo largo.",
                     "Hoy es su fecha de nacimiento${if (m.nacimientoAproximado) " (aproximada)" else ""}.",
@@ -276,7 +277,7 @@ object MotorRecomendaciones {
             )
             faltan in 1..7 -> add(
                 Recomendacion(
-                    "cumple_pronto_${m.id}_${hoy.year}", m.id, Tono.CELEBRACION, "🎈",
+                    "cumple_pronto_${m.id}_${hoy.year}", m.id, Tono.CELEBRACION, Icono.GLOBO,
                     "${m.nombre} cumple $anos el ${proximo.format(DIA)}",
                     "Faltan $faltan ${if (faltan == 1L) "día" else "días"}.",
                     "Calculado con su fecha de nacimiento.",
@@ -292,46 +293,52 @@ data class MensajeChopper(val texto: String, val pose: PoseChopper)
 
 enum class PoseChopper { SALUDO, COMIDA, AMIGOS, ORGANIZADOR, DOCTOR }
 
+data class CabeceraHoy(val momento: String, val estado: String, val pose: PoseChopper, val icono: Icono)
+
+data class Consejo(val icono: Icono, val texto: String)
+
 object Chopper {
-    /** [hora] 0–23; [pendientes]/[total] del día; [mascotas] = nombres. */
-    fun saludo(nombre: String, hora: Int, total: Int, pendientes: Int, mascotas: List<String>, hoy: LocalDate): MensajeChopper {
-        val quien = nombre.ifBlank { "" }.let { if (it.isEmpty()) "" else ", $it" }
+    /**
+     * Cabecera de Hoy en tres piezas cortas (Fase 6): el momento del día, una línea con el
+     * estado y la pose de Chopper. Nada de párrafos: lo demás lo cuentan el progreso y los trucos.
+     */
+    fun cabecera(hora: Int, total: Int, pendientes: Int, hayMascotas: Boolean): CabeceraHoy {
         val momento = when (hora) {
-            in 5..11 -> "¡Buenos días$quien!"
-            in 12..18 -> "¡Buenas tardes$quien!"
-            else -> "¡Buenas noches$quien!"
+            in 5..11 -> "Buenos días"
+            in 12..18 -> "Buenas tardes"
+            else -> "Buenas noches"
         }
-        val juntos = when (mascotas.size) {
-            0 -> ""
-            1 -> mascotas[0]
-            else -> mascotas.dropLast(1).joinToString(", ") + " y " + mascotas.last()
-        }
+        val hechos = total - pendientes
         return when {
-            mascotas.isEmpty() -> MensajeChopper("$momento Soy Chopper. Agrega a tu primera mascota y yo te ayudo a recordar sus cuidados.", PoseChopper.SALUDO)
-            total == 0 -> MensajeChopper("$momento Hoy no hay cuidados programados para $juntos. ${consejo(hoy)}", PoseChopper.ORGANIZADOR)
-            pendientes == 0 -> MensajeChopper("¡Todo listo por hoy! $juntos ${if (mascotas.size == 1) "está feliz" else "están felices"}. 🎉", PoseChopper.AMIGOS)
-            pendientes == total -> MensajeChopper("$momento Hoy hay $total ${if (total == 1) "cuidado" else "cuidados"} para $juntos. Vamos uno por uno.", PoseChopper.COMIDA)
-            pendientes == 1 -> MensajeChopper("¡Ya casi! Solo falta 1 cuidado para terminar el día.", PoseChopper.COMIDA)
-            else -> MensajeChopper("¡Vas muy bien! Llevas ${total - pendientes} de $total; quedan $pendientes.", PoseChopper.COMIDA)
+            !hayMascotas -> CabeceraHoy(momento, "Agrega a tu primera mascota", PoseChopper.SALUDO, Icono.HUELLAS)
+            total == 0 -> CabeceraHoy(momento, "Hoy no hay cuidados programados", PoseChopper.ORGANIZADOR, Icono.HOJA)
+            pendientes == 0 -> CabeceraHoy(momento, "¡Todo listo por hoy!", PoseChopper.AMIGOS, Icono.FIESTA)
+            pendientes == total -> CabeceraHoy(momento, "$total ${if (total == 1) "cuidado" else "cuidados"} para hoy", PoseChopper.COMIDA, Icono.CALENDARIO)
+            pendientes == 1 -> CabeceraHoy(momento, "¡Ya casi! Falta 1", PoseChopper.COMIDA, Icono.FUEGO)
+            else -> CabeceraHoy(momento, "Llevas $hechos de $total", PoseChopper.COMIDA, Icono.ESTRELLA)
         }
     }
 
-    /** Pequeños trucos de la app, uno distinto cada día. */
-    fun consejo(hoy: LocalDate): String = CONSEJOS[(hoy.dayOfYear) % CONSEJOS.size]
+    /** Trucos cortos de la app; la lista empieza en uno distinto cada día y rota sola. */
+    fun consejos(hoy: LocalDate): List<Consejo> = CONSEJOS.indices.map { CONSEJOS[(hoy.dayOfYear + it) % CONSEJOS.size] }
+
+    /** El truco del día (para textos que no rotan). */
+    fun consejo(hoy: LocalDate): String = consejos(hoy).first().texto
 
     private val CONSEJOS = listOf(
-        "Truco: desliza un cuidado hacia la derecha para marcarlo hecho.",
-        "Truco: toca la foto de una mascota arriba para ver solo sus cuidados.",
-        "Truco: en la ficha puedes ver el carné con su código QR.",
-        "Truco: comparte el código de tu mascota para que alguien más te ayude a cuidarla.",
-        "Truco: registra los paseos con GPS y verás su ruta en el mapa.",
-        "Truco: toca \"Ver mes\" para ver cómo vas en todo el mes.",
+        Consejo(Icono.CHECK, "Desliza un cuidado a la derecha para marcarlo"),
+        Consejo(Icono.HUELLAS, "Toca una mascota para ver solo lo suyo"),
+        Consejo(Icono.CARNE, "Su carné con código QR está en la ficha"),
+        Consejo(Icono.EQUIPO, "Comparte su código y cuiden en equipo"),
+        Consejo(Icono.MAPA, "Registra paseos con GPS y mira la ruta"),
+        Consejo(Icono.CALENDARIO, "Mira cómo vas en todo el mes"),
+        Consejo(Icono.CAMARA, "Escanea la etiqueta de una vacuna"),
     )
 
     /** Mensaje corto al marcar una toma (entre procesos). */
     fun alMarcar(titulo: String, mascota: String, quedan: Int): String = when (quedan) {
-        0 -> "¡$titulo de $mascota listo! Terminaste todo lo de hoy 🎉"
-        1 -> "¡Bien! $titulo de $mascota ✓ — queda 1"
-        else -> "¡Bien! $titulo de $mascota ✓ — quedan $quedan"
+        0 -> "¡$titulo de $mascota listo! Terminaste todo lo de hoy."
+        1 -> "¡Bien! $titulo de $mascota hecho. Queda 1."
+        else -> "¡Bien! $titulo de $mascota hecho. Quedan $quedan."
     }
 }

@@ -1,5 +1,6 @@
 package com.udenar.petcare.ui.profesional
 
+import com.udenar.petcare.domain.modelo.Icono
 import android.net.Uri
 import android.provider.OpenableColumns
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -173,7 +174,7 @@ fun RaizProfesional(viewModel: ModoVetViewModel = hiltViewModel()) {
                         .padding(horizontal = 20.dp, vertical = 8.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    Chip("🩺 Modo veterinario", fondo = Pc.CieloClaro, color = Pc.CieloOscuro, modifier = Modifier.testTag("chip_modo_vet"))
+                    Chip("Modo veterinario", icono = Icono.VETERINARIO, fondo = Pc.CieloClaro, color = Pc.CieloOscuro, modifier = Modifier.testTag("chip_modo_vet"))
                 }
             }
         },

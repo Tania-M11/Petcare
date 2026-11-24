@@ -1,5 +1,6 @@
 package com.udenar.petcare.domain.recomendaciones
 
+import com.udenar.petcare.domain.modelo.Icono
 import com.udenar.petcare.domain.cuidados.EventoCuidado
 import com.udenar.petcare.domain.cuidados.MotorCuidados
 import com.udenar.petcare.domain.cuidados.RegistroCuidado
@@ -18,7 +19,7 @@ data class SemanaProgreso(val lunes: LocalDate, val hechas: Int, val total: Int)
 
 data class SemanaPaseos(val lunes: LocalDate, val km: Double, val minutos: Int, val cantidad: Int)
 
-data class Logro(val emoji: String, val titulo: String, val descripcion: String, val conseguido: Boolean)
+data class Logro(val icono: Icono, val titulo: String, val descripcion: String, val conseguido: Boolean)
 
 data class ProgresoMascota(
     val semanas: List<SemanaProgreso>,
@@ -82,11 +83,11 @@ object Progreso {
             ).map { it.substringBefore(' ') }.groupingBy { it }.eachCount()
         val totalPaseos = paseos.size
         val logros = listOf(
-            Logro("⭐", "Semana perfecta", "Todos los cuidados de una semana hechos", semanasProgreso.any { it.total > 0 && it.hechas == it.total }),
-            Logro("🔥", "7 días seguidos", "Una semana completa sin olvidar nada", racha >= 7),
-            Logro("🦮", "10 paseos", "Diez paseos registrados", totalPaseos >= 10),
-            Logro("🤝", "Trabajo en equipo", "Dos o más personas ayudaron este mes", porPersona.size >= 2),
-            Logro("⚖️", "Peso al día", "Un peso registrado en el último mes", pesos.any { ChronoUnit.DAYS.between(it.fecha, hoy) <= 30 }),
+            Logro(Icono.ESTRELLA, "Semana perfecta", "Todos los cuidados de una semana hechos", semanasProgreso.any { it.total > 0 && it.hechas == it.total }),
+            Logro(Icono.FUEGO, "7 días seguidos", "Una semana completa sin olvidar nada", racha >= 7),
+            Logro(Icono.PASEO, "10 paseos", "Diez paseos registrados", totalPaseos >= 10),
+            Logro(Icono.EQUIPO, "Trabajo en equipo", "Dos o más personas ayudaron este mes", porPersona.size >= 2),
+            Logro(Icono.PESO, "Peso al día", "Un peso registrado en el último mes", pesos.any { ChronoUnit.DAYS.between(it.fecha, hoy) <= 30 }),
         )
         return ProgresoMascota(semanasProgreso, racha, paseosSemana, porPersona, logros)
     }

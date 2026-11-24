@@ -5,6 +5,8 @@ import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performTouchInput
+import androidx.compose.ui.test.click
 import androidx.compose.ui.test.performScrollToNode
 import androidx.compose.ui.test.performScrollTo
 import com.udenar.petcare.domain.cuidados.EventoCuidado
@@ -60,7 +62,8 @@ class HoyTest {
         compose.onNodeWithTag("hecho_Desayuno").performScrollTo().performClick()
         compose.waitUntil(5_000) { compose.onAllNodesWithTextExists("2 pendientes") }
         compose.onNodeWithText("Dada por Ana", substring = true).assertExists()
-        compose.onNodeWithText("Deshacer").performClick()
+        // El botón flotante "+" queda abajo a la derecha: se toca "Deshacer" por su borde izquierdo
+        compose.onNodeWithText("Deshacer").performScrollTo().performTouchInput { click(centerLeft + androidx.compose.ui.geometry.Offset(12f, 0f)) }
         compose.waitUntil(5_000) { compose.onAllNodesWithTextExists("3 pendientes") }
     }
 

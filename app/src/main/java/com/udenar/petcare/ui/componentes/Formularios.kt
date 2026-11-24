@@ -1,5 +1,6 @@
 package com.udenar.petcare.ui.componentes
 
+import com.udenar.petcare.domain.modelo.Icono
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
@@ -137,7 +138,7 @@ fun BotonPrincipal(
 
 /** Botón secundario blanco en píldora. */
 @Composable
-fun BotonSecundario(texto: String, onClick: () -> Unit, modifier: Modifier = Modifier) {
+fun BotonSecundario(texto: String, onClick: () -> Unit, modifier: Modifier = Modifier, icono: Icono? = null) {
     OutlinedButton(
         onClick = onClick,
         shape = RoundedCornerShape(50),
@@ -147,6 +148,7 @@ fun BotonSecundario(texto: String, onClick: () -> Unit, modifier: Modifier = Mod
             .fillMaxWidth()
             .height(56.dp),
     ) {
+        icono?.let { Icono3D(it, tam = 22.dp, modifier = Modifier.padding(end = 8.dp)) }
         Text(texto, style = MaterialTheme.typography.titleMedium)
     }
 }
@@ -158,18 +160,21 @@ fun ChipOpcion(
     seleccionado: Boolean,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
+    icono: Icono? = null,
 ) {
-    Text(
-        texto,
-        style = MaterialTheme.typography.labelLarge,
-        color = if (seleccionado) Pc.Tinta else Pc.TintaSuave,
-        modifier = modifier
+    androidx.compose.foundation.layout.Row(
+        modifier
             .clip(RoundedCornerShape(50))
             .background(if (seleccionado) Pc.Durazno else Pc.Blanco)
             .border(1.5.dp, if (seleccionado) Pc.Naranja else Pc.Linea, RoundedCornerShape(50))
             .selectable(selected = seleccionado, role = Role.RadioButton, onClick = onClick)
             .padding(horizontal = 14.dp, vertical = 9.dp),
-    )
+        verticalAlignment = androidx.compose.ui.Alignment.CenterVertically,
+        horizontalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(6.dp),
+    ) {
+        icono?.let { Icono3D(it, tam = 18.dp) }
+        Text(texto, style = MaterialTheme.typography.labelLarge, color = if (seleccionado) Pc.Tinta else Pc.TintaSuave)
+    }
 }
 
 /** Bloque blanco redondeado con título, para agrupar campos de un formulario o una ficha. */

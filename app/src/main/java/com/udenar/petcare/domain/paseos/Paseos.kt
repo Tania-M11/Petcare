@@ -1,5 +1,6 @@
 package com.udenar.petcare.domain.paseos
 
+import com.udenar.petcare.domain.modelo.Icono
 import com.udenar.petcare.domain.cuidados.Autor
 import kotlinx.coroutines.flow.Flow
 import java.time.Instant
@@ -12,11 +13,11 @@ import kotlin.math.sqrt
 
 data class Coordenada(val lat: Double, val lon: Double)
 
-enum class TipoPaseo(val etiqueta: String, val emoji: String) {
-    PASEO("Paseo", "🦮"),
-    JUEGO("Juego", "🎾"),
-    EJERCICIO("Ejercicio", "🏃"),
-    ENTRENAMIENTO("Entrenamiento", "🎯"),
+enum class TipoPaseo(val etiqueta: String, val icono: Icono) {
+    PASEO("Paseo", Icono.PASEO),
+    JUEGO("Juego", Icono.JUEGO),
+    EJERCICIO("Ejercicio", Icono.EJERCICIO),
+    ENTRENAMIENTO("Entrenamiento", Icono.ENTRENAMIENTO),
 }
 
 /** Paseo o actividad (RF-12): manual o con la ruta GPS. */

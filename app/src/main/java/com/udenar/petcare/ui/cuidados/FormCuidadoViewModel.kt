@@ -1,5 +1,6 @@
 package com.udenar.petcare.ui.cuidados
 
+import com.udenar.petcare.domain.modelo.Icono
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -28,13 +29,13 @@ import java.util.UUID
 import javax.inject.Inject
 
 /** Familias de formulario: cada una muestra solo los campos que le corresponden. */
-enum class ClaseCuidado(val titulo: String, val emoji: String) {
-    COMIDA("Comida", "🍽️"),
-    MEDICAMENTO("Medicamento", "💊"),
-    VACUNA("Vacuna", "💉"),
-    DESPARASITACION("Desparasitación", "🛡️"),
-    HIGIENE("Higiene", "🛁"),
-    PERSONALIZADO("Actividad personalizada", "⭐");
+enum class ClaseCuidado(val titulo: String, val icono: Icono) {
+    COMIDA("Comida", Icono.COMIDA),
+    MEDICAMENTO("Medicamento", Icono.MEDICAMENTO),
+    VACUNA("Vacuna", Icono.VACUNA),
+    DESPARASITACION("Desparasitación", Icono.ESCUDO),
+    HIGIENE("Higiene", Icono.BANO),
+    PERSONALIZADO("Actividad personalizada", Icono.ESTRELLA);
 
     companion object {
         fun de(tipo: TipoCuidado): ClaseCuidado = when (tipo) {

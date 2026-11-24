@@ -1,5 +1,8 @@
 package com.udenar.petcare.ui.hoy
 
+import com.udenar.petcare.ui.componentes.BaldosaIcono
+import com.udenar.petcare.ui.componentes.Icono3D
+import com.udenar.petcare.domain.modelo.Icono
 import android.Manifest
 import android.content.pm.PackageManager
 import android.os.Build
@@ -137,11 +140,12 @@ fun HoyScreen(
         if (!ok) avisar("Puedes activarlas luego en los ajustes del teléfono")
     }
 
+    val desplazamiento = rememberScrollState()
     Box(modifier.fillMaxSize()) {
         Column(
             Modifier
                 .fillMaxSize()
-                .verticalScroll(rememberScrollState())
+                .verticalScroll(desplazamiento)
                 .padding(horizontal = 20.dp, vertical = 12.dp),
             verticalArrangement = Arrangement.spacedBy(20.dp),
         ) {
@@ -151,15 +155,14 @@ fun HoyScreen(
                 BotonCircular(Icons.Rounded.CalendarMonth, "Ver mes", onClick = { verMes = true }, modifier = Modifier.testTag("ver_mes"))
             }
 
-            // Chopper saluda según la hora y cuenta cómo va el día; el anillo se llena al marcar
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                val saludo = com.udenar.petcare.domain.recomendaciones.Chopper.saludo(
-                    nombre, viewModel.horaActual(), if (esHoy) totalHoy else 0, pendientesHoy,
-                    mascotas.filter { filtro == null || it.id == filtro }.map { it.nombre }, estado.hoy,
-                )
-                com.udenar.petcare.ui.componentes.BurbujaChopper(saludo.texto, saludo.pose, Modifier.weight(1f))
-                if (mascotas.isNotEmpty()) com.udenar.petcare.ui.componentes.AnilloProgreso(totalHoy - pendientesHoy, totalHoy, tam = 84.dp)
-            }
+            // Saludo corto con el estado del día, Chopper y trucos que rotan
+            TarjetaSaludo(
+                nombre = nombre,
+                cabecera = com.udenar.petcare.domain.recomendaciones.Chopper.cabecera(viewModel.horaActual(), if (esHoy) totalHoy else 0, pendientesHoy, mascotas.isNotEmpty()),
+                hechos = totalHoy - pendientesHoy,
+                total = totalHoy,
+                consejos = remember(estado.hoy) { com.udenar.petcare.domain.recomendaciones.Chopper.consejos(estado.hoy) },
+            )
 
             Column {
                 TiraSemana(semana = estado.semana, hoy = estado.hoy, seleccionado = estado.seleccionado, onElegir = viewModel::elegirDia)
@@ -257,7 +260,7 @@ fun HoyScreen(
                     accion = {
                         if (!lista.isNullOrEmpty()) {
                             Text(
-                                if (pendientes == 0) "Todo hecho 🎉" else "$pendientes pendiente${if (pendientes == 1) "" else "s"}",
+                                if (pendientes == 0) "Todo hecho" else "$pendientes pendiente${if (pendientes == 1) "" else "s"}",
                                 style = MaterialTheme.typography.labelLarge,
                                 color = if (pendientes == 0) Pc.CieloOscuro else Pc.Naranja,
                             )
@@ -287,7 +290,7 @@ fun HoyScreen(
                     }
                 }
             }
-            Spacer(Modifier.height(72.dp))
+            Spacer(Modifier.height(96.dp))
         }
 
         com.udenar.petcare.ui.componentes.Confeti(confeti, Modifier.matchParentSize())
@@ -300,12 +303,15 @@ fun HoyScreen(
                     .clip(RoundedCornerShape(50))
                     .background(Pc.Naranja)
                     .clickable { nuevo = true }
-                    .padding(horizontal = 18.dp, vertical = 12.dp)
+                    .padding(16.dp)
                     .testTag("nuevo_cuidado"),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                Icon(Icons.Rounded.Add, contentDescription = null, tint = Pc.Blanco)
-                Text("Registrar", style = MaterialTheme.typography.labelLarge, color = Pc.Blanco, modifier = Modifier.padding(start = 6.dp))
+                Icon(Icons.Rounded.Add, contentDescription = "Registrar", tint = Pc.Blanco)
+                // Arriba se ve "Registrar"; al bajar queda solo el + para no tapar las tarjetas
+                androidx.compose.animation.AnimatedVisibility(desplazamiento.value < 60) {
+                    Text("Registrar", style = MaterialTheme.typography.labelLarge, color = Pc.Blanco, modifier = Modifier.padding(start = 6.dp, end = 4.dp))
+                }
             }
         }
     }
@@ -332,10 +338,9 @@ fun HoyScreen(
                 var queHacer by remember { mutableStateOf(if (propias.isEmpty()) "paseo" else if (preMascota != null) "cuidado" else null) }
                 if (queHacer == null) {
                     Text("¿Qué quieres registrar?", style = MaterialTheme.typography.headlineSmall, modifier = Modifier.padding(start = 12.dp, bottom = 8.dp))
-                    listOf("paseo" to "🦮  Un paseo (con GPS o sin él)", "cuidado" to "➕  Un cuidado nuevo (comida, medicina, baño…)").forEach { (clave, texto) ->
-                        Text(
-                            texto,
-                            style = MaterialTheme.typography.titleMedium,
+                    listOf(Triple("paseo", "Un paseo (con GPS o sin él)", Icono.PASEO), Triple("cuidado", "Un cuidado nuevo (comida, medicina, baño…)", Icono.MAS)).forEach { (clave, texto, icono) ->
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .clip(MaterialTheme.shapes.medium)
@@ -347,7 +352,10 @@ fun HoyScreen(
                                 }
                                 .padding(14.dp)
                                 .testTag("registrar_$clave"),
-                        )
+                        ) {
+                            BaldosaIcono(icono, fondo = Pc.Durazno, tam = 40.dp)
+                            Text(texto, style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(start = 14.dp))
+                        }
                     }
                 } else if (queHacer == "paseo") {
                     nuevo = false
@@ -385,7 +393,7 @@ fun HoyScreen(
                                 .padding(12.dp),
                             verticalAlignment = Alignment.CenterVertically,
                         ) {
-                            Text(c.emoji, fontSize = 22.sp)
+                            BaldosaIcono(c.icono, fondo = Pc.Durazno, tam = 40.dp)
                             Text(c.titulo, style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(start = 14.dp))
                         }
                     }
@@ -450,7 +458,8 @@ private fun DeslizarParaHecho(habilitado: Boolean, onHecho: () -> Unit, contenid
                     .padding(horizontal = 24.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                Text("✓ Hecho", style = MaterialTheme.typography.titleMedium, color = Pc.Tinta)
+                Icono3D(Icono.CHECK, tam = 26.dp)
+                Text("  Hecho", style = MaterialTheme.typography.titleMedium, color = Pc.Tinta)
             }
         },
     ) { contenido() }

@@ -79,7 +79,7 @@ class WidgetHoy : GlanceAppWidget() {
             GlanceModifier.fillMaxSize().background(Pc.Crema).cornerRadius(20.dp).padding(12.dp).clickable(actionStartActivity<MainActivity>()),
         ) {
             Text(
-                if (filas.isEmpty()) "Hoy · todo al día 🐾" else "Hoy · ${filas.size} pendiente${if (filas.size == 1) "" else "s"}",
+                if (filas.isEmpty()) "Hoy · todo al día" else "Hoy · ${filas.size} pendiente${if (filas.size == 1) "" else "s"}",
                 style = TextStyle(color = tinta, fontSize = 16.sp, fontWeight = FontWeight.Bold),
             )
             Spacer(GlanceModifier.height(6.dp))

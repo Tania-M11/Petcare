@@ -95,11 +95,16 @@ class RecomendacionesTest {
 
     @Test
     fun chopperSaludaSegunElDia() {
-        assertEquals(PoseChopper.SALUDO, Chopper.saludo("Ana", 8, 0, 0, emptyList(), hoy).pose)
-        assertEquals("¡Buenos días, Ana! Hoy hay 3 cuidados para Max y Luna. Vamos uno por uno.", Chopper.saludo("Ana", 8, 3, 3, listOf("Max", "Luna"), hoy).texto)
-        assertEquals(PoseChopper.AMIGOS, Chopper.saludo("Ana", 20, 3, 0, listOf("Max"), hoy).pose)
-        assertEquals("¡Vas muy bien! Llevas 2 de 5; quedan 3.", Chopper.saludo("Ana", 15, 5, 3, listOf("Max"), hoy).texto)
-        assertEquals("¡Bien! Cena de Max ✓ — quedan 2", Chopper.alMarcar("Cena", "Max", 2))
+        assertEquals(PoseChopper.SALUDO, Chopper.cabecera(8, 0, 0, hayMascotas = false).pose)
+        val manana = Chopper.cabecera(8, 3, 3, hayMascotas = true)
+        assertEquals("Buenos días", manana.momento)
+        assertEquals("3 cuidados para hoy", manana.estado)
+        assertEquals(PoseChopper.AMIGOS, Chopper.cabecera(20, 3, 0, hayMascotas = true).pose)
+        assertEquals("Llevas 2 de 5", Chopper.cabecera(15, 5, 3, hayMascotas = true).estado)
+        // Los trucos son cortos (caben en una línea) y rotan desde uno distinto cada día
+        assertTrue(Chopper.consejos(hoy).all { it.texto.length <= 45 })
+        assertTrue(Chopper.consejos(hoy).first() != Chopper.consejos(hoy.plusDays(1)).first())
+        assertEquals("¡Bien! Cena de Max hecho. Quedan 2.", Chopper.alMarcar("Cena", "Max", 2))
     }
 }
 

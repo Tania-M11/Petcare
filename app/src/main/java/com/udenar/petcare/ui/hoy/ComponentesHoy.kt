@@ -1,5 +1,6 @@
 package com.udenar.petcare.ui.hoy
 
+import com.udenar.petcare.ui.componentes.Icono3D
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -39,7 +40,7 @@ import com.udenar.petcare.domain.cuidados.grupo
 import com.udenar.petcare.ui.componentes.AvatarMascota
 import com.udenar.petcare.ui.componentes.Chip
 import com.udenar.petcare.ui.cuidados.color
-import com.udenar.petcare.ui.cuidados.emoji
+import com.udenar.petcare.ui.cuidados.icono
 import com.udenar.petcare.ui.theme.Kalnia
 import com.udenar.petcare.ui.theme.Pc
 import java.time.DayOfWeek
@@ -83,7 +84,7 @@ fun TarjetaToma(
                     .clip(RoundedCornerShape(16.dp))
                     .background(fondoIcono),
                 contentAlignment = Alignment.Center,
-            ) { Text(e.tipo.emoji, fontSize = 22.sp) }
+            ) { Icono3D(e.tipo.icono, tam = 32.dp) }
             AvatarMascota(
                 item.mascota.especie, item.mascota.fotoLocal, tam = 22.dp,
                 modifier = Modifier
@@ -260,9 +261,9 @@ fun TarjetaAlertas(alertas: List<Alerta>, onAbrir: (String) -> Unit) {
         Text("Atención", style = MaterialTheme.typography.titleMedium)
         alertas.take(5).forEach { a ->
             val texto = when (a.tipo) {
-                TipoAlerta.VACUNA_VENCIDA -> "💉 ${a.titulo} de ${a.mascota.nombre} venció${a.fecha?.let { " el ${it.format(CORTA)}" } ?: ""}"
-                TipoAlerta.VACUNA_PROXIMA -> "💉 ${a.titulo} de ${a.mascota.nombre}${a.fecha?.let { " el ${it.format(CORTA)}" } ?: ""}"
-                TipoAlerta.TRATAMIENTO_TERMINA -> "💊 ${a.titulo} de ${a.mascota.nombre} termina${a.fecha?.let { " el ${it.format(CORTA)}" } ?: ""}"
+                TipoAlerta.VACUNA_VENCIDA -> "${a.titulo} de ${a.mascota.nombre} venció${a.fecha?.let { " el ${it.format(CORTA)}" } ?: ""}"
+                TipoAlerta.VACUNA_PROXIMA -> "${a.titulo} de ${a.mascota.nombre}${a.fecha?.let { " el ${it.format(CORTA)}" } ?: ""}"
+                TipoAlerta.TRATAMIENTO_TERMINA -> "${a.titulo} de ${a.mascota.nombre} termina${a.fecha?.let { " el ${it.format(CORTA)}" } ?: ""}"
             }
             Text(
                 texto,

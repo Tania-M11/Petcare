@@ -48,32 +48,27 @@ fun TiraSemana(
     modifier: Modifier = Modifier,
 ) {
     Column(modifier.fillMaxWidth()) {
-        // Barra degradada fina, eco del deslizador de la referencia
-        Box(
-            Modifier
-                .fillMaxWidth()
-                .height(10.dp)
-                .clip(RoundedCornerShape(50))
-                .background(Brush.horizontalGradient(listOf(Pc.Lavanda, Pc.NaranjaClaro, Pc.Naranja)))
-                .grano(0.5f),
-        )
         Row(
             Modifier
                 .fillMaxWidth()
-                .padding(top = 10.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
+                .clip(RoundedCornerShape(24.dp))
+                .background(Pc.Blanco)
+                .padding(horizontal = 6.dp, vertical = 8.dp),
         ) {
             semana.forEach { dia ->
                 val elegido = dia == seleccionado
-                val color by animateColorAsState(if (elegido) Pc.Naranja else Pc.TintaSuave.copy(alpha = 0.55f), label = "color")
-                val tam by animateDpAsState(if (elegido) 32.dp else 20.dp, label = "tam")
+                val color by animateColorAsState(if (elegido) Pc.Naranja else Pc.TintaSuave.copy(alpha = 0.75f), label = "color")
+                val tam by animateDpAsState(if (elegido) 24.dp else 19.dp, label = "tam")
+                val fondo by animateColorAsState(if (elegido) Pc.Durazno else Pc.Blanco, label = "fondo")
                 Column(
                     horizontalAlignment = Alignment.CenterHorizontally,
                     modifier = Modifier
-                        .width(46.dp)
-                        .clip(RoundedCornerShape(16.dp))
+                        .weight(1f)
+                        .padding(horizontal = 2.dp)
+                        .clip(RoundedCornerShape(18.dp))
+                        .background(fondo)
                         .clickable { onElegir(dia) }
-                        .padding(vertical = 4.dp)
+                        .padding(vertical = 6.dp)
                         .testTag("dia_${dia.dayOfMonth}"),
                 ) {
                     Box(

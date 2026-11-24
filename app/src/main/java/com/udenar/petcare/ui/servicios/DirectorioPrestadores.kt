@@ -1,5 +1,7 @@
 package com.udenar.petcare.ui.servicios
 
+import com.udenar.petcare.ui.componentes.Icono3D
+import com.udenar.petcare.domain.modelo.Icono
 import android.Manifest
 import android.content.ActivityNotFoundException
 import android.content.Intent
@@ -171,7 +173,7 @@ fun DirectorioPrestadoresScreen(onVolver: () -> Unit, onAbrir: (String) -> Unit,
             }
         }
         Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            ChipOpcion(if (estado.ubicacion != null) "📍 Cerca de mí ✓" else "📍 Cerca de mí", estado.ubicacion != null, onClick = {
+            ChipOpcion("Cerca de mí", estado.ubicacion != null, icono = Icono.PIN, onClick = {
                 if (estado.ubicacion != null) viewModel.usarUbicacion(null)
                 else permiso.launch(arrayOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION))
             })
@@ -221,7 +223,7 @@ private fun TarjetaPrestador(p: PerfilPrestador, categorias: List<Categoria>, on
             if (foto != null) {
                 AsyncImage(foto, null, contentScale = ContentScale.Crop, modifier = Modifier.size(52.dp).clip(CircleShape))
             } else {
-                Box(Modifier.size(52.dp).clip(CircleShape).background(Pc.SolClaro), contentAlignment = Alignment.Center) { Text(principal?.icono ?: "🐾", fontSize = 22.sp) }
+                Box(Modifier.size(52.dp).clip(CircleShape).background(Pc.SolClaro), contentAlignment = Alignment.Center) { Icono3D(principal?.icono3d ?: Icono.HUELLAS, tam = 32.dp) }
             }
             Column(Modifier.weight(1f).padding(start = 12.dp), verticalArrangement = Arrangement.spacedBy(2.dp)) {
                 Text(p.nombre, style = MaterialTheme.typography.titleMedium)

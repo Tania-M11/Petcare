@@ -1,5 +1,6 @@
 package com.udenar.petcare.domain.profesionales
 
+import com.udenar.petcare.domain.modelo.Icono
 import com.udenar.petcare.domain.modelo.Especie
 import kotlinx.coroutines.flow.StateFlow
 import java.text.NumberFormat
@@ -12,7 +13,15 @@ enum class TipoPrestador(val etiqueta: String) { PERSONA("Persona"), NEGOCIO("Ne
 enum class ModalidadPrestador(val etiqueta: String) { DOMICILIO("A domicilio"), ESTABLECIMIENTO("En establecimiento") }
 
 /** Categoría del catálogo (RF-32). Vive en la base de datos: se agregan sin cambiar la app. */
-data class Categoria(val id: String, val nombre: String, val icono: String, val orden: Int = 0)
+data class Categoria(val id: String, val nombre: String, val icono: String, val orden: Int = 0) {
+    /** Ícono 3D de la categoría (el emoji guardado en la base queda solo como respaldo). */
+    val icono3d: Icono get() = when (id) {
+        "PASEADOR" -> Icono.PASEO
+        "BANO_PELUQUERIA" -> Icono.TIJERAS
+        "CUIDADO_TEMPORAL" -> Icono.CASA
+        else -> Icono.HUELLAS
+    }
+}
 
 enum class ModoPrecio(val etiqueta: String) { FIJO("Precio fijo"), DESDE("Desde"), COTIZACION("A cotizar") }
 

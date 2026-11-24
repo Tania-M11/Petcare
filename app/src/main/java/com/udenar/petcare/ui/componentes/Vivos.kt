@@ -1,5 +1,6 @@
 package com.udenar.petcare.ui.componentes
 
+import com.udenar.petcare.domain.modelo.Icono
 import androidx.annotation.DrawableRes
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
@@ -135,7 +136,7 @@ fun AnilloProgreso(hechos: Int, total: Int, modifier: Modifier = Modifier, tam: 
         }
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
             if (total == 0) {
-                Text("🌿", fontSize = (tam.value * 0.3f).sp)
+                Icono3D(Icono.HOJA, tam = tam * 0.34f)
             } else {
                 Text("$hechos/$total", fontFamily = Kalnia, fontSize = (tam.value * 0.22f).sp, color = Pc.Tinta)
                 Text(if (completo) "¡listo!" else "hoy", style = MaterialTheme.typography.labelSmall, color = Pc.TintaSuave)
@@ -193,9 +194,7 @@ fun TarjetaRecomendacion(r: Recomendacion, onAccion: () -> Unit, onDescartar: ()
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         Row(verticalAlignment = Alignment.Top) {
-            Box(Modifier.size(40.dp).clip(RoundedCornerShape(14.dp)).background(Pc.Blanco), contentAlignment = Alignment.Center) {
-                Text(r.emoji, fontSize = 20.sp)
-            }
+            BaldosaIcono(r.icono, fondo = Pc.Blanco, tam = 44.dp)
             Text(r.titulo, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f).padding(horizontal = 10.dp))
             Icon(
                 Icons.Rounded.Close, contentDescription = "Ahora no", tint = Pc.TintaSuave,
@@ -204,7 +203,10 @@ fun TarjetaRecomendacion(r: Recomendacion, onAccion: () -> Unit, onDescartar: ()
         }
         Text(r.mensaje, style = MaterialTheme.typography.bodySmall, color = Pc.Tinta)
         AnimatedVisibility(porQue, enter = expandVertically() + fadeIn(), exit = shrinkVertically() + fadeOut()) {
-            Text("💡 ${r.porque}", style = MaterialTheme.typography.bodySmall, color = Pc.TintaSuave)
+            Row(verticalAlignment = Alignment.Top) {
+                Icono3D(Icono.IDEA, tam = 16.dp)
+                Text(r.porque, style = MaterialTheme.typography.bodySmall, color = Pc.TintaSuave, modifier = Modifier.padding(start = 6.dp))
+            }
         }
         Row(verticalAlignment = Alignment.CenterVertically) {
             Text(

@@ -1,5 +1,6 @@
 package com.udenar.petcare.ui.cuidados
 
+import com.udenar.petcare.domain.modelo.Icono
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -68,7 +69,7 @@ fun NuevoCuidadoScreen(onListo: () -> Unit, onGuardado: () -> Unit = onListo, vi
             Paso("cual", { f.titulo.isNotBlank() }) {
                 PreguntaChopper("¿Qué comida es?", "Solo te recuerdo la hora; las porciones las decides tú", PoseChopper.COMIDA)
                 OpcionesGrandes(
-                    listOf("Desayuno" to "🌅", "Almuerzo" to "☀️", "Merienda" to "🍪", "Cena" to "🌙"), f.titulo,
+                    listOf("Desayuno" to Icono.AMANECER, "Almuerzo" to Icono.SOL, "Merienda" to Icono.GALLETA, "Cena" to Icono.LUNA), f.titulo,
                 ) { nombre ->
                     viewModel.editar(CampoCuidado.TITULO) {
                         it.copy(titulo = nombre, horas = listOf(HORA_COMIDA[nombre] ?: LocalTime.of(8, 0)))
@@ -144,8 +145,8 @@ fun NuevoCuidadoScreen(onListo: () -> Unit, onGuardado: () -> Unit = onListo, vi
             Paso("tipo") {
                 PreguntaChopper("¿Interna o externa?", null, PoseChopper.DOCTOR)
                 Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                    listOf(Triple(TipoCuidado.DESPARASITACION_INTERNA, "Interna", "💊"), Triple(TipoCuidado.DESPARASITACION_EXTERNA, "Externa", "🐜")).forEach { (t, txt, e) ->
-                        TarjetaOpcionGrande(txt, f.tipo == t, onClick = { viewModel.editar { it.copy(tipo = t) }; paso++ }, emoji = e, modifier = Modifier.weight(1f))
+                    listOf(Triple(TipoCuidado.DESPARASITACION_INTERNA, "Interna", Icono.MEDICAMENTO), Triple(TipoCuidado.DESPARASITACION_EXTERNA, "Externa", Icono.INSECTO)).forEach { (t, txt, e) ->
+                        TarjetaOpcionGrande(txt, f.tipo == t, onClick = { viewModel.editar { it.copy(tipo = t) }; paso++ }, icono = e, modifier = Modifier.weight(1f))
                     }
                 }
             },
@@ -172,7 +173,7 @@ fun NuevoCuidadoScreen(onListo: () -> Unit, onGuardado: () -> Unit = onListo, vi
                         TarjetaOpcionGrande(
                             t.etiqueta, f.tipo == t,
                             onClick = { viewModel.editar(CampoCuidado.TITULO) { it.copy(tipo = t, titulo = t.etiqueta) }; paso++ },
-                            emoji = EMOJI_HIGIENE[t] ?: "🧼", modifier = Modifier.testTag("higiene_${t.name}"),
+                            icono = ICONO_HIGIENE[t] ?: Icono.JABON, modifier = Modifier.testTag("higiene_${t.name}"),
                         )
                     }
                 }
@@ -190,7 +191,7 @@ fun NuevoCuidadoScreen(onListo: () -> Unit, onGuardado: () -> Unit = onListo, vi
         ClaseCuidado.PERSONALIZADO -> listOf(
             Paso("nombre", { f.titulo.isNotBlank() }) {
                 PreguntaChopper("¿Qué actividad quieres recordar?", null, PoseChopper.ORGANIZADOR)
-                OpcionesGrandes(listOf("Juego" to "🎾", "Entrenamiento" to "🦴", "Cepillar dientes" to "🪥", "Socializar" to "🐾"), f.titulo) { nombre ->
+                OpcionesGrandes(listOf("Juego" to Icono.JUEGO, "Entrenamiento" to Icono.HUESO, "Cepillar dientes" to Icono.CEPILLO_DIENTES, "Socializar" to Icono.HUELLAS), f.titulo) { nombre ->
                     viewModel.editar(CampoCuidado.TITULO) { it.copy(titulo = nombre) }
                     paso++
                 }
@@ -235,9 +236,9 @@ private val HORA_COMIDA = mapOf(
     "Desayuno" to LocalTime.of(7, 0), "Almuerzo" to LocalTime.of(12, 0), "Merienda" to LocalTime.of(16, 0), "Cena" to LocalTime.of(19, 0),
 )
 
-private val EMOJI_HIGIENE = mapOf(
-    TipoCuidado.BANO to "🛁", TipoCuidado.CORTE_PELO to "✂️", TipoCuidado.CEPILLADO to "🪮", TipoCuidado.CORTE_UNAS to "💅",
-    TipoCuidado.LIMPIEZA_DENTAL to "🪥", TipoCuidado.LIMPIEZA_OIDOS to "👂", TipoCuidado.LIMPIEZA_OJOS to "👀",
+private val ICONO_HIGIENE = mapOf(
+    TipoCuidado.BANO to Icono.BANO, TipoCuidado.CORTE_PELO to Icono.TIJERAS, TipoCuidado.CEPILLADO to Icono.JABON, TipoCuidado.CORTE_UNAS to Icono.UNAS,
+    TipoCuidado.LIMPIEZA_DENTAL to Icono.CEPILLO_DIENTES, TipoCuidado.LIMPIEZA_OIDOS to Icono.OIDO, TipoCuidado.LIMPIEZA_OJOS to Icono.OJO,
 )
 
 /** Último paso: el cuidado contado en una frase, con una nota opcional. */
@@ -248,7 +249,10 @@ private fun resumen(f: FormCuidado, viewModel: FormCuidadoViewModel, nota: Strin
         Modifier.fillMaxWidth().clip(MaterialTheme.shapes.large).background(Pc.Blanco).padding(18.dp).testTag("resumen_cuidado"),
         verticalArrangement = Arrangement.spacedBy(6.dp),
     ) {
-        Text("${f.clase.emoji} ${f.titulo}", fontFamily = Kalnia, fontSize = 24.sp, color = Pc.Tinta)
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            com.udenar.petcare.ui.componentes.BaldosaIcono(f.clase.icono, fondo = Pc.Durazno, tam = 48.dp)
+            Text(f.titulo, fontFamily = Kalnia, fontSize = 24.sp, color = Pc.Tinta, modifier = Modifier.padding(start = 12.dp))
+        }
         e?.let {
             Text(DescripcionCuidados.frecuencia(it.frecuencia), style = MaterialTheme.typography.titleMedium, color = Pc.Naranja)
             Text("Desde ${DescripcionCuidados.fecha(it.fechaInicio)}" + (it.fechaFin?.let { fin -> " hasta ${DescripcionCuidados.fecha(fin)}" } ?: ""), style = MaterialTheme.typography.bodyMedium, color = Pc.TintaSuave)
@@ -260,11 +264,11 @@ private fun resumen(f: FormCuidado, viewModel: FormCuidadoViewModel, nota: Strin
 }
 
 @Composable
-private fun OpcionesGrandes(opciones: List<Pair<String, String>>, elegido: String, onElegir: (String) -> Unit) {
+private fun OpcionesGrandes(opciones: List<Pair<String, Icono>>, elegido: String, onElegir: (String) -> Unit) {
     opciones.chunked(2).forEach { fila ->
         Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-            fila.forEach { (nombre, emoji) ->
-                TarjetaOpcionGrande(nombre, elegido == nombre, onClick = { onElegir(nombre) }, emoji = emoji, modifier = Modifier.weight(1f).testTag("opcion_$nombre"))
+            fila.forEach { (nombre, icono) ->
+                TarjetaOpcionGrande(nombre, elegido == nombre, onClick = { onElegir(nombre) }, icono = icono, modifier = Modifier.weight(1f).testTag("opcion_$nombre"))
             }
         }
     }
@@ -289,9 +293,9 @@ private fun DiasRapidos(dias: Set<DayOfWeek>, onCambio: (Set<DayOfWeek>) -> Unit
     val semana = todos - setOf(DayOfWeek.SATURDAY, DayOfWeek.SUNDAY)
     val finde = setOf(DayOfWeek.SATURDAY, DayOfWeek.SUNDAY)
     Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-        TarjetaOpcionGrande("Todos los días", dias == todos, onClick = { onCambio(todos) }, emoji = "📆", modifier = Modifier.weight(1f))
-        TarjetaOpcionGrande("Entre semana", dias == semana, onClick = { onCambio(semana) }, emoji = "💼", modifier = Modifier.weight(1f))
-        TarjetaOpcionGrande("Fines de semana", dias == finde, onClick = { onCambio(finde) }, emoji = "🏖️", modifier = Modifier.weight(1f))
+        TarjetaOpcionGrande("Todos los días", dias == todos, onClick = { onCambio(todos) }, icono = Icono.CALENDARIO, modifier = Modifier.weight(1f))
+        TarjetaOpcionGrande("Entre semana", dias == semana, onClick = { onCambio(semana) }, icono = Icono.MALETIN, modifier = Modifier.weight(1f))
+        TarjetaOpcionGrande("Fines de semana", dias == finde, onClick = { onCambio(finde) }, icono = Icono.PLAYA, modifier = Modifier.weight(1f))
     }
     Text("O elige los días", style = MaterialTheme.typography.labelLarge, color = Pc.TintaSuave)
     SelectorDias(dias, onCambio)
@@ -320,8 +324,8 @@ private fun Frecuencias(f: FormCuidado, viewModel: FormCuidadoViewModel, modos: 
 private fun FechaRapida(etiqueta: String, fecha: LocalDate?, hoy: LocalDate, permitirNinguna: Boolean = false, pasado: Boolean = false, onCambio: (LocalDate?) -> Unit) {
     val otra = if (pasado) hoy.minusDays(1) else hoy.plusDays(1)
     Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-        TarjetaOpcionGrande("Hoy", fecha == hoy, onClick = { onCambio(hoy) }, emoji = "📍", modifier = Modifier.weight(1f).testTag("fecha_hoy"))
-        TarjetaOpcionGrande(if (pasado) "Ayer" else "Mañana", fecha == otra, onClick = { onCambio(otra) }, emoji = if (pasado) "⏮️" else "⏭️", modifier = Modifier.weight(1f))
+        TarjetaOpcionGrande("Hoy", fecha == hoy, onClick = { onCambio(hoy) }, icono = Icono.PIN, modifier = Modifier.weight(1f).testTag("fecha_hoy"))
+        TarjetaOpcionGrande(if (pasado) "Ayer" else "Mañana", fecha == otra, onClick = { onCambio(otra) }, icono = if (pasado) Icono.RELOJ else Icono.AMANECER, modifier = Modifier.weight(1f))
     }
     SelectorFecha(
         "O elige otra fecha", fecha, onCambio,
@@ -340,7 +344,7 @@ private fun Escanear(viewModel: FormCuidadoViewModel, f: FormCuidado) {
         if (ok) uri?.let(viewModel::escanear)
     }
     com.udenar.petcare.ui.componentes.BotonSecundario(
-        if (leyendo) "Leyendo la etiqueta…" else "📷 Escanear etiqueta o carné",
+        if (leyendo) "Leyendo la etiqueta…" else "Escanear etiqueta o carné",
         onClick = {
             if (!leyendo) {
                 val (_, u) = viewModel.archivoCamara()
@@ -349,6 +353,7 @@ private fun Escanear(viewModel: FormCuidadoViewModel, f: FormCuidado) {
             }
         },
         modifier = Modifier.testTag("escanear_etiqueta"),
+        icono = Icono.CAMARA,
     )
     lectura?.let { l ->
         Column(Modifier.fillMaxWidth().clip(MaterialTheme.shapes.large).background(Pc.Blanco).padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {

@@ -101,10 +101,10 @@ fun PetcareRaiz() {
                     nav.popBackStack()
                     // Si era nueva (se abrió desde la lista), se muestra su ficha
                     if (nav.currentDestination?.hasRoute(RutaDetalleMascota::class) != true) {
-                        avisar("¡Bienvenida a la familia! 🐾 Ahora crea su primer recordatorio")
+                        avisar("¡Bienvenida a la familia! Ahora crea su primer recordatorio")
                         nav.navigate(RutaDetalleMascota(id))
                     } else {
-                        avisar("¡Listo! La ficha quedó guardada 🐾")
+                        avisar("¡Listo! La ficha quedó guardada")
                     }
                 }
                 // Nueva: recorrido guiado; editar: la ficha completa
@@ -136,7 +136,7 @@ fun PetcareRaiz() {
             composable<RutaFormCuidado> {
                 val nuevo = it.toRoute<RutaFormCuidado>().id == null
                 val listo = {
-                    avisar(if (nuevo) "¡Recordatorio listo! Te aviso a tiempo ⏰" else "¡Listo! Cuidados actualizados ✓")
+                    avisar(if (nuevo) "¡Recordatorio listo! Te aviso a tiempo" else "¡Listo! Cuidados actualizados")
                     nav.popBackStack()
                     Unit
                 }
@@ -161,7 +161,7 @@ fun PetcareRaiz() {
             }
             composable<RutaFormVisita> {
                 com.udenar.petcare.ui.mascotas.FormVisitaScreen(onListo = {
-                    avisar("¡Visita guardada en su historial! 🩺")
+                    avisar("¡Visita guardada en su historial!")
                     nav.popBackStack()
                 })
             }

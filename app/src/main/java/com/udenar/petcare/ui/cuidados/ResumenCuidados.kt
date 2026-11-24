@@ -1,5 +1,7 @@
 package com.udenar.petcare.ui.cuidados
 
+import com.udenar.petcare.domain.modelo.Icono
+import com.udenar.petcare.ui.componentes.Icono3D
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -47,23 +49,23 @@ import java.util.Locale
 
 private val CORTA = DateTimeFormatter.ofPattern("d MMM", Locale.forLanguageTag("es-CO"))
 
-val TipoCuidado.emoji: String
+val TipoCuidado.icono: Icono
     get() = when (this) {
-        TipoCuidado.COMIDA -> "🍽️"
-        TipoCuidado.MEDICAMENTO -> "💊"
-        TipoCuidado.VACUNA -> "💉"
-        TipoCuidado.DESPARASITACION_INTERNA, TipoCuidado.DESPARASITACION_EXTERNA -> "🛡️"
-        TipoCuidado.BANO -> "🛁"
-        TipoCuidado.CORTE_PELO -> "✂️"
-        TipoCuidado.CEPILLADO -> "🧼"
-        TipoCuidado.CORTE_UNAS -> "💅"
-        TipoCuidado.LIMPIEZA_DENTAL -> "🦷"
-        TipoCuidado.LIMPIEZA_OIDOS -> "👂"
-        TipoCuidado.LIMPIEZA_OJOS -> "👁️"
-        TipoCuidado.CITA_VET -> "🩺"
-        TipoCuidado.SERVICIO_CONTRATADO -> "🧺"
-        TipoCuidado.PESAJE -> "⚖️"
-        TipoCuidado.PERSONALIZADO -> "⭐"
+        TipoCuidado.COMIDA -> Icono.COMIDA
+        TipoCuidado.MEDICAMENTO -> Icono.MEDICAMENTO
+        TipoCuidado.VACUNA -> Icono.VACUNA
+        TipoCuidado.DESPARASITACION_INTERNA, TipoCuidado.DESPARASITACION_EXTERNA -> Icono.ESCUDO
+        TipoCuidado.BANO -> Icono.BANO
+        TipoCuidado.CORTE_PELO -> Icono.TIJERAS
+        TipoCuidado.CEPILLADO -> Icono.JABON
+        TipoCuidado.CORTE_UNAS -> Icono.UNAS
+        TipoCuidado.LIMPIEZA_DENTAL -> Icono.DIENTE
+        TipoCuidado.LIMPIEZA_OIDOS -> Icono.OIDO
+        TipoCuidado.LIMPIEZA_OJOS -> Icono.OJO
+        TipoCuidado.CITA_VET -> Icono.VETERINARIO
+        TipoCuidado.SERVICIO_CONTRATADO -> Icono.CANASTA
+        TipoCuidado.PESAJE -> Icono.PESO
+        TipoCuidado.PERSONALIZADO -> Icono.ESTRELLA
     }
 
 fun GrupoCuidado.color(): Pair<Color, Color> = when (this) {
@@ -148,7 +150,7 @@ private fun FilaCuidado(r: ResumenCuidado, onClick: () -> Unit) {
                 .clip(RoundedCornerShape(14.dp))
                 .background(fondo),
             contentAlignment = Alignment.Center,
-        ) { Text(r.evento.tipo.emoji, fontSize = 20.sp) }
+        ) { Icono3D(r.evento.tipo.icono, tam = 28.dp) }
         Column(
             Modifier
                 .weight(1f)
@@ -163,7 +165,7 @@ private fun FilaCuidado(r: ResumenCuidado, onClick: () -> Unit) {
             Text(partes.joinToString(" · "), style = MaterialTheme.typography.bodySmall, color = Pc.TintaSuave)
             if (r.evento.oculto) Text("Oculto: no aparece en la agenda", style = MaterialTheme.typography.labelSmall, color = Pc.TintaSuave)
             if (r.evento.creadoPor?.rol == "VETERINARIO") {
-                Text("🩺 Registrado por veterinario · ${r.evento.creadoPor.nombre.orEmpty()}", style = MaterialTheme.typography.labelSmall, color = Pc.CieloOscuro)
+                com.udenar.petcare.ui.componentes.Chip("Registrado por veterinario · ${r.evento.creadoPor.nombre.orEmpty()}", fondo = Pc.CieloClaro, color = Pc.CieloOscuro, icono = Icono.VETERINARIO)
             }
         }
         when {

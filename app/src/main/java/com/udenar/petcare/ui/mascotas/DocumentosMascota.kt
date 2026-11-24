@@ -1,5 +1,7 @@
 package com.udenar.petcare.ui.mascotas
 
+import com.udenar.petcare.ui.componentes.Icono3D
+import com.udenar.petcare.domain.modelo.Icono
 import android.content.Context
 import android.content.Intent
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -102,12 +104,12 @@ fun TarjetaDocumentos(
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Box(Modifier.size(40.dp).clip(RoundedCornerShape(12.dp)).background(Pc.CieloClaro), contentAlignment = Alignment.Center) {
-                    Text(if (d.esPdf) "📄" else d.tipo.emoji, fontSize = 18.sp)
+                    Icono3D(if (d.esPdf) Icono.DOCUMENTO else d.tipo.icono, tam = 28.dp)
                 }
                 Column(Modifier.weight(1f).padding(start = 12.dp)) {
                     Text(d.nombre, style = MaterialTheme.typography.titleSmall)
                     Text(
-                        listOfNotNull(d.tipo.etiqueta, d.fecha.format(FECHA), if (d.porSubir) "☁ por subir" else null).joinToString(" · "),
+                        listOfNotNull(d.tipo.etiqueta, d.fecha.format(FECHA), if (d.porSubir) "por subir" else null).joinToString(" · "),
                         style = MaterialTheme.typography.bodySmall, color = Pc.TintaSuave,
                     )
                 }

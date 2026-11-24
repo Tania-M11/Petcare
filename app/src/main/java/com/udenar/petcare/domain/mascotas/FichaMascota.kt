@@ -77,16 +77,3 @@ object FichaMascota {
     private fun plural(n: Int, uno: String, varios: String) = if (n == 1) "1 $uno" else "$n $varios"
 }
 
-/** Emoji y color de cada especie, para el avatar cuando no hay foto. */
-val Especie.emoji: String
-    get() = when (this) {
-        Especie.PERRO -> "🐶"
-        Especie.GATO -> "🐱"
-        Especie.AVE -> "🐦"
-        Especie.CONEJO -> "🐰"
-        Especie.ROEDOR -> "🐹"
-        Especie.REPTIL -> "🦎"
-        Especie.PEZ -> "🐟"
-        Especie.EQUINO -> "🐴"
-        Especie.OTRO -> "🐾"
-    }

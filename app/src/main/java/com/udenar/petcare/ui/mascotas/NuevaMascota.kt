@@ -1,5 +1,6 @@
 package com.udenar.petcare.ui.mascotas
 
+import com.udenar.petcare.domain.modelo.Icono
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
@@ -99,7 +100,7 @@ fun NuevaMascotaScreen(onVolver: () -> Unit, onGuardada: (String) -> Unit, viewM
         abajo = {
             when (actual) {
                 PasoMascota.ESPECIE -> Unit // avanza al tocar una especie
-                PasoMascota.RESUMEN -> BotonPrincipal("Agregar a $nombre 🐾", onClick = viewModel::guardar, cargando = f.guardando, modifier = Modifier.testTag("guardar_mascota"))
+                PasoMascota.RESUMEN -> BotonPrincipal("Agregar a $nombre", onClick = viewModel::guardar, cargando = f.guardando, modifier = Modifier.testTag("guardar_mascota"))
                 PasoMascota.NOMBRE -> BotonPrincipal(
                     "Continuar", habilitado = f.nombre.isNotBlank() && (f.especie != Especie.OTRO || f.especieOtro.isNotBlank()),
                     onClick = { siguiente() }, modifier = Modifier.testTag("continuar"),
@@ -156,8 +157,8 @@ fun NuevaMascotaScreen(onVolver: () -> Unit, onGuardada: (String) -> Unit, viewM
             PasoMascota.DETALLES -> {
                 PreguntaChopper("Cuéntame de $nombre", "Sexo, tamaño y peso; todo se puede cambiar después", PoseChopper.ORGANIZADOR)
                 Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                    listOf(Sexo.MACHO to "♂️", Sexo.HEMBRA to "♀️", Sexo.DESCONOCIDO to "❔").forEach { (s, e) ->
-                        TarjetaOpcionGrande(s.etiqueta, f.sexo == s, onClick = { viewModel.editar { it.copy(sexo = s) } }, emoji = e, modifier = Modifier.weight(1f))
+                    listOf(Sexo.MACHO to Icono.MACHO, Sexo.HEMBRA to Icono.HEMBRA, Sexo.DESCONOCIDO to Icono.PREGUNTA).forEach { (s, e) ->
+                        TarjetaOpcionGrande(s.etiqueta, f.sexo == s, onClick = { viewModel.editar { it.copy(sexo = s) } }, icono = e, modifier = Modifier.weight(1f))
                     }
                 }
                 Text("Tamaño", style = MaterialTheme.typography.titleSmall)
@@ -165,7 +166,7 @@ fun NuevaMascotaScreen(onVolver: () -> Unit, onGuardada: (String) -> Unit, viewM
                     Tamano.entries.forEachIndexed { i, t ->
                         TarjetaOpcionGrande(
                             t.etiqueta, f.tamano == t, onClick = { viewModel.editar { it.copy(tamano = if (it.tamano == t) null else t) } },
-                            emoji = listOf("🐁", "🐕", "🐕‍🦺", "🐻").getOrElse(i) { "🐾" }, modifier = Modifier.weight(1f),
+                            icono = listOf(Icono.RATON, Icono.PERRO, Icono.PERRO_GRANDE, Icono.OSO).getOrElse(i) { Icono.HUELLAS }, modifier = Modifier.weight(1f),
                         )
                     }
                 }
@@ -187,7 +188,7 @@ fun NuevaMascotaScreen(onVolver: () -> Unit, onGuardada: (String) -> Unit, viewM
                 Text(nombre, style = MaterialTheme.typography.headlineMedium, modifier = Modifier.align(Alignment.CenterHorizontally))
                 Column(Modifier.fillMaxWidth().clip(MaterialTheme.shapes.large).background(Pc.Blanco).padding(horizontal = 12.dp)) {
                     FilaResumen("Especie", f.especie?.let { if (it == Especie.OTRO) f.especieOtro.ifBlank { it.etiqueta } else it.etiqueta } ?: "—", onEditar = { paso = PasoMascota.ESPECIE.ordinal })
-                    FilaResumen("Foto", if (f.foto != null) "Lista ✓" else "Sin foto", onEditar = { paso = PasoMascota.FOTO.ordinal })
+                    FilaResumen("Foto", if (f.foto != null) "Lista" else "Sin foto", onEditar = { paso = PasoMascota.FOTO.ordinal })
                     FilaResumen("Edad", f.nacimiento?.let { FichaMascota.edad(it, f.aproximada, viewModel.hoy) } ?: "Sin dato", onEditar = { paso = PasoMascota.EDAD.ordinal })
                     FilaResumen(
                         "Detalles",
@@ -210,7 +211,7 @@ private fun androidx.compose.foundation.layout.ColumnScope.PasoFoto(
         if (foto == null) "¡Muéstrame a $nombre!" else if (procesando) "Un momento…" else "¡Qué buena foto!",
         when {
             foto == null -> "Una foto de frente y con buena luz queda mejor"
-            procesando -> "Estoy recortando a $nombre del fondo ✂️"
+            procesando -> "Estoy recortando a $nombre del fondo…"
             pegatina != null -> "La convertí en pegatina. Puedes usar la foto completa si prefieres"
             sinRecorte -> "No pude recortarla del fondo, pero la foto completa también se ve muy bien"
             else -> null
@@ -228,13 +229,13 @@ private fun androidx.compose.foundation.layout.ColumnScope.PasoFoto(
     }
     AnimatedVisibility(completa != null && pegatina != null && !procesando, enter = scaleIn()) {
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-            TarjetaOpcionGrande("Pegatina", foto == pegatina, onClick = { pegatina?.let(onUsar) }, emoji = "✂️", modifier = Modifier.weight(1f).testTag("usar_pegatina"))
-            TarjetaOpcionGrande("Foto completa", foto == completa, onClick = { completa?.let(onUsar) }, emoji = "🖼️", modifier = Modifier.weight(1f).testTag("usar_completa"))
+            TarjetaOpcionGrande("Pegatina", foto == pegatina, onClick = { pegatina?.let(onUsar) }, icono = Icono.TIJERAS, modifier = Modifier.weight(1f).testTag("usar_pegatina"))
+            TarjetaOpcionGrande("Foto completa", foto == completa, onClick = { completa?.let(onUsar) }, icono = Icono.GALERIA, modifier = Modifier.weight(1f).testTag("usar_completa"))
         }
     }
     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-        BotonSecundario("📷 Tomar foto", onClick = onCamara, modifier = Modifier.weight(1f).testTag("tomar_foto"))
-        BotonSecundario("🖼️ Galería", onClick = onGaleria, modifier = Modifier.weight(1f))
+        BotonSecundario("Tomar foto", onClick = onCamara, modifier = Modifier.weight(1f).testTag("tomar_foto"), icono = Icono.CAMARA)
+        BotonSecundario("Galería", onClick = onGaleria, modifier = Modifier.weight(1f), icono = Icono.GALERIA)
     }
 }
 
@@ -280,16 +281,16 @@ private fun androidx.compose.foundation.layout.ColumnScope.PasoSalud(nombre: Str
     PreguntaChopper("Lo importante de su salud", "Así quienes cuiden a $nombre lo sabrán. PetCare solo lo guarda.", PoseChopper.DOCTOR)
     Text("¿Tiene alguna alergia?", style = MaterialTheme.typography.titleMedium)
     Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-        TarjetaOpcionGrande("Sí", alergia == true, onClick = { alergia = true }, emoji = "🌼", modifier = Modifier.weight(1f).testTag("alergia_si"))
-        TarjetaOpcionGrande("No", alergia == false, onClick = { alergia = false; viewModel.editar { it.copy(alergias = "") } }, emoji = "👍", modifier = Modifier.weight(1f))
+        TarjetaOpcionGrande("Sí", alergia == true, onClick = { alergia = true }, icono = Icono.FLOR, modifier = Modifier.weight(1f).testTag("alergia_si"))
+        TarjetaOpcionGrande("No", alergia == false, onClick = { alergia = false; viewModel.editar { it.copy(alergias = "") } }, icono = Icono.PULGAR, modifier = Modifier.weight(1f))
     }
     AnimatedVisibility(alergia == true) {
         CampoTexto(f.alergias, { v -> viewModel.editar { it.copy(alergias = v) } }, "¿A qué?", modifier = Modifier.testTag("alergias"))
     }
     Text("¿Toma algún medicamento ahora?", style = MaterialTheme.typography.titleMedium)
     Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-        TarjetaOpcionGrande("Sí", medicina == true, onClick = { medicina = true }, emoji = "💊", modifier = Modifier.weight(1f))
-        TarjetaOpcionGrande("No", medicina == false, onClick = { medicina = false; viewModel.editar { it.copy(medicamentos = "") } }, emoji = "👍", modifier = Modifier.weight(1f))
+        TarjetaOpcionGrande("Sí", medicina == true, onClick = { medicina = true }, icono = Icono.MEDICAMENTO, modifier = Modifier.weight(1f))
+        TarjetaOpcionGrande("No", medicina == false, onClick = { medicina = false; viewModel.editar { it.copy(medicamentos = "") } }, icono = Icono.PULGAR, modifier = Modifier.weight(1f))
     }
     AnimatedVisibility(medicina == true) {
         Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {

@@ -1,14 +1,15 @@
 package com.udenar.petcare.domain.cuidados
 
+import com.udenar.petcare.domain.modelo.Icono
 import java.time.LocalDateTime
 
 /** Categorías del estado de cuidado (RF-16). */
-enum class AreaCuidado(val titulo: String, val emoji: String) {
-    VACUNAS("Vacunas", "💉"),
-    MEDICAMENTOS("Medicamentos", "💊"),
-    HIGIENE("Higiene", "🛁"),
-    COMIDAS("Comidas", "🍽️"),
-    CITAS("Citas", "🩺"),
+enum class AreaCuidado(val titulo: String, val icono: Icono) {
+    VACUNAS("Vacunas", Icono.VACUNA),
+    MEDICAMENTOS("Medicamentos", Icono.MEDICAMENTO),
+    HIGIENE("Higiene", Icono.BANO),
+    COMIDAS("Comidas", Icono.COMIDA),
+    CITAS("Citas", Icono.VETERINARIO),
 }
 
 enum class NivelCuidado(val etiqueta: String) { AL_DIA("Al día"), PROXIMO("Próximo"), PENDIENTE("Pendiente") }

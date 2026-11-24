@@ -1,5 +1,7 @@
 package com.udenar.petcare.ui.servicios
 
+import com.udenar.petcare.ui.componentes.Icono3D
+import com.udenar.petcare.domain.modelo.Icono
 import android.Manifest
 import android.content.ActivityNotFoundException
 import android.content.Intent
@@ -159,7 +161,7 @@ fun DirectorioVeterinariosScreen(onVolver: () -> Unit, onAbrir: (String) -> Unit
             modifier = Modifier.testTag("filtro_ciudad"),
         )
         Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            ChipOpcion(if (estado.ubicacion != null) "📍 Cerca de mí ✓" else "📍 Cerca de mí", estado.ubicacion != null, onClick = {
+            ChipOpcion("Cerca de mí", estado.ubicacion != null, icono = Icono.PIN, onClick = {
                 if (estado.ubicacion != null) viewModel.usarUbicacion(null)
                 else permiso.launch(arrayOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION))
             })
@@ -304,7 +306,10 @@ fun DetalleVeterinarioScreen(onVolver: () -> Unit, onSolicitar: () -> Unit, avis
             Text(v.especies.joinToString(", ") { it.etiqueta }, style = MaterialTheme.typography.bodyMedium)
             if (v.servicios.isNotEmpty()) Text(v.servicios.joinToString(" · ") { it.etiqueta }, style = MaterialTheme.typography.bodyMedium, color = Pc.TintaSuave)
             if (v.especialidades.isNotEmpty()) Text("Especialidades: " + v.especialidades.joinToString(", "), style = MaterialTheme.typography.bodyMedium, color = Pc.TintaSuave)
-            Text(if (v.domicilio) "🏠 Atiende a domicilio" else "Atiende en el consultorio", style = MaterialTheme.typography.bodyMedium)
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icono3D(if (v.domicilio) Icono.CASA else Icono.HOSPITAL, tam = 20.dp)
+                Text(if (v.domicilio) "  Atiende a domicilio" else "  Atiende en el consultorio", style = MaterialTheme.typography.bodyMedium)
+            }
             v.tarifa?.let { Text("Consulta: $it (referencial; el pago se acuerda directamente)", style = MaterialTheme.typography.bodySmall, color = Pc.TintaSuave) }
         }
         if (v.horario.isNotEmpty()) {

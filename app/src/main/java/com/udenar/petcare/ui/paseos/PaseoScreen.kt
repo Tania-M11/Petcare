@@ -1,5 +1,6 @@
 package com.udenar.petcare.ui.paseos
 
+import com.udenar.petcare.ui.componentes.Icono3D
 import android.Manifest
 import android.os.Build
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -161,7 +162,7 @@ fun PaseoScreen(onVolver: () -> Unit, avisar: (String) -> Unit, viewModel: Paseo
                     }
                 }
                 Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    TipoPaseo.entries.forEach { t -> ChipOpcion("${t.emoji} ${t.etiqueta}", tipo == t, onClick = { tipo = t }) }
+                    TipoPaseo.entries.forEach { t -> ChipOpcion(t.etiqueta, tipo == t, onClick = { tipo = t }, icono = t.icono) }
                 }
             }
             BotonPrincipal("Iniciar con GPS", habilitado = elegidas.isNotEmpty(), onClick = {
@@ -282,7 +283,10 @@ fun DetallePaseoScreen(paseo: com.udenar.petcare.domain.paseos.Paseo?, onVolver:
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             BotonCircular(Icons.AutoMirrored.Rounded.ArrowBack, "Volver", onClick = onVolver)
-            Text(paseo?.let { "${it.tipo.emoji} ${it.tipo.etiqueta}" } ?: "Paseo", style = MaterialTheme.typography.headlineMedium, modifier = Modifier.padding(start = 16.dp))
+            Row(Modifier.padding(start = 16.dp), verticalAlignment = Alignment.CenterVertically) {
+                paseo?.let { Icono3D(it.tipo.icono, tam = 32.dp) }
+                Text(paseo?.tipo?.etiqueta ?: "Paseo", style = MaterialTheme.typography.headlineMedium, modifier = Modifier.padding(start = 8.dp))
+            }
         }
         val p = paseo ?: return@Column
         if (p.ruta.isNotEmpty()) {

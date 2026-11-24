@@ -1,5 +1,6 @@
 package com.udenar.petcare.ui.componentes
 
+import com.udenar.petcare.domain.modelo.Icono
 import androidx.annotation.DrawableRes
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
@@ -65,16 +66,15 @@ fun BotonCircular(
 
 /** Etiqueta en píldora (p. ej. "Primeros pasos"). */
 @Composable
-fun Chip(texto: String, modifier: Modifier = Modifier, fondo: Color = Pc.Blanco, color: Color = Pc.Tinta) {
-    Text(
-        texto,
-        style = MaterialTheme.typography.labelMedium,
-        color = color,
-        modifier = modifier
-            .clip(RoundedCornerShape(50))
-            .background(fondo)
-            .padding(horizontal = 12.dp, vertical = 6.dp),
-    )
+fun Chip(texto: String, modifier: Modifier = Modifier, fondo: Color = Pc.Blanco, color: Color = Pc.Tinta, icono: Icono? = null) {
+    androidx.compose.foundation.layout.Row(
+        modifier.clip(RoundedCornerShape(50)).background(fondo).padding(horizontal = 12.dp, vertical = 6.dp),
+        verticalAlignment = androidx.compose.ui.Alignment.CenterVertically,
+        horizontalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(6.dp),
+    ) {
+        icono?.let { Icono3D(it, tam = 16.dp) }
+        Text(texto, style = MaterialTheme.typography.labelMedium, color = color)
+    }
 }
 
 /** Fondo orgánico con degradado y grano, detrás de las ilustraciones de Chopper. */

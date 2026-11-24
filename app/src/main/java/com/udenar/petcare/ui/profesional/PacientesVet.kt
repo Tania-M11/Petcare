@@ -1,5 +1,7 @@
 package com.udenar.petcare.ui.profesional
 
+import com.udenar.petcare.ui.componentes.Icono3D
+import com.udenar.petcare.domain.modelo.Icono
 import android.content.ActivityNotFoundException
 import android.content.Intent
 import android.net.Uri
@@ -287,10 +289,10 @@ fun FichaPacienteScreen(miId: String?, onVolver: () -> Unit, avisar: (String) ->
             Dato("Observaciones", m.observaciones)
         }
         FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            ChipOpcion("➕ Visita", false, onClick = { dialogo = "visita" }, modifier = Modifier.testTag("nueva_visita_vet"))
-            ChipOpcion("💉 Vacuna o medicamento", false, onClick = { dialogo = "cuidado" }, modifier = Modifier.testTag("nuevo_cuidado_vet"))
-            ChipOpcion("⚖️ Peso", false, onClick = { dialogo = "peso" })
-            ChipOpcion("📄 Documento", false, onClick = { dialogo = "documento" })
+            ChipOpcion("Visita", false, icono = Icono.VETERINARIO, onClick = { dialogo = "visita" }, modifier = Modifier.testTag("nueva_visita_vet"))
+            ChipOpcion("Vacuna o medicamento", false, icono = Icono.VACUNA, onClick = { dialogo = "cuidado" }, modifier = Modifier.testTag("nuevo_cuidado_vet"))
+            ChipOpcion("Peso", false, icono = Icono.PESO, onClick = { dialogo = "peso" })
+            ChipOpcion("Documento", false, icono = Icono.DOCUMENTO, onClick = { dialogo = "documento" })
         }
         Seccion("Vacunas, desparasitación y medicamentos") {
             if (f.cuidados.isEmpty()) Text("Sin registros.", color = Pc.TintaSuave)
@@ -328,7 +330,7 @@ fun FichaPacienteScreen(miId: String?, onVolver: () -> Unit, avisar: (String) ->
                         }
                         .padding(vertical = 6.dp),
                 ) {
-                    Text("${d.tipo.emoji}  ", style = MaterialTheme.typography.titleMedium)
+                    Icono3D(d.tipo.icono, tam = 26.dp, modifier = Modifier.padding(end = 10.dp))
                     Column {
                         Text(d.nombre, style = MaterialTheme.typography.titleSmall)
                         Text(listOfNotNull(d.fecha.format(FECHA), d.subidoPor).joinToString(" · "), style = MaterialTheme.typography.bodySmall, color = Pc.TintaSuave)
@@ -366,7 +368,7 @@ fun FichaPacienteScreen(miId: String?, onVolver: () -> Unit, avisar: (String) ->
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     Text("Imagen o PDF, hasta 5 MB. El dueño lo verá en la ficha de su mascota.", style = MaterialTheme.typography.bodySmall, color = Pc.TintaSuave)
                     FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                        TipoDocumento.entries.forEach { t -> ChipOpcion("${t.emoji} ${t.etiqueta}", tipoDoc == t, onClick = { tipoDoc = t }) }
+                        TipoDocumento.entries.forEach { t -> ChipOpcion(t.etiqueta, tipoDoc == t, onClick = { tipoDoc = t }, icono = t.icono) }
                     }
                 }
             },
@@ -414,7 +416,12 @@ private fun FilaClinica(titulo: String, detalle: String, autor: String?, porVete
     Column(Modifier.fillMaxWidth().padding(vertical = 4.dp)) {
         Text(titulo, style = MaterialTheme.typography.titleSmall)
         if (detalle.isNotBlank()) Text(detalle, style = MaterialTheme.typography.bodySmall)
-        autor?.let { Text((if (porVeterinario) "🩺 " else "") + it, style = MaterialTheme.typography.labelSmall, color = Pc.TintaSuave) }
+        autor?.let {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                if (porVeterinario) Icono3D(Icono.VETERINARIO, tam = 14.dp, modifier = Modifier.padding(end = 4.dp))
+                Text(it, style = MaterialTheme.typography.labelSmall, color = Pc.TintaSuave)
+            }
+        }
     }
 }
 

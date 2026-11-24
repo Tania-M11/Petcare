@@ -1,5 +1,6 @@
 package com.udenar.petcare.ui.profesional
 
+import com.udenar.petcare.domain.modelo.Icono
 import androidx.compose.foundation.background
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
@@ -158,7 +159,7 @@ fun RaizPrestador(viewModel: ModoPrestadorViewModel = hiltViewModel()) {
         topBar = {
             if (actual != null) {
                 Row(Modifier.statusBarsPadding().fillMaxWidth().padding(horizontal = 20.dp, vertical = 8.dp)) {
-                    Chip("✂️ Modo prestador", fondo = Pc.SolClaro, color = Pc.Tinta, modifier = Modifier.testTag("chip_modo_pres"))
+                    Chip("Modo prestador", icono = Icono.TIJERAS, fondo = Pc.SolClaro, color = Pc.Tinta, modifier = Modifier.testTag("chip_modo_pres"))
                 }
             }
         },

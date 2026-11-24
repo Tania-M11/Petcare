@@ -1,5 +1,6 @@
 package com.udenar.petcare.ui.mascotas
 
+import com.udenar.petcare.domain.modelo.Icono
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -17,7 +18,7 @@ import com.udenar.petcare.domain.mascotas.FichaMascota
 import com.udenar.petcare.domain.salud.RegistroPeso
 import com.udenar.petcare.domain.salud.RepositorioSalud
 import com.udenar.petcare.domain.salud.Visita
-import com.udenar.petcare.ui.cuidados.emoji
+import com.udenar.petcare.ui.cuidados.icono
 import com.udenar.petcare.domain.mascotas.CodigoMascota
 import com.udenar.petcare.domain.cuidados.ResumenCuidado
 import com.udenar.petcare.domain.cuidados.resumir
@@ -218,26 +219,26 @@ class DetalleMascotaViewModel @Inject constructor(
                 val verbo = if (r.estado == EstadoRegistro.OMITIDA) "Omitido" else "Hecho"
                 add(
                     ItemHistorial(
-                        r.registradoEn.atZone(zona).toLocalDateTime(), CategoriaHistorial.CUIDADOS, e?.tipo?.emoji ?: "✔️",
+                        r.registradoEn.atZone(zona).toLocalDateTime(), CategoriaHistorial.CUIDADOS, e?.tipo?.icono ?: Icono.CHECK,
                         e?.titulo ?: "Cuidado eliminado",
                         "$verbo${quien?.let { " por $it" } ?: ""} · ${DescripcionCuidados.hora(r.registradoEn.atZone(zona).toLocalTime())}",
                     ),
                 )
             }
             ps.forEach { p ->
-                add(ItemHistorial(p.fecha.atTime(12, 0), CategoriaHistorial.PESO, "⚖️", FichaMascota.peso(p.gramos), "Pesaje${p.registradoPor?.nombre?.let { " · ${it.substringBefore(' ')}" } ?: ""}"))
+                add(ItemHistorial(p.fecha.atTime(12, 0), CategoriaHistorial.PESO, Icono.PESO, FichaMascota.peso(p.gramos), "Pesaje${p.registradoPor?.nombre?.let { " · ${it.substringBefore(' ')}" } ?: ""}"))
             }
             pas.forEach { p ->
                 add(
                     ItemHistorial(
-                        p.inicio.atZone(zona).toLocalDateTime(), CategoriaHistorial.PASEOS, p.tipo.emoji,
+                        p.inicio.atZone(zona).toLocalDateTime(), CategoriaHistorial.PASEOS, p.tipo.icono,
                         listOfNotNull(p.distanciaM?.let { com.udenar.petcare.domain.paseos.textoDistancia(it) }, com.udenar.petcare.domain.paseos.textoDuracion(p.duracionS)).joinToString(" · "),
                         "${p.tipo.etiqueta}${p.registradoPor?.nombre?.let { " · ${it.substringBefore(' ')}" } ?: ""}",
                     ),
                 )
             }
             vs.forEach { v ->
-                add(ItemHistorial(v.fecha.atTime(12, 0), CategoriaHistorial.VISITAS, "🩺", v.motivo, listOfNotNull("Visita veterinaria", v.veterinario, v.clinica).joinToString(" · ")))
+                add(ItemHistorial(v.fecha.atTime(12, 0), CategoriaHistorial.VISITAS, Icono.VETERINARIO, v.motivo, listOfNotNull("Visita veterinaria", v.veterinario, v.clinica).joinToString(" · ")))
             }
         }.sortedByDescending { it.instante }
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())

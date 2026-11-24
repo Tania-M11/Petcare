@@ -1,14 +1,15 @@
 package com.udenar.petcare.domain.documentos
 
+import com.udenar.petcare.domain.modelo.Icono
 import kotlinx.coroutines.flow.Flow
 import java.time.LocalDate
 
-enum class TipoDocumento(val etiqueta: String, val emoji: String) {
-    CARNE("Carné", "🪪"),
-    FORMULA("Fórmula", "📝"),
-    EXAMEN("Examen", "🔬"),
-    INFORME("Informe", "📄"),
-    OTRO("Otro", "📎"),
+enum class TipoDocumento(val etiqueta: String, val icono: Icono) {
+    CARNE("Carné", Icono.CARNE),
+    FORMULA("Fórmula", Icono.NOTA),
+    EXAMEN("Examen", Icono.EXAMEN),
+    INFORME("Informe", Icono.DOCUMENTO),
+    OTRO("Otro", Icono.ADJUNTO),
 }
 
 /** Documento de una mascota (RF-17): imagen o PDF que sube el propietario. */

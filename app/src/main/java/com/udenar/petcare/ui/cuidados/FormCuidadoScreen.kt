@@ -68,7 +68,7 @@ fun FormCuidadoScreen(onListo: () -> Unit, viewModel: FormCuidadoViewModel = hil
         Row(verticalAlignment = Alignment.CenterVertically) {
             BotonCircular(Icons.AutoMirrored.Rounded.ArrowBack, "Volver", onClick = onListo)
             Column(Modifier.padding(start = 16.dp)) {
-                Text("${f.clase.emoji} ${f.clase.titulo}", style = MaterialTheme.typography.labelLarge, color = Pc.TintaSuave)
+                com.udenar.petcare.ui.componentes.Chip(f.clase.titulo, icono = f.clase.icono)
                 Text(if (f.esNuevo) "Nuevo cuidado" else "Editar cuidado", style = MaterialTheme.typography.headlineMedium)
             }
         }
@@ -217,7 +217,7 @@ fun FormCuidadoScreen(onListo: () -> Unit, viewModel: FormCuidadoViewModel = hil
         f.mensaje?.let { Text(it, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodyMedium) }
         BotonPrincipal(if (f.esNuevo) "Guardar cuidado" else "Guardar cambios", onClick = viewModel::guardar, cargando = f.guardando, habilitado = !f.cargando)
         if (!f.esNuevo && viewModel.esDelVeterinario) {
-            Text("🩺 Lo registró el veterinario. Puedes ocultarlo: deja de sonar y de verse en la agenda, pero sigue en el historial.", style = MaterialTheme.typography.bodySmall, color = Pc.TintaSuave)
+            Text("Lo registró el veterinario. Puedes ocultarlo: deja de sonar y de verse en la agenda, pero sigue en el historial.", style = MaterialTheme.typography.bodySmall, color = Pc.TintaSuave)
             com.udenar.petcare.ui.componentes.BotonSecundario(
                 if (viewModel.estaOculto) "Mostrar de nuevo" else "Ocultar",
                 onClick = { viewModel.cambiarOculto(!viewModel.estaOculto) },

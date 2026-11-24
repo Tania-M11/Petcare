@@ -1,5 +1,6 @@
 package com.udenar.petcare.ui.componentes
 
+import com.udenar.petcare.domain.modelo.Icono
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateDpAsState
@@ -144,7 +145,7 @@ fun TarjetaOpcionGrande(
     modifier: Modifier = Modifier,
     subtitulo: String? = null,
     dibujo: Int? = null,
-    emoji: String? = null,
+    icono: Icono? = null,
     color: Color = Pc.Durazno,
 ) {
     val escala by animateFloatAsState(if (seleccionada) 1.04f else 1f, spring(dampingRatio = Spring.DampingRatioMediumBouncy), label = "opcion")
@@ -162,7 +163,7 @@ fun TarjetaOpcionGrande(
     ) {
         when {
             dibujo != null -> Image(painterResource(dibujo), contentDescription = null, modifier = Modifier.size(64.dp))
-            emoji != null -> Text(emoji, fontSize = 36.sp)
+            icono != null -> BaldosaIcono(icono, fondo = if (seleccionada) Pc.Blanco.copy(alpha = 0.7f) else color.copy(alpha = 0.45f), tam = 60.dp)
         }
         Text(titulo, style = MaterialTheme.typography.titleSmall, textAlign = TextAlign.Center, color = Pc.Tinta)
         subtitulo?.let { Text(it, style = MaterialTheme.typography.bodySmall, color = Pc.TintaSuave, textAlign = TextAlign.Center) }

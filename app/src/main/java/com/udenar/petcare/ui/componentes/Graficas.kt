@@ -104,7 +104,10 @@ fun TarjetaProgreso(nombre: String, p: ProgresoMascota, modifier: Modifier = Mod
                 )
             }
             Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.clip(RoundedCornerShape(18.dp)).background(Pc.Durazno).padding(horizontal = 14.dp, vertical = 6.dp)) {
-                Text("🔥 ${p.racha}", fontFamily = Kalnia, fontSize = 24.sp, color = Pc.Tinta, modifier = Modifier.testTag("racha"))
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icono3D(com.udenar.petcare.domain.modelo.Icono.FUEGO, tam = 24.dp)
+                    Text(" ${p.racha}", fontFamily = Kalnia, fontSize = 24.sp, color = Pc.Tinta, modifier = Modifier.testTag("racha"))
+                }
                 Text(if (p.racha == 1) "día" else "días", style = MaterialTheme.typography.labelSmall, color = Pc.TintaSuave)
             }
         }
@@ -142,7 +145,7 @@ fun TarjetaProgreso(nombre: String, p: ProgresoMascota, modifier: Modifier = Mod
                     Modifier.width(96.dp).clip(RoundedCornerShape(18.dp)).background(if (l.conseguido) Pc.SolClaro else Pc.Crema).padding(10.dp).alpha(if (l.conseguido) 1f else 0.45f),
                     horizontalAlignment = Alignment.CenterHorizontally,
                 ) {
-                    Text(l.emoji, fontSize = 26.sp)
+                    Icono3D(l.icono, tam = 36.dp)
                     Text(l.titulo, style = MaterialTheme.typography.labelMedium, textAlign = TextAlign.Center, color = Pc.Tinta)
                     Text(l.descripcion, style = MaterialTheme.typography.labelSmall, textAlign = TextAlign.Center, color = Pc.TintaSuave, maxLines = 3)
                 }

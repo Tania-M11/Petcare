@@ -370,6 +370,7 @@ fun PerfilScreen(
                         color = Pc.TintaSuave,
                     )
                     Text("Tipografías Kalnia y Quicksand (SIL Open Font License).", style = MaterialTheme.typography.bodySmall, color = Pc.TintaSuave)
+                    Text("Íconos 3D: Fluent Emoji de Microsoft (licencia MIT).", style = MaterialTheme.typography.bodySmall, color = Pc.TintaSuave)
                     Chip(
                         when (conexion) {
                             Conexion.COMPROBANDO -> "Servidor: comprobando…"
