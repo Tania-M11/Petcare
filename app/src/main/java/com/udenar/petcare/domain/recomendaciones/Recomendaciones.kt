@@ -310,7 +310,7 @@ object Chopper {
         }
         val hechos = total - pendientes
         return when {
-            !hayMascotas -> CabeceraHoy(momento, "Agrega a tu primera mascota", PoseChopper.SALUDO, Icono.HUELLAS)
+            !hayMascotas -> CabeceraHoy(momento, "¡Empecemos! Soy Chopper", PoseChopper.SALUDO, Icono.HUELLAS)
             total == 0 -> CabeceraHoy(momento, "Hoy no hay cuidados programados", PoseChopper.ORGANIZADOR, Icono.HOJA)
             pendientes == 0 -> CabeceraHoy(momento, "¡Todo listo por hoy!", PoseChopper.AMIGOS, Icono.FIESTA)
             pendientes == total -> CabeceraHoy(momento, "$total ${if (total == 1) "cuidado" else "cuidados"} para hoy", PoseChopper.COMIDA, Icono.CALENDARIO)

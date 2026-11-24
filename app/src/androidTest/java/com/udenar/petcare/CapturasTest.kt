@@ -7,6 +7,7 @@ import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.swipeUp
 import com.udenar.petcare.domain.cuidados.EventoCuidado
@@ -43,6 +44,7 @@ class CapturasTest {
 
     @Inject lateinit var mascotas: RepositorioMascotas
     @Inject lateinit var cuidados: RepositorioCuidados
+    @Inject lateinit var veterinarios: VeterinariosFalso
 
     private fun guardar(nombre: String) {
         compose.waitForIdle()
@@ -75,5 +77,49 @@ class CapturasTest {
         guardar("02_hoy_abajo")
         compose.onNodeWithTag("nuevo_cuidado").performClick()
         guardar("03_registrar")
+    }
+
+    @Test
+    fun capturasProfesionales() {
+        hilt.inject()
+        compose.runOnUiThread {
+            compose.activity.setShowWhenLocked(true)
+            compose.activity.setTurnScreenOn(true)
+        }
+        compose.esperarInterfaz()
+        runBlocking { mascotas.guardar(Mascota("m1", "Venus", Especie.PERRO)) }
+        val base = com.udenar.petcare.domain.profesionales.PerfilVeterinario(
+            id = "v1", nombre = "Laura Gómez", especies = setOf(Especie.PERRO, Especie.GATO),
+            servicios = setOf(com.udenar.petcare.domain.profesionales.ServicioVet.CONSULTA, com.udenar.petcare.domain.profesionales.ServicioVet.VACUNACION),
+            telefono = "3001234567", ciudad = "Pasto", direccion = "Calle 18", lat = 1.2136, lon = -77.2811,
+            verificacion = com.udenar.petcare.domain.profesionales.Verificacion.VERIFICADO, clinica = "Clínica Huellitas",
+        )
+        veterinarios.directorio += base
+        veterinarios.directorio += base.copy(id = "v2", nombre = "Pedro Ruiz", lat = 1.2085, lon = -77.2760, domicilio = true, verificacion = com.udenar.petcare.domain.profesionales.Verificacion.SIN_CERTIFICADO, clinica = null)
+        compose.onNodeWithTag("pestana_servicios").performClick()
+        compose.onNodeWithTag("tarjeta_veterinarios").performClick()
+        compose.waitUntil(5_000) { compose.onAllNodesWithTagExists("vet_Laura Gómez") }
+        guardar("10_directorio")
+        compose.onNodeWithTag("alternar_mapa").performClick()
+        Thread.sleep(4_000)
+        guardar("11_mapa")
+        // La superficie del mapa no sale en la captura sobre la pantalla de bloqueo: se guardan los marcadores aparte
+        val dir = File(compose.activity.getExternalFilesDir(null), "capturas")
+        listOf(com.udenar.petcare.domain.modelo.Icono.VETERINARIO to 0xFF5B89BA.toInt(), com.udenar.petcare.domain.modelo.Icono.TIJERAS to 0xFFF08A4B.toInt(), com.udenar.petcare.domain.modelo.Icono.CASA to 0xFFA98EE0.toInt()).forEachIndexed { i, (ic, c) ->
+            File(dir, "15_marcador_$i.png").outputStream().use { com.udenar.petcare.ui.mapas.imagenMarcador(compose.activity, ic, c).compress(Bitmap.CompressFormat.PNG, 100, it) }
+        }
+        compose.onNodeWithTag("alternar_mapa").performClick()
+        compose.onNodeWithTag("vet_Laura Gómez").performClick()
+        compose.waitUntil(5_000) { compose.onAllNodesWithTagExists("solicitar_servicio") }
+        compose.onNodeWithTag("solicitar_servicio").performScrollTo().performClick()
+        compose.waitUntil(5_000) { compose.onAllNodesWithTagExists("servicio_CONSULTA") }
+        compose.onNodeWithTag("servicio_CONSULTA").performClick()
+        guardar("12_cita_servicio")
+        compose.onNodeWithTag("continuar").performClick()
+        compose.waitUntil(5_000) { compose.onAllNodesWithTagExists("hora_9") }
+        guardar("13_cita_cuando")
+        compose.onNodeWithTag("continuar").performClick()
+        compose.waitUntil(5_000) { compose.onAllNodesWithTagExists("agregar_foto_solicitud") }
+        guardar("14_cita_fotos")
     }
 }

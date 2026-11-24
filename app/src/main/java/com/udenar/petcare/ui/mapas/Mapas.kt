@@ -28,6 +28,7 @@ import com.google.android.gms.location.LocationServices
 import com.google.android.gms.location.Priority
 import com.udenar.petcare.domain.paseos.Coordenada
 import com.udenar.petcare.ui.theme.Pc
+import com.udenar.petcare.ui.componentes.dibujo
 import org.maplibre.android.MapLibre
 import org.maplibre.android.camera.CameraPosition
 import org.maplibre.android.camera.CameraUpdateFactory
@@ -110,8 +111,36 @@ fun MapaLibre(
     AndroidView(factory = { mapView }, modifier = modifier)
 }
 
-/** Un punto del directorio: [destacado] = verificado (marcador azul); los demás, gris lavanda. */
-data class PuntoMapa(val id: String, val posicion: Coordenada, val destacado: Boolean)
+/**
+ * Un punto del directorio: [destacado] = verificado o recibiendo (borde de color); [icono] = la
+ * categoría, dibujada en 3D dentro de la burbuja del marcador (Fase 6.8).
+ */
+data class PuntoMapa(val id: String, val posicion: Coordenada, val destacado: Boolean, val icono: com.udenar.petcare.domain.modelo.Icono = com.udenar.petcare.domain.modelo.Icono.HUELLAS)
+
+/** Burbuja blanca con borde de color, el ícono 3D adentro y una punta hacia el lugar. */
+internal fun imagenMarcador(contexto: android.content.Context, icono: com.udenar.petcare.domain.modelo.Icono, borde: Int): android.graphics.Bitmap {
+    val d = contexto.resources.displayMetrics.density
+    val lado = (44 * d).toInt()
+    val punta = (8 * d).toInt()
+    val bmp = android.graphics.Bitmap.createBitmap(lado, lado + punta, android.graphics.Bitmap.Config.ARGB_8888)
+    val c = android.graphics.Canvas(bmp)
+    val r = lado / 2f
+    val relleno = android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG).apply { color = borde }
+    // Punta
+    c.drawPath(android.graphics.Path().apply {
+        moveTo(r - punta, lado - punta * 1.2f); lineTo(r + punta, lado - punta * 1.2f); lineTo(r, (lado + punta).toFloat()); close()
+    }, relleno)
+    c.drawCircle(r, r, r, relleno)
+    c.drawCircle(r, r, r - 3 * d, android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG).apply { color = android.graphics.Color.WHITE })
+    val img = android.graphics.BitmapFactory.decodeResource(contexto.resources, icono.dibujo())
+    if (img != null) {
+        val m = (lado * 0.2f).toInt()
+        c.drawBitmap(img, null, android.graphics.Rect(m, m, lado - m, lado - m), android.graphics.Paint(android.graphics.Paint.FILTER_BITMAP_FLAG))
+    }
+    return bmp
+}
+
+private fun claveMarcador(p: PuntoMapa) = "marcador_${p.icono.name}_${p.destacado}"
 
 private const val FUENTE_PUNTOS = "puntos"
 
@@ -126,13 +155,22 @@ fun MapaMarcadores(
 ) {
     var listo by remember { mutableStateOf<Pair<MapLibreMap, Style>?>(null) }
     val elegir by rememberUpdatedState(onElegir)
+    val contexto = LocalContext.current
     MapaLibre(modifier, centro = puntos.firstOrNull()?.posicion ?: CENTRO_INICIAL, zoom = 13.0) { m, s ->
         s.addSource(GeoJsonSource(FUENTE_PUNTOS))
+        // Punto de color debajo (respaldo si la imagen aún no carga) y la burbuja con el ícono encima
         s.addLayer(
-            CircleLayer("capa_puntos", FUENTE_PUNTOS).withProperties(
-                circleRadius(10f),
+            CircleLayer("capa_base", FUENTE_PUNTOS).withProperties(
+                circleRadius(6f),
                 circleColor(Expression.switchCase(Expression.get("destacado"), Expression.color(colorDestacado), Expression.color(colorNormal))),
-                circleStrokeColor("#FFFFFF"), circleStrokeWidth(3f),
+                circleStrokeColor("#FFFFFF"), circleStrokeWidth(2f),
+            ),
+        )
+        s.addLayer(
+            org.maplibre.android.style.layers.SymbolLayer("capa_puntos", FUENTE_PUNTOS).withProperties(
+                org.maplibre.android.style.layers.PropertyFactory.iconImage("{imagen}"),
+                org.maplibre.android.style.layers.PropertyFactory.iconAllowOverlap(true),
+                org.maplibre.android.style.layers.PropertyFactory.iconAnchor(org.maplibre.android.style.layers.Property.ICON_ANCHOR_BOTTOM),
             ),
         )
         m.addOnMapClickListener { p ->
@@ -146,12 +184,17 @@ fun MapaMarcadores(
     }
     LaunchedEffect(listo, puntos) {
         val (m, s) = listo ?: return@LaunchedEffect
+        // Una imagen por combinación de ícono y estado, antes de usarla en los puntos
+        puntos.distinctBy(::claveMarcador).forEach { p ->
+            if (s.getImage(claveMarcador(p)) == null) s.addImage(claveMarcador(p), imagenMarcador(contexto, p.icono, if (p.destacado) colorDestacado else colorNormal))
+        }
         (s.getSource(FUENTE_PUNTOS) as? GeoJsonSource)?.setGeoJson(
             FeatureCollection.fromFeatures(
                 puntos.map { p ->
                     Feature.fromGeometry(Point.fromLngLat(p.posicion.lon, p.posicion.lat)).apply {
                         addStringProperty("id", p.id)
                         addBooleanProperty("destacado", p.destacado)
+                        addStringProperty("imagen", claveMarcador(p))
                     }
                 },
             ),

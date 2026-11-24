@@ -195,7 +195,7 @@ fun DirectorioPrestadoresScreen(onVolver: () -> Unit, onAbrir: (String) -> Unit,
             estado.resultados.isEmpty() -> EstadoVacio(R.drawable.chopper_amigos, "Nadie con esos filtros", "Prueba con otra ciudad, zona o categoría.", fondoBlob = listOf(Pc.SolClaro, Pc.Durazno))
             verMapa -> Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 MapaMarcadores(
-                    estado.resultados.map { PuntoMapa(it.id, Coordenada(it.lat, it.lon), it.recibiendo) },
+                    estado.resultados.map { p -> PuntoMapa(p.id, Coordenada(p.lat, p.lon), p.recibiendo, estado.categorias.firstOrNull { it.id == p.categoriaPrincipal }?.icono3d ?: com.udenar.petcare.domain.modelo.Icono.HUELLAS) },
                     onElegir = { id -> elegido = estado.resultados.firstOrNull { it.id == id } },
                     modifier = Modifier.fillMaxWidth().weight(1f).clip(MaterialTheme.shapes.large).testTag("mapa_prestadores"),
                     colorDestacado = 0xFFF08A4B.toInt(),

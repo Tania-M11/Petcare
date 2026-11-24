@@ -192,7 +192,7 @@ fun DirectorioVeterinariosScreen(onVolver: () -> Unit, onAbrir: (String) -> Unit
             )
             verMapa -> Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(6.dp)) {
                 MapaMarcadores(
-                    estado.resultados.map { PuntoMapa(it.id, Coordenada(it.lat, it.lon), it.verificacion.verificado) },
+                    estado.resultados.map { PuntoMapa(it.id, Coordenada(it.lat, it.lon), it.verificacion.verificado, if (it.domicilio) com.udenar.petcare.domain.modelo.Icono.CASA else com.udenar.petcare.domain.modelo.Icono.VETERINARIO) },
                     onElegir = onAbrir,
                     modifier = Modifier
                         .fillMaxWidth()
