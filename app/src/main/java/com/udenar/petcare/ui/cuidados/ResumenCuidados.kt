@@ -93,7 +93,7 @@ fun SeccionCuidados(
         verticalArrangement = Arrangement.spacedBy(10.dp),
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            Text("Cuidados", style = MaterialTheme.typography.titleMedium, modifier = Modifier.weight(1f))
+            com.udenar.petcare.ui.componentes.TituloConIcono("Cuidados", Modifier.weight(1f))
             if (onAgregar != null) Row(
                 Modifier
                     .clip(RoundedCornerShape(50))
@@ -173,7 +173,7 @@ private fun FilaCuidado(r: ResumenCuidado, onClick: () -> Unit) {
             r.vencimiento == Vencimiento.PROXIMO -> Chip("Próximo", fondo = Pc.SolClaro)
             r.vencimiento == Vencimiento.AL_DIA -> Chip("Al día", fondo = Pc.MentaClara)
             r.terminaPronto -> Chip("Termina pronto", fondo = Pc.LavandaClara)
-            r.evento.porSubir -> Text("☁", color = Pc.TintaSuave)
+            r.evento.porSubir -> Icono3D(Icono.NUBE, tam = 18.dp)
         }
     }
 }

@@ -158,7 +158,7 @@ fun DetalleMascotaScreen(
                     false -> Chip("Sin esterilizar")
                     null -> Unit
                 }
-                if (mascota.porSubir) Chip("Por subir ☁", fondo = Pc.Blanco.copy(alpha = 0.6f))
+                if (mascota.porSubir) Chip("Por subir", fondo = Pc.Blanco.copy(alpha = 0.6f), icono = com.udenar.petcare.domain.modelo.Icono.NUBE)
             }
         }
 

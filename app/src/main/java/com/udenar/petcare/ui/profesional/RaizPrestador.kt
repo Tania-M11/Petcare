@@ -238,12 +238,12 @@ private fun PerfilPrestadorScreen(viewModel: ModoPrestadorViewModel, onEditar: (
             }
         }
         Column(Modifier.clip(MaterialTheme.shapes.large).background(Pc.Blanco).padding(6.dp)) {
-            FilaOpcion(Icons.Rounded.Edit, "Editar perfil", "Servicios, precios, horario, zona y galería", Pc.SolClaro, Pc.Naranja, onClick = onEditar, modifier = Modifier.testTag("editar_perfil_pres"))
+            FilaOpcion(Icons.Rounded.Edit, "Editar perfil", "Servicios, precios, horario, zona y galería", Pc.SolClaro, Pc.Naranja, icono3d = com.udenar.petcare.domain.modelo.Icono.LAPIZ, onClick = onEditar, modifier = Modifier.testTag("editar_perfil_pres"))
             if (vet?.activo == true) {
-                FilaOpcion(Icons.Rounded.MedicalServices, "Cambiar a modo veterinario", "Solicitudes, agenda y pacientes", Pc.CieloClaro, Pc.CieloOscuro, onClick = viewModel::modoVeterinario)
+                FilaOpcion(Icons.Rounded.MedicalServices, "Cambiar a modo veterinario", "Solicitudes, agenda y pacientes", Pc.CieloClaro, Pc.CieloOscuro, icono3d = com.udenar.petcare.domain.modelo.Icono.VETERINARIO, onClick = viewModel::modoVeterinario)
             }
-            FilaOpcion(Icons.Rounded.SwapHoriz, "Volver a modo personal", "Tus mascotas y cuidados", Pc.Durazno, Pc.Naranja, onClick = viewModel::volverAPersonal, modifier = Modifier.testTag("volver_personal_pres"))
-            FilaOpcion(Icons.Rounded.VisibilityOff, "Ocultar mi perfil", "Dejas de aparecer en el directorio", Pc.LavandaClara, Pc.Lavanda, onClick = { confirmarOcultar = true })
+            FilaOpcion(Icons.Rounded.SwapHoriz, "Volver a modo personal", "Tus mascotas y cuidados", Pc.Durazno, Pc.Naranja, icono3d = com.udenar.petcare.domain.modelo.Icono.CASA, onClick = viewModel::volverAPersonal, modifier = Modifier.testTag("volver_personal_pres"))
+            FilaOpcion(Icons.Rounded.VisibilityOff, "Ocultar mi perfil", "Dejas de aparecer en el directorio", Pc.LavandaClara, Pc.Lavanda, icono3d = com.udenar.petcare.domain.modelo.Icono.CANDADO, onClick = { confirmarOcultar = true })
         }
     }
     if (confirmarOcultar) {

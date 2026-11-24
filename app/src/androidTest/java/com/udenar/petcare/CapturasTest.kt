@@ -122,4 +122,39 @@ class CapturasTest {
         compose.waitUntil(5_000) { compose.onAllNodesWithTagExists("agregar_foto_solicitud") }
         guardar("14_cita_fotos")
     }
+
+    @Test
+    fun capturasPantallas() {
+        hilt.inject()
+        compose.runOnUiThread {
+            compose.activity.setShowWhenLocked(true)
+            compose.activity.setTurnScreenOn(true)
+        }
+        compose.esperarInterfaz()
+        val hoy = LocalDate.now()
+        runBlocking {
+            mascotas.guardar(Mascota("m1", "Apolo", Especie.GATO, raza = "Criollo"))
+            mascotas.guardar(Mascota("m2", "Venus", Especie.PERRO))
+            cuidados.guardarEvento(EventoCuidado("e2", "m2", TipoCuidado.COMIDA, "Desayuno", Frecuencia(TipoFrecuencia.DIARIO, horas = listOf(LocalTime.of(7, 0))), fechaInicio = hoy.minusDays(10)))
+            cuidados.guardarEvento(EventoCuidado("e3", "m2", TipoCuidado.VACUNA, "Rabia", Frecuencia(TipoFrecuencia.UNICO), fechaInicio = hoy.plusDays(3), avisoAnticipadoDias = 7))
+        }
+        compose.onNodeWithTag("pestana_mascotas").performClick()
+        compose.waitUntil(5_000) { compose.onAllNodesWithTagExists("mascota_Venus") }
+        guardar("20_mascotas")
+        compose.onNodeWithTag("mascota_Venus").performClick()
+        compose.waitUntil(5_000) { compose.onAllNodesWithTagExists("seccion_Cuidados") }
+        guardar("21_ficha_resumen")
+        compose.onRoot().performTouchInput { swipeUp() }
+        guardar("22_ficha_resumen_abajo")
+        compose.onNodeWithTag("seccion_Cuidados").performClick()
+        guardar("23_ficha_cuidados")
+        compose.onNodeWithTag("seccion_Salud").performClick()
+        guardar("24_ficha_salud")
+        androidx.test.espresso.Espresso.pressBack()
+        compose.onNodeWithTag("pestana_servicios").performClick()
+        guardar("25_servicios")
+        compose.onNodeWithTag("pestana_perfil").performClick()
+        guardar("26_perfil")
+    }
 }
+

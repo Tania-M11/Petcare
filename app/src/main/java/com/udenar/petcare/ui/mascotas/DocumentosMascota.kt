@@ -85,7 +85,7 @@ fun TarjetaDocumentos(
         verticalArrangement = Arrangement.spacedBy(10.dp),
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            Text("Documentos", style = MaterialTheme.typography.titleMedium, modifier = Modifier.weight(1f))
+            com.udenar.petcare.ui.componentes.TituloConIcono("Documentos", Modifier.weight(1f))
             BotonAgregar("Imagen", "agregar_imagen") { imagen.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)) }
             Box(Modifier.size(8.dp))
             BotonAgregar("PDF", "agregar_pdf") { pdf.launch(arrayOf("application/pdf")) }

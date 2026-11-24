@@ -4,6 +4,7 @@ import androidx.annotation.DrawableRes
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
@@ -70,6 +71,7 @@ fun Icono.dibujo(): Int = when (this) {
     Icono.HUELLAS -> R.drawable.ic3d_huellas
     Icono.HUESO -> R.drawable.ic3d_hueso
     Icono.IDEA -> R.drawable.ic3d_idea
+    Icono.INFO -> R.drawable.ic3d_info
     Icono.INSECTO -> R.drawable.ic3d_insecto
     Icono.JABON -> R.drawable.ic3d_jabon
     Icono.JUEGO -> R.drawable.ic3d_juego
@@ -83,6 +85,7 @@ fun Icono.dibujo(): Int = when (this) {
     Icono.MEDICAMENTO -> R.drawable.ic3d_medicamento
     Icono.MENSAJE -> R.drawable.ic3d_mensaje
     Icono.NOTA -> R.drawable.ic3d_nota
+    Icono.NUBE -> R.drawable.ic3d_nube
     Icono.OIDO -> R.drawable.ic3d_oido
     Icono.OJO -> R.drawable.ic3d_ojo
     Icono.OSO -> R.drawable.ic3d_oso
@@ -98,6 +101,7 @@ fun Icono.dibujo(): Int = when (this) {
     Icono.RATON -> R.drawable.ic3d_raton
     Icono.REGALO -> R.drawable.ic3d_regalo
     Icono.RELOJ -> R.drawable.ic3d_reloj
+    Icono.SALIR -> R.drawable.ic3d_salir
     Icono.SOL -> R.drawable.ic3d_sol
     Icono.SOL_NUBE -> R.drawable.ic3d_sol_nube
     Icono.SUBE -> R.drawable.ic3d_sube
@@ -128,3 +132,52 @@ fun BaldosaIcono(icono: Icono, modifier: Modifier = Modifier, fondo: Color = Pc.
         Icono3D(icono, tam = tam * 0.66f)
     }
 }
+
+/**
+ * Ícono 3D para el título de una sección o tarjeta, según sus palabras (null = sin ícono).
+ * Así todas las pantallas comparten la misma ilustración para el mismo tema.
+ */
+fun iconoDeTitulo(titulo: String): Icono? {
+    val t = titulo.lowercase()
+    return when {
+        "vacuna" in t -> Icono.VACUNA
+        "medicamento" in t || "tratamiento" in t -> Icono.MEDICAMENTO
+        "desparasit" in t -> Icono.ESCUDO
+        "salud" in t -> Icono.TERMOMETRO
+        "peso" in t -> Icono.PESO
+        "visita" in t || "consulta" in t -> Icono.HOSPITAL
+        "veterinari" in t -> Icono.VETERINARIO
+        "paseo" in t || "actividad" in t -> Icono.PASEO
+        "comida" in t -> Icono.COMIDA
+        "higiene" in t -> Icono.BANO
+        "document" in t -> Icono.DOCUMENTO
+        "historial" in t -> Icono.RELOJ
+        "estado de cuidado" in t || t.startsWith("cuidados") -> Icono.CHECK
+        "horario" in t || "disponibilidad" in t -> Icono.CALENDARIO
+        "contacto" in t -> Icono.TELEFONO
+        "dónde" in t -> Icono.MAPA
+        "galería" in t -> Icono.GALERIA
+        "servicio" in t -> Icono.MALETIN
+        "especies" in t || "a quién" in t || t == "mascota" -> Icono.HUELLAS
+        "categor" in t -> Icono.ESTRELLA
+        "reseña" in t -> Icono.ESTRELLA
+        "código" in t -> Icono.CARNE
+        "personas" in t || "cuidadores" in t || "con quién" in t -> Icono.EQUIPO
+        "verificación" in t -> Icono.CHECK
+        "propuesta" in t -> Icono.DINERO
+        "edad" in t -> Icono.PASTEL
+        "próxima cita" in t -> Icono.CALENDARIO
+        "lo que pide" in t || "lo que indicó" in t || "sobre mí" in t || "más detalles" in t -> Icono.NOTA
+        else -> null
+    }
+}
+
+/** Título de sección con su ícono 3D a la izquierda (si el tema tiene uno). */
+@androidx.compose.runtime.Composable
+fun TituloConIcono(titulo: String, modifier: Modifier = Modifier) {
+    androidx.compose.foundation.layout.Row(modifier, verticalAlignment = Alignment.CenterVertically) {
+        iconoDeTitulo(titulo)?.let { Icono3D(it, tam = 26.dp, modifier = Modifier.padding(end = 10.dp)) }
+        androidx.compose.material3.Text(titulo, style = androidx.compose.material3.MaterialTheme.typography.titleMedium)
+    }
+}
+

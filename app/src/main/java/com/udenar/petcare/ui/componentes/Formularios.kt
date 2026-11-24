@@ -188,7 +188,7 @@ fun Seccion(titulo: String, modifier: Modifier = Modifier, contenido: @Composabl
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        Text(titulo, style = MaterialTheme.typography.titleMedium)
+        TituloConIcono(titulo)
         contenido()
     }
 }

@@ -20,7 +20,24 @@ import javax.inject.Inject
 class MascotasViewModel @Inject constructor(
     private val repo: RepositorioMascotas,
     private val reloj: Clock,
+    cuidados: com.udenar.petcare.domain.cuidados.RepositorioCuidados,
 ) : ViewModel() {
+
+    /** Cómo va el día de cada mascota: tomas hechas, total y lo próximo pendiente. */
+    val hoy: StateFlow<Map<String, DiaMascota>> = kotlinx.coroutines.flow.combine(cuidados.observarEventos(), cuidados.observarRegistros()) { eventos, registros ->
+        val fecha = LocalDate.now(reloj)
+        val ahora = java.time.LocalDateTime.now(reloj)
+        com.udenar.petcare.domain.cuidados.MotorCuidados.agendaDelDia(fecha, fecha, eventos, registros, reloj.zone)
+            .groupBy { it.evento.mascotaId }
+            .mapValues { (_, tomas) ->
+                val pendientes = tomas.filter { it.pendiente }.sortedBy { it.fechaHora }
+                // Lo próximo: la siguiente pendiente desde ahora, o la más atrasada
+                val proxima = pendientes.firstOrNull { !it.fechaHora.isBefore(ahora.minusHours(1)) } ?: pendientes.firstOrNull()
+                DiaMascota(tomas.size - pendientes.size, tomas.size, proxima?.evento?.tipo, proxima?.let {
+                    it.evento.titulo + if (it.conHora) " · " + it.fechaHora.toLocalTime().format(java.time.format.DateTimeFormatter.ofPattern("h:mm a", java.util.Locale.forLanguageTag("es-CO"))) else ""
+                })
+            }
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyMap())
 
     val mascotas: StateFlow<List<Mascota>?> = repo.observar()
         .map { it as List<Mascota>? }
@@ -33,6 +50,8 @@ class MascotasViewModel @Inject constructor(
         if (m.fotoLocal == null && m.fotoUrl != null) viewModelScope.launch { repo.asegurarFoto(m.id) }
     }
 }
+
+data class DiaMascota(val hechos: Int, val total: Int, val tipoProximo: com.udenar.petcare.domain.cuidados.TipoCuidado?, val proximo: String?)
 
 /** "Gato · 2 años · 4,2 kg" */
 fun describir(m: Mascota, hoy: LocalDate): String = listOfNotNull(

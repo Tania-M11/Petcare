@@ -69,7 +69,7 @@ private fun Tarjeta(titulo: String, accion: (@Composable () -> Unit)? = null, co
         verticalArrangement = Arrangement.spacedBy(10.dp),
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            Text(titulo, style = MaterialTheme.typography.titleMedium, modifier = Modifier.weight(1f))
+            com.udenar.petcare.ui.componentes.TituloConIcono(titulo, Modifier.weight(1f))
             accion?.invoke()
         }
         contenido()

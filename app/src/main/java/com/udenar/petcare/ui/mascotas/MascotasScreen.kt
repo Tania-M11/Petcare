@@ -1,5 +1,7 @@
 package com.udenar.petcare.ui.mascotas
 
+import com.udenar.petcare.ui.componentes.colores
+import com.udenar.petcare.ui.cuidados.icono
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -60,6 +62,7 @@ fun MascotasScreen(
     viewModel: MascotasViewModel = hiltViewModel(),
 ) {
     val mascotas by viewModel.mascotas.collectAsStateWithLifecycle()
+    val dias by viewModel.hoy.collectAsStateWithLifecycle()
     var menuAbierto by remember { mutableStateOf(false) }
     val contexto = androidx.compose.ui.platform.LocalContext.current
 
@@ -105,7 +108,7 @@ fun MascotasScreen(
                 val (mias, cuidadas) = lista.partition { it.esPropietario }
                 items(mias, key = { it.id }) { m ->
                     LaunchedEffect(m.id, m.fotoUrl) { viewModel.asegurarFoto(m) }
-                    TarjetaMascota(m, viewModel.descripcion(m), onClick = { onAbrir(m.id) })
+                    TarjetaMascota(m, viewModel.descripcion(m), dias[m.id], onClick = { onAbrir(m.id) })
                 }
                 if (cuidadas.isNotEmpty()) {
                     item {
@@ -113,7 +116,7 @@ fun MascotasScreen(
                     }
                     items(cuidadas, key = { it.id }) { m ->
                         LaunchedEffect(m.id, m.fotoUrl) { viewModel.asegurarFoto(m) }
-                        TarjetaMascota(m, viewModel.descripcion(m), onClick = { onAbrir(m.id) })
+                        TarjetaMascota(m, viewModel.descripcion(m), dias[m.id], onClick = { onAbrir(m.id) })
                     }
                 }
             }
@@ -133,15 +136,15 @@ fun MascotasScreen(
                     style = MaterialTheme.typography.headlineSmall,
                     modifier = Modifier.padding(start = 12.dp, bottom = 8.dp),
                 )
-                FilaOpcion(Icons.Rounded.Pets, "Agregar mascota", "Crea su ficha, foto y cuidados", Pc.Durazno, Pc.Naranja, onClick = {
+                FilaOpcion(Icons.Rounded.Pets, "Agregar mascota", "Crea su ficha, foto y cuidados", Pc.Durazno, Pc.Naranja, icono3d = com.udenar.petcare.domain.modelo.Icono.HUELLAS, onClick = {
                     menuAbierto = false
                     onAgregar()
                 })
-                FilaOpcion(Icons.Rounded.Key, "Cuidar con código", "Escribe el código que te compartió el dueño", Pc.LavandaClara, Pc.Lavanda, onClick = {
+                FilaOpcion(Icons.Rounded.Key, "Cuidar con código", "Escribe el código que te compartió el dueño", Pc.LavandaClara, Pc.Lavanda, icono3d = com.udenar.petcare.domain.modelo.Icono.EQUIPO, onClick = {
                     menuAbierto = false
                     onCuidar()
                 })
-                FilaOpcion(Icons.Rounded.QrCodeScanner, "Escanear QR", "Lee el carné de una mascota", Pc.CieloClaro, Pc.Cielo, onClick = {
+                FilaOpcion(Icons.Rounded.QrCodeScanner, "Escanear QR", "Lee el carné de una mascota", Pc.CieloClaro, Pc.Cielo, icono3d = com.udenar.petcare.domain.modelo.Icono.CAMARA, onClick = {
                     menuAbierto = false
                     com.udenar.petcare.ui.compartir.escanearQr(contexto, onTexto = onQrLeido, onError = avisar)
                 })
@@ -151,26 +154,38 @@ fun MascotasScreen(
 }
 
 @Composable
-private fun TarjetaMascota(m: Mascota, descripcion: String, onClick: () -> Unit) {
+private fun TarjetaMascota(m: Mascota, descripcion: String, dia: DiaMascota?, onClick: () -> Unit) {
+    // Tarjeta con el color de su especie, cómo va su día y lo próximo que le toca
+    val color = m.especie.colores().first()
     Row(
         Modifier
             .fillMaxWidth()
             .clip(MaterialTheme.shapes.large)
-            .background(Pc.Blanco)
+            .background(androidx.compose.ui.graphics.Brush.horizontalGradient(listOf(color.copy(alpha = 0.45f), Pc.Blanco, Pc.Blanco)))
             .clickable(onClick = onClick)
             .testTag("mascota_${m.nombre}")
             .padding(14.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        AvatarMascota(m.especie, m.fotoLocal, tam = 68.dp)
+        AvatarMascota(m.especie, m.fotoLocal, tam = 72.dp)
         Column(
             Modifier
                 .weight(1f)
                 .padding(start = 14.dp),
+            verticalArrangement = Arrangement.spacedBy(2.dp),
         ) {
             Text(m.nombre, style = MaterialTheme.typography.headlineSmall)
             Text(descripcion, style = MaterialTheme.typography.bodyMedium, color = Pc.TintaSuave)
+            when {
+                dia == null -> Unit
+                dia.proximo != null -> com.udenar.petcare.ui.componentes.Chip(
+                    dia.proximo, fondo = Pc.Crema, icono = dia.tipoProximo?.icono,
+                    modifier = Modifier.padding(top = 4.dp),
+                )
+                else -> com.udenar.petcare.ui.componentes.Chip("Todo listo por hoy", fondo = Pc.MentaClara, icono = com.udenar.petcare.domain.modelo.Icono.CHECK, modifier = Modifier.padding(top = 4.dp))
+            }
         }
+        if (dia != null && dia.total > 0) com.udenar.petcare.ui.componentes.AnilloProgreso(dia.hechos, dia.total, tam = 56.dp)
         if (m.porSubir) {
             Icon(
                 Icons.Rounded.CloudUpload,

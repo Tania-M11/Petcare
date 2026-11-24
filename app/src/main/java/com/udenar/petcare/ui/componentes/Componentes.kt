@@ -73,7 +73,7 @@ fun Chip(texto: String, modifier: Modifier = Modifier, fondo: Color = Pc.Blanco,
         horizontalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(6.dp),
     ) {
         icono?.let { Icono3D(it, tam = 16.dp) }
-        Text(texto, style = MaterialTheme.typography.labelMedium, color = color)
+        Text(texto, style = MaterialTheme.typography.labelMedium, color = color, maxLines = 1, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis)
     }
 }
 
@@ -233,6 +233,7 @@ fun FilaOpcion(
     colorIcono: Color,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
+    icono3d: com.udenar.petcare.domain.modelo.Icono? = null,
 ) {
     Row(
         modifier = modifier
@@ -242,7 +243,7 @@ fun FilaOpcion(
             .padding(horizontal = 12.dp, vertical = 10.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Box(
+        if (icono3d != null) BaldosaIcono(icono3d, fondo = fondoIcono, tam = 42.dp) else Box(
             Modifier
                 .size(42.dp)
                 .clip(RoundedCornerShape(14.dp))

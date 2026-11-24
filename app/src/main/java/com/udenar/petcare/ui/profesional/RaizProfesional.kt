@@ -281,12 +281,12 @@ private fun PerfilVetScreen(viewModel: ModoVetViewModel, onEditar: () -> Unit, a
                 .background(Pc.Blanco)
                 .padding(6.dp),
         ) {
-            FilaOpcion(Icons.Rounded.Edit, "Editar perfil", "Especies, servicios, horario y ubicación", Pc.CieloClaro, Pc.CieloOscuro, onClick = onEditar, modifier = Modifier.testTag("editar_perfil_vet"))
+            FilaOpcion(Icons.Rounded.Edit, "Editar perfil", "Especies, servicios, horario y ubicación", Pc.CieloClaro, Pc.CieloOscuro, icono3d = com.udenar.petcare.domain.modelo.Icono.LAPIZ, onClick = onEditar, modifier = Modifier.testTag("editar_perfil_vet"))
             val pres by viewModel.perfilPres.collectAsStateWithLifecycle()
             if (pres?.activo == true) {
-                FilaOpcion(Icons.Rounded.SwapHoriz, "Cambiar a modo prestador", "Solicitudes, agenda y clientes", Pc.SolClaro, Pc.Naranja, onClick = viewModel::modoPrestador)
+                FilaOpcion(Icons.Rounded.SwapHoriz, "Cambiar a modo prestador", "Solicitudes, agenda y clientes", Pc.SolClaro, Pc.Naranja, icono3d = com.udenar.petcare.domain.modelo.Icono.TIJERAS, onClick = viewModel::modoPrestador)
             }
-            FilaOpcion(Icons.Rounded.SwapHoriz, "Volver a modo personal", "Tus mascotas y cuidados", Pc.Durazno, Pc.Naranja, onClick = viewModel::volverAPersonal, modifier = Modifier.testTag("volver_personal"))
+            FilaOpcion(Icons.Rounded.SwapHoriz, "Volver a modo personal", "Tus mascotas y cuidados", Pc.Durazno, Pc.Naranja, icono3d = com.udenar.petcare.domain.modelo.Icono.CASA, onClick = viewModel::volverAPersonal, modifier = Modifier.testTag("volver_personal"))
             FilaOpcion(Icons.Rounded.VisibilityOff, "Ocultar mi perfil", "Dejas de aparecer en el directorio", Pc.LavandaClara, Pc.Lavanda, onClick = { confirmarOcultar = true })
         }
     }

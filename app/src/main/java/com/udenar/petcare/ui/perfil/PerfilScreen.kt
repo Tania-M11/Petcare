@@ -176,7 +176,7 @@ fun PerfilScreen(
                 .padding(6.dp),
         ) {
             FilaOpcion(
-                icono = Icons.Rounded.Explore,
+                icono = Icons.Rounded.Explore, icono3d = com.udenar.petcare.domain.modelo.Icono.BRILLOS,
                 titulo = "¿Qué te trae a PetCare?",
                 subtitulo = usuario?.intenciones?.takeIf { it.isNotEmpty() }?.joinToString(" · ") { it.titulo }
                     ?: "Personaliza tus primeros pasos",
@@ -185,7 +185,7 @@ fun PerfilScreen(
                 onClick = irAIntenciones,
             )
             FilaOpcion(
-                icono = Icons.Rounded.NotificationsActive,
+                icono = Icons.Rounded.NotificationsActive, icono3d = com.udenar.petcare.domain.modelo.Icono.CAMPANA,
                 titulo = "Recordatorios",
                 subtitulo = when {
                     !notificacionesActivas -> "Notificaciones desactivadas · toca para activarlas"
@@ -211,7 +211,7 @@ fun PerfilScreen(
             )
             if (BuildConfig.DEBUG) {
                 FilaOpcion(
-                    icono = Icons.Rounded.Alarm,
+                    icono = Icons.Rounded.Alarm, icono3d = com.udenar.petcare.domain.modelo.Icono.ALARMA,
                     titulo = "Probar recordatorio",
                     subtitulo = "Solo en desarrollo: suena en 1 minuto, aunque cierres la app",
                     fondoIcono = Pc.SolClaro,
@@ -223,7 +223,7 @@ fun PerfilScreen(
                 )
             }
             FilaOpcion(
-                icono = Icons.Rounded.CloudSync,
+                icono = Icons.Rounded.CloudSync, icono3d = com.udenar.petcare.domain.modelo.Icono.NUBE,
                 titulo = "Sincronización",
                 subtitulo = describirSync(estadoSync),
                 fondoIcono = Pc.CieloClaro,
@@ -235,7 +235,7 @@ fun PerfilScreen(
                 modifier = Modifier.testTag("fila_sync"),
             )
             FilaOpcion(
-                icono = Icons.Rounded.Info,
+                icono = Icons.Rounded.Info, icono3d = com.udenar.petcare.domain.modelo.Icono.INFO,
                 titulo = "Acerca de PetCare",
                 subtitulo = "Versión ${BuildConfig.VERSION_NAME} · créditos",
                 fondoIcono = Pc.LavandaClara,
@@ -298,7 +298,7 @@ fun PerfilScreen(
                 Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                     Text("Sigues teniendo tus mascotas: el perfil profesional se suma a tu cuenta.", style = MaterialTheme.typography.bodySmall, color = Pc.TintaSuave)
                     FilaOpcion(
-                        icono = Icons.Rounded.MedicalServices,
+                        icono = Icons.Rounded.MedicalServices, icono3d = com.udenar.petcare.domain.modelo.Icono.VETERINARIO,
                         titulo = when {
                             perfilVet?.activo == true -> "Editar mi perfil de veterinario"
                             perfilVet != null -> "Reactivar mi perfil de veterinario"
@@ -314,7 +314,7 @@ fun PerfilScreen(
                         modifier = Modifier.testTag("trabajar_vet"),
                     )
                     FilaOpcion(
-                        icono = Icons.Rounded.ContentCut,
+                        icono = Icons.Rounded.ContentCut, icono3d = com.udenar.petcare.domain.modelo.Icono.TIJERAS,
                         titulo = when {
                             perfilPres?.activo == true -> "Editar mi perfil de servicios"
                             perfilPres != null -> "Reactivar mi perfil de servicios"
