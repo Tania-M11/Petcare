@@ -205,7 +205,7 @@ private fun PerfilPrestadorScreen(viewModel: ModoPrestadorViewModel, onEditar: (
             val principal = categorias.firstOrNull { it.id == p.categoriaPrincipal }
             TarjetaIlustrada(
                 titulo = p.nombre,
-                texto = listOfNotNull(principal?.let { "${it.icono} ${it.nombre}" }, p.ciudad).joinToString(" · "),
+                texto = listOfNotNull(principal?.nombre, p.ciudad).joinToString(" · "),
                 chip = if (p.recibiendo) "Recibiendo solicitudes" else "En pausa",
                 ilustracion = R.drawable.chopper_amigos,
                 degradado = listOf(Pc.SolClaro, Pc.Sol),

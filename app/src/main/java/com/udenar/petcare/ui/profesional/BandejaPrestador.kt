@@ -258,6 +258,7 @@ fun DetalleSolicitudPresScreen(onVolver: () -> Unit, avisar: (String) -> Unit, v
             Text("${s.inicio.textoCita()}" + (s.fin?.let { " → ${it.textoCita()}" } ?: "") + " · ${s.modalidad.etiqueta.lowercase()}", style = MaterialTheme.typography.titleSmall)
             s.precioReferencia?.let { Text("Precio publicado: ${Precios.pesos(it)} (${s.precioModo.etiqueta.lowercase()})", style = MaterialTheme.typography.bodySmall, color = Pc.TintaSuave) }
             s.mensaje?.let { Text("“$it”", style = MaterialTheme.typography.bodyMedium) }
+            com.udenar.petcare.ui.componentes.FotosSolicitud(s.fotos)
         }
         det.salud?.let { sa ->
             Seccion("Salud y comportamiento (compartido)") {

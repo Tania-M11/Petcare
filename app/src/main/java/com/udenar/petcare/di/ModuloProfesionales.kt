@@ -23,5 +23,7 @@ abstract class ModuloProfesionales {
 
     @Binds abstract fun resenas(impl: com.udenar.petcare.data.profesionales.ResenasSupabase): com.udenar.petcare.domain.profesionales.RepositorioResenas
 
+    @Binds abstract fun fotosSolicitudes(impl: com.udenar.petcare.data.profesionales.FotosSolicitudesSupabase): com.udenar.petcare.domain.profesionales.FotosSolicitudes
+
     @Binds abstract fun atencion(impl: com.udenar.petcare.data.profesionales.AtencionVetSupabase): com.udenar.petcare.domain.profesionales.RepositorioAtencionVet
 }

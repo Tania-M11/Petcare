@@ -93,6 +93,8 @@ class SolicitarVetViewModel @Inject constructor(
     private val atencion: RepositorioAtencionVet,
     mascotasRepo: RepositorioMascotas,
     private val reloj: Clock,
+    private val fotosSolicitudes: com.udenar.petcare.domain.profesionales.FotosSolicitudes,
+    private val archivos: com.udenar.petcare.data.fotos.ArchivosFotos,
 ) : ViewModel() {
     private val vetId = estado.toRoute<RutaSolicitarVet>().id
     val vet = MutableStateFlow<PerfilVeterinario?>(null)
@@ -114,7 +116,7 @@ class SolicitarVetViewModel @Inject constructor(
         }
     }
 
-    fun enviar(mascotaId: String, servicio: ServicioVet, modalidad: Modalidad, fecha: LocalDateTime, texto: String, onListo: () -> Unit) {
+    fun enviar(mascotaId: String, servicio: ServicioVet, modalidad: Modalidad, fecha: LocalDateTime, texto: String, fotos: List<android.net.Uri>, onListo: () -> Unit) {
         if (fecha.isBefore(LocalDateTime.now(reloj))) {
             mensaje.value = "Elige una fecha y hora que no hayan pasado"
             return
@@ -122,7 +124,8 @@ class SolicitarVetViewModel @Inject constructor(
         enviando.value = true
         viewModelScope.launch {
             try {
-                atencion.solicitar(mascotaId, vetId, servicio, modalidad, fecha, texto)
+                val id = atencion.solicitar(mascotaId, vetId, servicio, modalidad, fecha, texto)
+                adjuntarFotos(archivos, fotosSolicitudes, com.udenar.petcare.domain.profesionales.TipoSolicitud.VET, id, fotos)?.let { mensaje.value = it }
                 onListo()
             } catch (e: ProfesionalException) {
                 mensaje.value = e.message
@@ -130,90 +133,6 @@ class SolicitarVetViewModel @Inject constructor(
                 enviando.value = false
             }
         }
-    }
-}
-
-/** Solicitud de servicio a un veterinario (RF-25): sin pagos ni chat. */
-@Composable
-fun SolicitarVetScreen(onVolver: () -> Unit, onEnviada: () -> Unit, avisar: (String) -> Unit, viewModel: SolicitarVetViewModel = hiltViewModel()) {
-    val vet by viewModel.vet.collectAsStateWithLifecycle()
-    val mascotas by viewModel.mascotas.collectAsStateWithLifecycle()
-    val mensaje by viewModel.mensaje.collectAsStateWithLifecycle()
-    val enviando by viewModel.enviando.collectAsStateWithLifecycle()
-    LaunchedEffect(mensaje) {
-        mensaje?.let {
-            avisar(it)
-            viewModel.mensaje.value = null
-        }
-    }
-    var mascotaId by remember { mutableStateOf<String?>(null) }
-    var servicio by remember { mutableStateOf<ServicioVet?>(null) }
-    var modalidad by remember { mutableStateOf(Modalidad.CONSULTORIO) }
-    var fecha by remember { mutableStateOf(viewModel.hoy.plusDays(1)) }
-    var hora by remember { mutableStateOf(listOf(LocalTime.of(9, 0))) }
-    var texto by remember { mutableStateOf("") }
-    LaunchedEffect(mascotas) { if (mascotaId == null && mascotas.size == 1) mascotaId = mascotas.first().id }
-
-    Column(
-        Modifier
-            .fillMaxSize()
-            .background(Pc.Crema)
-            .statusBarsPadding()
-            .navigationBarsPadding()
-            .imePadding()
-            .verticalScroll(rememberScrollState())
-            .padding(horizontal = 20.dp, vertical = 12.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp),
-    ) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            BotonCircular(Icons.AutoMirrored.Rounded.ArrowBack, "Volver", onClick = onVolver)
-            Text("Pedir una cita", style = MaterialTheme.typography.headlineMedium, modifier = Modifier.padding(start = 16.dp))
-        }
-        val v = vet ?: return@Column
-        Text("Con ${v.nombre}${if (v.verificacion.verificado) " ✓" else ""}", style = MaterialTheme.typography.titleMedium)
-        if (mascotas.isEmpty()) {
-            Text("Primero agrega una mascota propia: solo el dueño puede pedir servicios.", color = Pc.TintaSuave)
-            return@Column
-        }
-        Seccion("¿Para quién?") {
-            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                mascotas.forEach { m -> ChipOpcion(m.nombre, mascotaId == m.id, onClick = { mascotaId = m.id }, modifier = Modifier.testTag("pedir_${m.nombre}")) }
-            }
-            val elegida = mascotas.firstOrNull { it.id == mascotaId }
-            if (elegida != null && elegida.especie !in v.especies) {
-                // Se advierte sin bloquear (RF-25)
-                Text(
-                    "${v.nombre} no indica que atienda ${elegida.especie.etiqueta.lowercase()}. Puedes enviar la solicitud de todas formas.",
-                    style = MaterialTheme.typography.bodySmall, color = Pc.Naranja, modifier = Modifier.testTag("aviso_especie"),
-                )
-            }
-        }
-        Seccion("Servicio") {
-            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                (v.servicios.takeIf { it.isNotEmpty() } ?: ServicioVet.entries.toSet()).sortedBy { it.ordinal }.forEach { s ->
-                    ChipOpcion(s.etiqueta, servicio == s, onClick = { servicio = s }, modifier = Modifier.testTag("servicio_${s.name}"))
-                }
-            }
-            if (v.domicilio) {
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Modalidad.entries.forEach { m -> ChipOpcion(m.etiqueta, modalidad == m, onClick = { modalidad = m }) }
-                }
-            }
-        }
-        Seccion("¿Cuándo te gustaría?") {
-            SelectorFecha("Fecha", fecha, { it?.let { f -> fecha = f } }, desde = viewModel.hoy)
-            EditorHoras(hora, { h -> hora = h.takeLast(1) })
-            Text("El veterinario confirma o propone otra hora.", style = MaterialTheme.typography.bodySmall, color = Pc.TintaSuave)
-        }
-        CampoTexto(texto, { texto = it.take(500) }, "Mensaje (opcional)", lineas = 3)
-        BotonPrincipal(
-            "Enviar solicitud",
-            habilitado = mascotaId != null && servicio != null && hora.isNotEmpty(),
-            cargando = enviando,
-            onClick = { viewModel.enviar(mascotaId!!, servicio!!, modalidad, fecha.atTime(hora.first()), texto, onEnviada) },
-            modifier = Modifier.testTag("enviar_solicitud"),
-        )
-        Text("PetCare no cobra ni procesa pagos: el valor se acuerda directamente con el veterinario.", style = MaterialTheme.typography.bodySmall, color = Pc.TintaSuave)
     }
 }
 
@@ -371,5 +290,31 @@ fun FilaSolicitud(s: SolicitudVet, titulo: String, onClick: () -> Unit, modifier
             Text("${s.servicio.etiqueta} · ${s.fecha.textoCita()}", style = MaterialTheme.typography.bodySmall, color = Pc.TintaSuave)
         }
         Chip(s.estado.etiqueta, fondo = s.estado.colores().first, color = s.estado.colores().second)
+    }
+}
+
+/**
+ * Comprime (512 px) y adjunta las fotos de una solicitud ya creada. Devuelve un aviso si no se
+ * pudieron subir: la solicitud igual quedó enviada.
+ */
+internal suspend fun adjuntarFotos(
+    archivos: com.udenar.petcare.data.fotos.ArchivosFotos,
+    fotosSolicitudes: com.udenar.petcare.domain.profesionales.FotosSolicitudes,
+    tipo: com.udenar.petcare.domain.profesionales.TipoSolicitud,
+    id: String,
+    fotos: List<android.net.Uri>,
+): String? {
+    if (fotos.isEmpty()) return null
+    return try {
+        val bytes = fotos.take(com.udenar.petcare.domain.profesionales.FotosSolicitudes.MAXIMO).map { uri ->
+            val archivo = archivos.comprimir(uri, "solicitud")
+            try { archivo.readBytes() } finally { archivo.delete() }
+        }
+        fotosSolicitudes.adjuntar(tipo, id, bytes)
+        null
+    } catch (e: ProfesionalException) {
+        e.message
+    } catch (_: Exception) {
+        "La solicitud se envió, pero no pudimos leer las fotos."
     }
 }

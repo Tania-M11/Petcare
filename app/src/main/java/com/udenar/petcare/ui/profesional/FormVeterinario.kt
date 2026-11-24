@@ -91,6 +91,7 @@ data class BorradorVet(
     val direccion: String = "",
     val ubicacion: Coordenada? = null,
     val activo: Boolean = true,
+    val foto: String? = null,
 ) {
     fun comoPerfil(id: String) = PerfilVeterinario(
         id = id, nombre = nombre, especies = especies,
@@ -98,14 +99,14 @@ data class BorradorVet(
         servicios = servicios, clinica = clinica, telefono = telefono, whatsapp = whatsapp, correo = correo,
         descripcion = descripcion, domicilio = domicilio, horario = horario.filterValues { it.isNotBlank() },
         tarifa = tarifa, ciudad = ciudad, direccion = direccion,
-        lat = ubicacion?.lat ?: 0.0, lon = ubicacion?.lon ?: 0.0, activo = true,
+        lat = ubicacion?.lat ?: 0.0, lon = ubicacion?.lon ?: 0.0, activo = true, foto = foto,
     )
 
     companion object {
         fun desde(p: PerfilVeterinario) = BorradorVet(
             p.nombre, p.especies, p.servicios, p.especialidades.joinToString(", "), p.clinica.orEmpty(), p.telefono,
             p.whatsapp.orEmpty(), p.correo.orEmpty(), p.descripcion.orEmpty(), p.domicilio, p.horario, p.tarifa.orEmpty(),
-            p.ciudad, p.direccion, Coordenada(p.lat, p.lon), p.activo,
+            p.ciudad, p.direccion, Coordenada(p.lat, p.lon), p.activo, p.foto,
         )
     }
 }
@@ -114,6 +115,7 @@ data class EstadoFormVet(
     val borrador: BorradorVet = BorradorVet(),
     val cargando: Boolean = true,
     val guardando: Boolean = false,
+    val subiendoFoto: Boolean = false,
     val errores: Map<String, String> = emptyMap(),
     val mensaje: String? = null,
     /** true si ya existía un perfil (edición); false = activación. */
@@ -125,8 +127,27 @@ class FormVeterinarioViewModel @Inject constructor(
     private val veterinarios: RepositorioVeterinarios,
     private val modo: RepositorioModo,
     private val cuenta: RepositorioCuenta,
+    private val archivos: com.udenar.petcare.data.fotos.ArchivosFotos,
 ) : ViewModel() {
     private val _estado = MutableStateFlow(EstadoFormVet())
+
+    /** Comprime (512 px) y sube la foto; queda en el perfil al guardar. */
+    fun elegirFoto(uri: android.net.Uri) {
+        _estado.update { it.copy(subiendoFoto = true) }
+        viewModelScope.launch {
+            try {
+                val archivo = archivos.comprimir(uri, "perfil")
+                val url = try { veterinarios.subirFoto(archivo.readBytes()) } finally { archivo.delete() }
+                cambiar { it.copy(foto = url) }
+            } catch (e: ProfesionalException) {
+                _estado.update { it.copy(mensaje = e.message) }
+            } catch (_: Exception) {
+                _estado.update { it.copy(mensaje = "No pudimos leer la foto") }
+            } finally {
+                _estado.update { it.copy(subiendoFoto = false) }
+            }
+        }
+    }
     val estado = _estado.asStateFlow()
 
     init {
@@ -193,21 +214,23 @@ fun FormVeterinarioScreen(onVolver: () -> Unit, onGuardado: (activado: Boolean) 
         }
     }
 
-    Column(
-        Modifier
-            .fillMaxSize()
-            .background(Pc.Crema)
-            .statusBarsPadding()
-            .navigationBarsPadding()
-            .imePadding()
-            .verticalScroll(rememberScrollState())
-            .padding(horizontal = 20.dp, vertical = 12.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp),
-    ) {
+    Column(Modifier.fillMaxSize().background(Pc.Crema).statusBarsPadding().navigationBarsPadding().imePadding()) {
+    Column(Modifier.padding(horizontal = 20.dp, vertical = 12.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             BotonCircular(Icons.AutoMirrored.Rounded.ArrowBack, "Volver", onClick = onVolver)
             Text(if (estado.existente) "Mi perfil profesional" else "Perfil de veterinario", style = MaterialTheme.typography.headlineMedium, modifier = Modifier.padding(start = 16.dp))
         }
+        // Vista previa fija arriba: cambia mientras se escribe
+        if (!estado.cargando) VistaPreviaPerfil { com.udenar.petcare.ui.servicios.TarjetaVeterinario(b.comoPerfil(""), onClick = {}) }
+    }
+    Column(
+        Modifier
+            .weight(1f)
+            .verticalScroll(rememberScrollState())
+            .padding(horizontal = 20.dp)
+            .padding(bottom = 16.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp),
+    ) {
         if (!estado.existente) {
             Text(
                 "Así te verán los dueños en el directorio. Después podrás subir tu certificado para obtener la insignia Verificado.",
@@ -220,6 +243,7 @@ fun FormVeterinarioScreen(onVolver: () -> Unit, onGuardado: (activado: Boolean) 
         }
 
         Seccion("Tú") {
+            com.udenar.petcare.ui.componentes.EditorFotoPerfil(b.foto, b.nombre, estado.subiendoFoto, onElegir = viewModel::elegirFoto, onQuitar = { viewModel.cambiar { it.copy(foto = null) } })
             CampoTexto(b.nombre, { v -> viewModel.cambiar { it.copy(nombre = v) } }, "Nombre completo *", error = e["nombre"], modifier = Modifier.testTag("vet_nombre"))
             CampoTexto(b.clinica, { v -> viewModel.cambiar { it.copy(clinica = v) } }, "Clínica o consultorio")
             CampoTexto(b.especialidades, { v -> viewModel.cambiar { it.copy(especialidades = v) } }, "Especialidades (separadas por coma)")
@@ -293,6 +317,7 @@ fun FormVeterinarioScreen(onVolver: () -> Unit, onGuardado: (activado: Boolean) 
             cargando = estado.guardando,
             modifier = Modifier.testTag("vet_guardar"),
         )
+    }
     }
 
     if (mapa) {

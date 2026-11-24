@@ -73,6 +73,7 @@ private data class FilaSolicitudPres(
     val motivo: String? = null,
     val historial: List<PasoJson> = emptyList(),
     @SerialName("creado_en") val creadoEn: String? = null,
+    val fotos: List<String> = emptyList(),
 ) {
     fun comoSolicitud() = SolicitudPrestador(
         id = id, mascotaId = mascotaId, propietarioNombre = propietarioNombre, prestadorId = prestadorId, prestadorNombre = prestadorNombre,
@@ -88,6 +89,7 @@ private data class FilaSolicitudPres(
         motivo = motivo,
         historial = historial.map { PasoHistorial(it.actor, EstadoSolicitudPres.desdeCodigo(it.estado), it.fecha?.let { f -> runCatching { OffsetDateTime.parse(f).toInstant() }.getOrNull() }, it.nota) },
         creadaEn = creadoEn?.let { runCatching { OffsetDateTime.parse(it).toInstant() }.getOrNull() },
+        fotos = fotos,
     )
 }
 

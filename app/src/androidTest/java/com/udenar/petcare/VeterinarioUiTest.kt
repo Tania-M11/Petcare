@@ -1,5 +1,6 @@
 package com.udenar.petcare
 
+import androidx.compose.ui.test.performTextClearance
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
@@ -44,7 +45,13 @@ class VeterinarioUiTest {
         compose.onNodeWithTag("tarjeta_trabaja").performClick()
         compose.onNodeWithTag("trabajar_vet").performClick()
         compose.waitUntil(5_000) { compose.onAllNodesWithTagExists("vet_nombre") }
-        // El nombre viene de la cuenta (Ana María)
+        // Vista previa en vivo de la tarjeta del directorio, con la foto de perfil (Fase 6.7)
+        compose.onNodeWithTag("vista_previa").assertExists()
+        compose.onNodeWithTag("elegir_foto_perfil").assertExists()
+        compose.onNodeWithTag("vet_nombre").performTextClearance()
+        compose.onNodeWithTag("vet_nombre").performTextInput("Ana María Paz")
+        compose.waitUntil(5_000) { compose.onAllNodesWithTagExists("vet_Ana María Paz") } // la tarjeta cambia al escribir
+        androidx.test.espresso.Espresso.closeSoftKeyboard()
         compose.onNodeWithTag("vet_especie_PERRO").performScrollTo().performClick()
         compose.onNodeWithTag("vet_telefono").performScrollTo().performTextInput("300 123 4567")
         compose.onNodeWithTag("vet_ciudad").performScrollTo().performTextInput("Pasto")
@@ -58,7 +65,7 @@ class VeterinarioUiTest {
         // Modo veterinario: pestaña Perfil con la verificación pendiente
         compose.waitUntil(5_000) { compose.onAllNodesWithTagExists("chip_modo_vet") }
         assertEquals(ModoUso.VETERINARIO, modo.modo.value)
-        assertEquals("Ana María", veterinarios.miPerfil.value!!.nombre)
+        assertEquals("Ana María Paz", veterinarios.miPerfil.value!!.nombre)
         compose.onNodeWithTag("mensaje_verificacion").assertExists()
         compose.onNodeWithText(Verificacion.SIN_CERTIFICADO.mensaje).assertExists()
         compose.onNodeWithTag("pestana_solicitudes").performClick()

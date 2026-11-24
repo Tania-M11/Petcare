@@ -44,6 +44,8 @@ data class SolicitudVet(
     val motivoRechazo: String? = null,
     val estado: EstadoSolicitudVet = EstadoSolicitudVet.PENDIENTE,
     val creadaEn: Instant? = null,
+    /** Rutas en el bucket privado "solicitudes" (máximo 3, RF-34). */
+    val fotos: List<String> = emptyList(),
 ) {
     /** La hora acordada si ya se aceptó; si no, la que pidió el dueño. */
     val fecha: LocalDateTime get() = fechaConfirmada ?: fechaPreferida

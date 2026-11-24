@@ -40,6 +40,7 @@ import javax.inject.Singleton
 private data class FilaVeterinario(
     val id: String,
     val nombre: String,
+    @SerialName("foto_url") val fotoUrl: String? = null,
     val especies: List<String> = emptyList(),
     val especialidades: List<String> = emptyList(),
     val servicios: List<String> = emptyList(),
@@ -71,7 +72,7 @@ private data class FilaVeterinario(
         horario = horario.mapNotNull { (k, v) -> k.toIntOrNull()?.takeIf { it in 1..7 }?.let { DayOfWeek.of(it) to v } }.toMap(),
         tarifa = tarifa, ciudad = ciudad, direccion = direccion, lat = lat, lon = lon,
         verificacion = Verificacion.desdeCodigo(verificacion), activo = activo,
-        ratingSuma = ratingSuma, ratingCantidad = ratingCantidad, distanciaKm = distanciaKm,
+        ratingSuma = ratingSuma, ratingCantidad = ratingCantidad, distanciaKm = distanciaKm, foto = fotoUrl,
     )
 }
 
@@ -112,6 +113,7 @@ class VeterinariosSupabase @Inject constructor(private val supabase: SupabaseCli
             put("lat", perfil.lat)
             put("lon", perfil.lon)
             put("activo", perfil.activo)
+            put("foto_url", perfil.foto)
         }
         // insert u update por separado: el id y la verificación no son editables (permisos por columna)
         val existe = supabase.from(TABLA).select { filter { eq("id", id) } }.decodeSingleOrNull<FilaVeterinario>() != null
@@ -121,6 +123,14 @@ class VeterinariosSupabase @Inject constructor(private val supabase: SupabaseCli
             supabase.from(TABLA).insert(JsonObject(datos + ("id" to JsonPrimitive(id)))) { select() }.decodeSingle<FilaVeterinario>()
         }
         _miPerfil.value = fila.comoPerfil()
+    }
+
+    override suspend fun subirFoto(bytes: ByteArray): String = red {
+        // Bucket público de la galería, en la carpeta del usuario (las políticas solo dejan escribir ahí)
+        val ruta = "${yo()}/perfil_${System.currentTimeMillis()}.jpg"
+        val bucket = supabase.storage.from("galeria")
+        bucket.upload(ruta, bytes) { contentType = io.ktor.http.ContentType.Image.JPEG }
+        bucket.publicUrl(ruta)
     }
 
     override suspend fun subirCertificado(bytes: ByteArray, tipoMime: String) = red {

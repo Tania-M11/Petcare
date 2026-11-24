@@ -1,5 +1,6 @@
 package com.udenar.petcare
 
+import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
@@ -68,11 +69,22 @@ class CotizacionUiTest {
         compose.onNodeWithTag("pres_Paseos Felices").performClick()
         compose.waitUntil(5_000) { compose.onAllNodesWithTagExists("solicitar_cotizacion") }
         compose.onNodeWithTag("solicitar_cotizacion").performScrollTo().performClick()
+        // Recorrido por pasos: qué → detalle → cuándo → qué compartes → resumen
         compose.waitUntil(5_000) { compose.onAllNodesWithTagExists("cotizar_servicio_Paseo de 1 hora") }
         compose.onNodeWithTag("cotizar_servicio_Paseo de 1 hora").performClick()
+        compose.onNodeWithTag("continuar").performClick()
+        compose.waitUntil(5_000) { compose.onAllNodesWithTagExists("cotizar_descripcion") }
+        compose.onNodeWithTag("continuar").assertIsNotEnabled() // falta contar qué necesita
         compose.onNodeWithTag("cotizar_descripcion").performTextInput("Paseo por la tarde")
-        compose.onNodeWithTag("compartir_salud").performScrollTo().performClick()
-        compose.onNodeWithTag("enviar_cotizacion").performScrollTo().performClick()
+        androidx.test.espresso.Espresso.closeSoftKeyboard()
+        compose.onNodeWithTag("continuar").performClick()
+        compose.waitUntil(5_000) { compose.onAllNodesWithTagExists("hora_9") }
+        compose.onNodeWithTag("continuar").performClick()
+        compose.waitUntil(5_000) { compose.onAllNodesWithTagExists("compartir_salud") }
+        compose.onNodeWithTag("compartir_salud").performClick()
+        compose.onNodeWithTag("continuar").performClick()
+        compose.waitUntil(5_000) { compose.onAllNodesWithTagExists("enviar_cotizacion") }
+        compose.onNodeWithTag("enviar_cotizacion").performClick()
 
         compose.waitUntil(5_000) { cotizaciones.solicitudes.size == 1 }
         val id = cotizaciones.solicitudes.single().id

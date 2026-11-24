@@ -110,20 +110,21 @@ data class BorradorPrestador(
     val ubicacion: Coordenada? = null,
     val recibiendo: Boolean = true,
     val galeria: List<String> = emptyList(),
+    val foto: String? = null,
 ) {
     fun comoPerfil(id: String) = PerfilPrestador(
         id = id, nombre = nombre, tipo = tipo, descripcion = descripcion, telefono = telefono, whatsapp = whatsapp, correo = correo,
         ciudad = ciudad, direccion = direccion, zona = zona, radioKm = radioKm.trim().toIntOrNull(),
         lat = ubicacion?.lat ?: 0.0, lon = ubicacion?.lon ?: 0.0, modalidades = modalidades, especies = especies,
         categorias = categorias, servicios = servicios.filter { it.categoriaId in categorias }, horario = horario.filterValues { it.isNotBlank() },
-        noDisponible = noDisponible, recibiendo = recibiendo, galeria = galeria, activo = true,
+        noDisponible = noDisponible, recibiendo = recibiendo, galeria = galeria, activo = true, foto = foto,
     )
 
     companion object {
         fun desde(p: PerfilPrestador) = BorradorPrestador(
             p.nombre, p.tipo, p.descripcion, p.telefono, p.whatsapp.orEmpty(), p.correo.orEmpty(), p.categorias, p.especies, p.modalidades,
             p.servicios, p.horario, p.noDisponible, p.ciudad, p.direccion.orEmpty(), p.zona.orEmpty(), p.radioKm?.toString().orEmpty(),
-            Coordenada(p.lat, p.lon), p.recibiendo, p.galeria,
+            Coordenada(p.lat, p.lon), p.recibiendo, p.galeria, p.foto,
         )
     }
 }
@@ -134,6 +135,7 @@ data class EstadoFormPrestador(
     val cargando: Boolean = true,
     val guardando: Boolean = false,
     val subiendoFotos: Boolean = false,
+    val subiendoFoto: Boolean = false,
     val errores: Map<String, String> = emptyMap(),
     val mensaje: String? = null,
     val existente: Boolean = false,
@@ -206,6 +208,24 @@ class FormPrestadorViewModel @Inject constructor(
         }
     }
 
+    /** Foto de perfil (Fase 6.7): se sube al elegirla y queda al guardar. */
+    fun elegirFotoPerfil(uri: Uri) {
+        _estado.update { it.copy(subiendoFoto = true) }
+        viewModelScope.launch {
+            try {
+                val archivo = archivos.comprimir(uri, "perfil")
+                val url = try { prestadores.subirFoto(archivo.readBytes()) } finally { archivo.delete() }
+                cambiar { it.copy(foto = url) }
+            } catch (e: ProfesionalException) {
+                _estado.update { it.copy(mensaje = e.message) }
+            } catch (_: Exception) {
+                _estado.update { it.copy(mensaje = "No pudimos leer la foto") }
+            } finally {
+                _estado.update { it.copy(subiendoFoto = false) }
+            }
+        }
+    }
+
     fun quitarFoto(url: String) {
         cambiar { it.copy(galeria = it.galeria - url) }
         viewModelScope.launch { runCatching { prestadores.borrarFoto(url) } }
@@ -255,21 +275,22 @@ fun FormPrestadorScreen(onVolver: () -> Unit, onGuardado: (activado: Boolean) ->
         }
     }
 
-    Column(
-        Modifier
-            .fillMaxSize()
-            .background(Pc.Crema)
-            .statusBarsPadding()
-            .navigationBarsPadding()
-            .imePadding()
-            .verticalScroll(rememberScrollState())
-            .padding(horizontal = 20.dp, vertical = 12.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp),
-    ) {
+    Column(Modifier.fillMaxSize().background(Pc.Crema).statusBarsPadding().navigationBarsPadding().imePadding()) {
+    Column(Modifier.padding(horizontal = 20.dp, vertical = 12.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             BotonCircular(Icons.AutoMirrored.Rounded.ArrowBack, "Volver", onClick = onVolver)
             Text(if (estado.existente) "Mi perfil de servicios" else "Ofrece tus servicios", style = MaterialTheme.typography.headlineMedium, modifier = Modifier.padding(start = 16.dp))
         }
+        if (!estado.cargando) VistaPreviaPerfil { com.udenar.petcare.ui.servicios.TarjetaPrestador(b.comoPerfil(""), estado.categorias, onClick = {}) }
+    }
+    Column(
+        Modifier
+            .weight(1f)
+            .verticalScroll(rememberScrollState())
+            .padding(horizontal = 20.dp)
+            .padding(bottom = 16.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp),
+    ) {
         if (estado.cargando) {
             Text("Cargando…", color = Pc.TintaSuave)
             return@Column
@@ -279,6 +300,10 @@ fun FormPrestadorScreen(onVolver: () -> Unit, onGuardado: (activado: Boolean) ->
         }
 
         Seccion("Quién eres") {
+            com.udenar.petcare.ui.componentes.EditorFotoPerfil(
+                b.foto, b.nombre, estado.subiendoFoto, onElegir = viewModel::elegirFotoPerfil, onQuitar = { viewModel.cambiar { it.copy(foto = null) } },
+                fondo = Pc.SolClaro, color = Pc.Tinta,
+            )
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 TipoPrestador.entries.forEach { t -> ChipOpcion(t.etiqueta, b.tipo == t, onClick = { viewModel.cambiar { it.copy(tipo = t) } }) }
             }
@@ -292,7 +317,7 @@ fun FormPrestadorScreen(onVolver: () -> Unit, onGuardado: (activado: Boolean) ->
                 estado.categorias.forEach { c ->
                     val i = b.categorias.indexOf(c.id)
                     ChipOpcion(
-                        "${c.icono} ${c.nombre}" + if (i == 0) " · principal" else "", i >= 0,
+                        c.nombre + if (i == 0) " · principal" else "", i >= 0, icono = c.icono3d,
                         onClick = { viewModel.cambiar { it.copy(categorias = if (c.id in it.categorias) it.categorias - c.id else it.categorias + c.id) } },
                         modifier = Modifier.testTag("pres_categoria_${c.id}"),
                     )
@@ -421,6 +446,7 @@ fun FormPrestadorScreen(onVolver: () -> Unit, onGuardado: (activado: Boolean) ->
             modifier = Modifier.testTag("pres_guardar"),
         )
     }
+    }
 
     if (mapa) {
         DialogoUbicacion(
@@ -471,7 +497,7 @@ private fun DialogoServicio(
         text = {
             Column(Modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    categorias.forEach { c -> ChipOpcion("${c.icono} ${c.nombre}", s.categoriaId == c.id, onClick = { s = s.copy(categoriaId = c.id) }) }
+                    categorias.forEach { c -> ChipOpcion(c.nombre, s.categoriaId == c.id, onClick = { s = s.copy(categoriaId = c.id) }, icono = c.icono3d) }
                 }
                 CampoTexto(s.nombre, { s = s.copy(nombre = it.take(80)) }, "Nombre del servicio *", modifier = Modifier.testTag("servicio_nombre"))
                 CampoTexto(s.descripcion.orEmpty(), { s = s.copy(descripcion = it.take(300)) }, "Descripción (opcional)", lineas = 2)
@@ -512,4 +538,4 @@ private fun DialogoServicio(
 
 /** Chip de categoría con su ícono (se reutiliza en el directorio y el perfil). */
 @Composable
-fun ChipCategoria(c: Categoria, principal: Boolean = false) = Chip("${c.icono} ${c.nombre}", fondo = if (principal) Pc.SolClaro else Pc.Blanco)
+fun ChipCategoria(c: Categoria, principal: Boolean = false) = Chip(c.nombre, fondo = if (principal) Pc.SolClaro else Pc.Blanco, icono = c.icono3d)

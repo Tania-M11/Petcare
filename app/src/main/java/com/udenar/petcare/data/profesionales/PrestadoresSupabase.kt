@@ -56,6 +56,7 @@ private data class FilaPrestador(
     val id: String,
     val nombre: String,
     val tipo: String = "PERSONA",
+    @SerialName("foto_url") val fotoUrl: String? = null,
     val descripcion: String,
     val telefono: String,
     val whatsapp: String? = null,
@@ -95,7 +96,7 @@ private data class FilaPrestador(
         horario = horario.mapNotNull { (k, v) -> k.toIntOrNull()?.takeIf { it in 1..7 }?.let { DayOfWeek.of(it) to v } }.toMap(),
         noDisponible = noDisponible.mapNotNull { runCatching { LocalDate.parse(it) }.getOrNull() }.sorted(),
         recibiendo = recibiendo, galeria = galeria, activo = activo,
-        ratingSuma = ratingSuma, ratingCantidad = ratingCantidad, distanciaKm = distanciaKm,
+        ratingSuma = ratingSuma, ratingCantidad = ratingCantidad, distanciaKm = distanciaKm, foto = fotoUrl,
     )
 }
 
@@ -150,6 +151,7 @@ class PrestadoresSupabase @Inject constructor(private val supabase: SupabaseClie
             put("recibiendo", perfil.recibiendo)
             put("galeria", JsonArray(perfil.galeria.take(ValidadorPrestador.MAX_GALERIA).map { JsonPrimitive(it) }))
             put("activo", perfil.activo)
+            put("foto_url", perfil.foto)
         }
         val existe = supabase.from(TABLA).select { filter { eq("id", id) } }.decodeSingleOrNull<FilaPrestador>() != null
         val fila = if (existe) {

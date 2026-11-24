@@ -8,6 +8,7 @@ import android.content.Intent
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
@@ -209,7 +210,7 @@ fun DirectorioVeterinariosScreen(onVolver: () -> Unit, onAbrir: (String) -> Unit
 }
 
 @Composable
-private fun TarjetaVeterinario(v: PerfilVeterinario, onClick: () -> Unit) {
+internal fun TarjetaVeterinario(v: PerfilVeterinario, onClick: () -> Unit) {
     Row(
         Modifier
             .fillMaxWidth()
@@ -220,11 +221,9 @@ private fun TarjetaVeterinario(v: PerfilVeterinario, onClick: () -> Unit) {
             .testTag("vet_${v.nombre}"),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Box(Modifier.size(48.dp).clip(CircleShape).background(Pc.CieloClaro), contentAlignment = Alignment.Center) {
-            Text(v.nombre.trim().take(1).uppercase(), style = MaterialTheme.typography.titleLarge, color = Pc.CieloOscuro)
-        }
+        com.udenar.petcare.ui.componentes.AvatarProfesional(v.foto, v.nombre, tam = 52.dp)
         Column(Modifier.weight(1f).padding(start = 12.dp), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-            Text(v.nombre, style = MaterialTheme.typography.titleMedium)
+            Text(v.nombre.ifBlank { "Tu nombre" }, style = MaterialTheme.typography.titleMedium)
             Text(
                 listOfNotNull(v.clinica, v.ciudad, v.distanciaKm?.let(Contacto::textoDistancia)).joinToString(" · "),
                 style = MaterialTheme.typography.bodySmall, color = Pc.TintaSuave,
@@ -287,6 +286,12 @@ fun DetalleVeterinarioScreen(onVolver: () -> Unit, onSolicitar: () -> Unit, avis
             BotonSecundario("Reintentar", onClick = { viewModel.cargar() })
         }
         val v = perfil ?: return@Column
+        v.foto?.let { f ->
+            com.udenar.petcare.ui.componentes.AvatarProfesional(
+                f, v.nombre, tam = 104.dp, fondo = Pc.CieloClaro,
+                modifier = Modifier.align(Alignment.CenterHorizontally).border(4.dp, Pc.Blanco, androidx.compose.foundation.shape.CircleShape).testTag("foto_profesional"),
+            )
+        }
         TarjetaIlustrada(
             titulo = v.nombre,
             texto = listOfNotNull(v.clinica, v.ciudad).joinToString(" · "),

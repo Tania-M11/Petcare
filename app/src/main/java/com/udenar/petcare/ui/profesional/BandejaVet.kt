@@ -198,6 +198,7 @@ private fun DialogoSolicitudVet(s: SolicitudVet, viewModel: BandejaVetViewModel,
                         Text((if (s.estado == EstadoSolicitudVet.PENDIENTE) "Pide: " else "Cita: ") + s.fecha.textoCita(), style = MaterialTheme.typography.titleSmall)
                         Text(s.modalidad.etiqueta, color = Pc.TintaSuave)
                         s.mensaje?.let { Text("“$it”", style = MaterialTheme.typography.bodyMedium) }
+                        com.udenar.petcare.ui.componentes.FotosSolicitud(s.fotos)
                         s.motivoRechazo?.let { Text("Motivo: $it", color = Pc.TintaSuave) }
                         Text("Estado: ${s.estado.etiqueta}", color = Pc.TintaSuave)
                         s.propietarioTelefono?.let { tel ->

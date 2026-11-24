@@ -68,6 +68,7 @@ private data class FilaSolicitud(
     @SerialName("propietario_telefono") val propietarioTelefono: String? = null,
     @SerialName("veterinario_nombre") val veterinarioNombre: String,
     @SerialName("creado_en") val creadoEn: String? = null,
+    val fotos: List<String> = emptyList(),
 ) {
     fun comoSolicitud() = SolicitudVet(
         id, mascotaId, mascotaNombre, Especie.desdeCodigo(mascotaEspecie), propietarioNombre, propietarioTelefono, veterinarioId, veterinarioNombre,
@@ -75,6 +76,7 @@ private data class FilaSolicitud(
         Modalidad.entries.firstOrNull { it.name == modalidad } ?: Modalidad.CONSULTORIO,
         LocalDateTime.parse(fechaPreferida), fechaConfirmada?.let(LocalDateTime::parse), mensaje, motivoRechazo,
         EstadoSolicitudVet.desdeCodigo(estado), creadoEn?.let { runCatching { OffsetDateTime.parse(it).toInstant() }.getOrNull() },
+        fotos = fotos,
     )
 }
 

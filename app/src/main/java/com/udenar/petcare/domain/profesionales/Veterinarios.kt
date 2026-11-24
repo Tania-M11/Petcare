@@ -50,6 +50,8 @@ data class PerfilVeterinario(
     val ratingSuma: Int = 0,
     val ratingCantidad: Int = 0,
     val distanciaKm: Double? = null,
+    /** URL pública de la foto de perfil (bucket "galeria"). */
+    val foto: String? = null,
 ) {
     val promedio: Double? get() = if (ratingCantidad == 0) null else ratingSuma.toDouble() / ratingCantidad
 }
@@ -77,6 +79,9 @@ interface RepositorioVeterinarios {
 
     /** Sube o reemplaza el certificado (imagen o PDF, hasta 5 MB) y pasa a EN_REVISION. */
     suspend fun subirCertificado(bytes: ByteArray, tipoMime: String)
+
+    /** Sube la foto de perfil (JPEG ya comprimido) y devuelve su URL pública. */
+    suspend fun subirFoto(bytes: ByteArray): String
 
     /** Directorio (RF-24): máximo 100, ordenado por distancia si hay ubicación. */
     suspend fun buscar(filtro: FiltroVeterinarios, lat: Double? = null, lon: Double? = null): List<PerfilVeterinario>

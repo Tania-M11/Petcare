@@ -69,6 +69,8 @@ data class PerfilPrestador(
     val ratingSuma: Int = 0,
     val ratingCantidad: Int = 0,
     val distanciaKm: Double? = null,
+    /** URL pública de la foto de perfil (bucket "galeria"). */
+    val foto: String? = null,
 ) {
     val categoriaPrincipal: String? get() = categorias.firstOrNull()
     val promedio: Double? get() = if (ratingCantidad == 0) null else ratingSuma.toDouble() / ratingCantidad

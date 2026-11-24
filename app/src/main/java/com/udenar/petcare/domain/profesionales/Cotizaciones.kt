@@ -69,6 +69,8 @@ data class SolicitudPrestador(
     val motivo: String? = null,
     val historial: List<PasoHistorial> = emptyList(),
     val creadaEn: Instant? = null,
+    /** Rutas en el bucket privado "solicitudes" (máximo 3, RF-34). */
+    val fotos: List<String> = emptyList(),
 ) {
     /** RF-35: aceptar sin cotizar solo si el servicio tiene precio fijo o "desde". */
     val aceptableDirecto: Boolean get() = estado == EstadoSolicitudPres.PENDIENTE && precioModo != ModoPrecio.COTIZACION

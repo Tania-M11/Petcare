@@ -31,6 +31,8 @@ class VeterinariosFalso @Inject constructor() : RepositorioVeterinarios {
         miPerfil.value = perfil.copy(verificacion = miPerfil.value?.verificacion ?: Verificacion.SIN_CERTIFICADO)
     }
 
+    override suspend fun subirFoto(bytes: ByteArray) = "https://ejemplo.test/perfil.jpg"
+
     override suspend fun subirCertificado(bytes: ByteArray, tipoMime: String) {
         certificados++
         miPerfil.value = miPerfil.value?.copy(verificacion = Verificacion.EN_REVISION)
@@ -210,6 +212,16 @@ class AtencionVetFalsa @Inject constructor() : com.udenar.petcare.domain.profesi
     }
 }
 
+/** Fotos de solicitudes en memoria: registra lo adjuntado para las pruebas. */
+@Singleton
+class FotosSolicitudesFalsas @Inject constructor() : com.udenar.petcare.domain.profesionales.FotosSolicitudes {
+    val adjuntadas = mutableMapOf<String, Int>()
+    override suspend fun adjuntar(tipo: com.udenar.petcare.domain.profesionales.TipoSolicitud, solicitudId: String, fotos: List<ByteArray>) {
+        if (fotos.isNotEmpty()) adjuntadas[solicitudId] = fotos.size
+    }
+    override suspend fun descargar(ruta: String) = ByteArray(0)
+}
+
 @Module
 @TestInstallIn(components = [SingletonComponent::class], replaces = [ModuloProfesionales::class])
 abstract class ModuloProfesionalesPrueba {
@@ -224,4 +236,6 @@ abstract class ModuloProfesionalesPrueba {
     @Binds abstract fun resenas(r: ResenasFalsas): com.udenar.petcare.domain.profesionales.RepositorioResenas
 
     @Binds abstract fun atencion(a: AtencionVetFalsa): com.udenar.petcare.domain.profesionales.RepositorioAtencionVet
+
+    @Binds abstract fun fotosSolicitudes(f: FotosSolicitudesFalsas): com.udenar.petcare.domain.profesionales.FotosSolicitudes
 }

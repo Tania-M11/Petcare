@@ -8,6 +8,7 @@ import android.content.Intent
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
@@ -169,7 +170,7 @@ fun DirectorioPrestadoresScreen(onVolver: () -> Unit, onAbrir: (String) -> Unit,
         }
         Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             estado.categorias.forEach { c ->
-                ChipOpcion("${c.icono} ${c.nombre}", f.categoria == c.id, onClick = { viewModel.filtrar { it.copy(categoria = if (it.categoria == c.id) null else c.id) } }, modifier = Modifier.testTag("filtro_cat_${c.id}"))
+                ChipOpcion(c.nombre, f.categoria == c.id, icono = c.icono3d, onClick = { viewModel.filtrar { it.copy(categoria = if (it.categoria == c.id) null else c.id) } }, modifier = Modifier.testTag("filtro_cat_${c.id}"))
             }
         }
         Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -212,14 +213,14 @@ fun DirectorioPrestadoresScreen(onVolver: () -> Unit, onAbrir: (String) -> Unit,
 }
 
 @Composable
-private fun TarjetaPrestador(p: PerfilPrestador, categorias: List<Categoria>, onClick: () -> Unit, boton: Boolean = false) {
+internal fun TarjetaPrestador(p: PerfilPrestador, categorias: List<Categoria>, onClick: () -> Unit, boton: Boolean = false) {
     val principal = categorias.firstOrNull { it.id == p.categoriaPrincipal }
     Column(
         Modifier.fillMaxWidth().clip(MaterialTheme.shapes.large).background(Pc.Blanco).clickable(onClick = onClick).padding(14.dp).testTag("pres_${p.nombre}"),
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            val foto = p.galeria.firstOrNull()
+            val foto = p.foto ?: p.galeria.firstOrNull()
             if (foto != null) {
                 AsyncImage(foto, null, contentScale = ContentScale.Crop, modifier = Modifier.size(52.dp).clip(CircleShape))
             } else {
@@ -228,7 +229,7 @@ private fun TarjetaPrestador(p: PerfilPrestador, categorias: List<Categoria>, on
             Column(Modifier.weight(1f).padding(start = 12.dp), verticalArrangement = Arrangement.spacedBy(2.dp)) {
                 Text(p.nombre, style = MaterialTheme.typography.titleMedium)
                 Text(
-                    listOfNotNull(principal?.let { "${it.icono} ${it.nombre}" }, p.zona?.takeIf { it.isNotBlank() } ?: p.ciudad, p.distanciaKm?.let(Contacto::textoDistancia)).joinToString(" · "),
+                    listOfNotNull(principal?.nombre, p.zona?.takeIf { it.isNotBlank() } ?: p.ciudad, p.distanciaKm?.let(Contacto::textoDistancia)).joinToString(" · "),
                     style = MaterialTheme.typography.bodySmall, color = Pc.TintaSuave,
                 )
                 Text(
@@ -290,9 +291,15 @@ fun DetallePrestadorScreen(onVolver: () -> Unit, onSolicitar: () -> Unit, avisar
         }
         val p = perfil ?: return@Column
         val principal = categorias.firstOrNull { it.id == p.categoriaPrincipal }
+        p.foto?.let { f ->
+            com.udenar.petcare.ui.componentes.AvatarProfesional(
+                f, p.nombre, tam = 104.dp, fondo = Pc.SolClaro,
+                modifier = Modifier.align(Alignment.CenterHorizontally).border(4.dp, Pc.Blanco, androidx.compose.foundation.shape.CircleShape).testTag("foto_profesional"),
+            )
+        }
         TarjetaIlustrada(
             titulo = p.nombre,
-            texto = listOfNotNull(principal?.let { "${it.icono} ${it.nombre}" }, p.ciudad).joinToString(" · "),
+            texto = listOfNotNull(principal?.nombre, p.ciudad).joinToString(" · "),
             chip = if (p.recibiendo) p.tipo.etiqueta else "En pausa",
             ilustracion = R.drawable.chopper_amigos,
             degradado = listOf(Pc.SolClaro, Pc.Sol),
@@ -320,7 +327,7 @@ fun DetallePrestadorScreen(onVolver: () -> Unit, onSolicitar: () -> Unit, avisar
             p.categorias.forEach { cid ->
                 val c = categorias.firstOrNull { it.id == cid }
                 val deEsta = p.servicios.filter { it.categoriaId == cid }
-                Text("${c?.icono.orEmpty()} ${c?.nombre ?: cid}", style = MaterialTheme.typography.titleSmall)
+                com.udenar.petcare.ui.componentes.Chip(c?.nombre ?: cid, icono = c?.icono3d ?: com.udenar.petcare.domain.modelo.Icono.HUELLAS)
                 if (deEsta.isEmpty()) Text("A cotizar", style = MaterialTheme.typography.bodySmall, color = Pc.TintaSuave)
                 deEsta.forEach { s ->
                     Row(Modifier.fillMaxWidth().padding(start = 8.dp)) {

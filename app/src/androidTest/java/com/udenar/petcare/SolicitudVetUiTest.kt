@@ -64,9 +64,18 @@ class SolicitudVetUiTest {
         compose.onNodeWithTag("vet_Laura Gómez").performClick()
         compose.waitUntil(5_000) { compose.onAllNodesWithTagExists("solicitar_servicio") }
         compose.onNodeWithTag("solicitar_servicio").performScrollTo().performClick()
+        // Recorrido por pasos: con una sola mascota empieza en el servicio
         compose.waitUntil(5_000) { compose.onAllNodesWithTagExists("servicio_CONSULTA") }
         compose.onNodeWithTag("servicio_CONSULTA").performClick()
-        compose.onNodeWithTag("enviar_solicitud").performScrollTo().performClick()
+        compose.onNodeWithTag("continuar").performClick()
+        compose.waitUntil(5_000) { compose.onAllNodesWithTagExists("hora_9") }
+        compose.onNodeWithTag("hora_10").performScrollTo().performClick()
+        compose.onNodeWithTag("continuar").performClick()
+        compose.waitUntil(5_000) { compose.onAllNodesWithTagExists("agregar_foto_solicitud") } // fotos opcionales
+        compose.onNodeWithTag("asistente_saltar").performClick()
+        compose.waitUntil(5_000) { compose.onAllNodesWithTagExists("enviar_solicitud") }
+        compose.onNodeWithText("Mañana · 10:00", substring = true).assertExists()
+        compose.onNodeWithTag("enviar_solicitud").performClick()
 
         // De vuelta en Servicios: aparece en "Mis solicitudes"
         compose.waitUntil(5_000) { compose.onAllNodesWithTagExists("solicitud_Max") }
