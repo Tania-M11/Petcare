@@ -164,6 +164,9 @@ fun HoyScreen(
                 consejos = remember(estado.hoy) { com.udenar.petcare.domain.recomendaciones.Michi.consejos(estado.hoy) },
             )
 
+            // Paseo en curso: mapa en vivo, tiempo y distancia; al tocarlo vuelve al paseo
+            com.udenar.petcare.ui.paseos.TarjetaPaseoEnVivo(onAbrir = { onPasear(null) })
+
             Column {
                 TiraSemana(semana = estado.semana, hoy = estado.hoy, seleccionado = estado.seleccionado, onElegir = viewModel::elegirDia)
                 if (estado.seleccionado != estado.hoy) {

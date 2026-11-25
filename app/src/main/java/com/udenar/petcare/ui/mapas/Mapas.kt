@@ -98,6 +98,7 @@ fun MapaLibre(
     modifier: Modifier = Modifier,
     centro: Coordenada = CENTRO_INICIAL,
     zoom: Double = 14.0,
+    interactivo: Boolean = true,
     alListo: (MapLibreMap, Style) -> Unit,
 ) {
     val mapView = rememberMapaLibre()
@@ -106,6 +107,8 @@ fun MapaLibre(
             m.cameraPosition = CameraPosition.Builder().target(centro.latLng()).zoom(zoom).build()
             m.uiSettings.isRotateGesturesEnabled = false
             m.uiSettings.isTiltGesturesEnabled = false
+            // Mapa de vista previa (p. ej. en una tarjeta): no roba el desplazamiento de la pantalla
+            if (!interactivo) m.uiSettings.setAllGesturesEnabled(false)
             m.setStyle(Style.Builder().fromUri(ESTILO_MAPA)) { s -> alListo(m, s) }
         }
     }

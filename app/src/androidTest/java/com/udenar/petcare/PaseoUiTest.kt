@@ -33,6 +33,7 @@ class PaseoUiTest {
 
     @Inject lateinit var mascotas: RepositorioMascotas
     @Inject lateinit var paseos: RepositorioPaseos
+    @Inject lateinit var sesion: com.udenar.petcare.data.paseos.SesionPaseo
 
     @Before
     fun preparar() {
@@ -77,5 +78,26 @@ class PaseoUiTest {
         compose.waitUntil(5_000) { compose.onAllNodesWithTagExists("mapa_paseo") }
         Thread.sleep(3_000) // deja que MapLibre cargue el estilo y dibuje la ruta
         compose.onNodeWithText("180 m").assertExists()
+    }
+
+    @Test
+    fun elPaseoEnCursoSeVeEnHoyYDesdeOtrasPestanas() {
+        // Sin servicio de GPS: la sesión se alimenta a mano (el servicio se prueba en la calle)
+        sesion.iniciar(listOf("m1"))
+        try {
+            sesion.nuevaUbicacion(1.2136, -77.2811, 5f)
+            compose.waitUntil(5_000) { compose.onAllNodesWithTagExists("tarjeta_paseo_vivo") }
+
+            // En otra pestaña queda la barra del paseo; al tocarla vuelve al mapa en vivo
+            compose.onNodeWithTag("pestana_mascotas").performClick()
+            compose.waitUntil(5_000) { compose.onAllNodesWithTagExists("barra_paseo") }
+            compose.onNodeWithTag("barra_paseo_pausa").performClick()
+            compose.waitUntil(5_000) { compose.onAllNodesWithTextExists("Paseo en pausa") }
+            compose.onNodeWithTag("barra_paseo").performClick()
+            compose.waitUntil(5_000) { compose.onAllNodesWithTagExists("paseo_tiempo") }
+            compose.onNodeWithTag("paseo_finalizar").assertExists()
+        } finally {
+            sesion.cancelar()
+        }
     }
 }

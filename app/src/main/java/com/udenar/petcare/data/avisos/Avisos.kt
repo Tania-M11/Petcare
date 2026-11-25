@@ -49,7 +49,7 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 /** Pestaña que abre un aviso al tocarlo (RF-29: "el push abre el modo correcto"). */
-enum class DestinoAviso { HOY, MASCOTAS, SERVICIOS, PERFIL, SOLICITUDES }
+enum class DestinoAviso { HOY, MASCOTAS, SERVICIOS, PERFIL, SOLICITUDES, PASEO }
 
 data class Aviso(
     val id: String,

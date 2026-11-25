@@ -39,9 +39,9 @@ private const val FUENTE_POSICION = "posicion"
  * [seguir] = la cámara acompaña la última posición (paseo en curso); si no, encuadra toda la ruta.
  */
 @Composable
-fun MapaPaseo(ruta: List<Coordenada>, posicion: Coordenada?, seguir: Boolean, modifier: Modifier = Modifier) {
+fun MapaPaseo(ruta: List<Coordenada>, posicion: Coordenada?, seguir: Boolean, modifier: Modifier = Modifier, interactivo: Boolean = true) {
     var listo by remember { mutableStateOf<Pair<MapLibreMap, Style>?>(null) }
-    MapaLibre(modifier) { m, s ->
+    MapaLibre(modifier, centro = posicion ?: ruta.lastOrNull() ?: com.udenar.petcare.ui.mapas.CENTRO_INICIAL, interactivo = interactivo) { m, s ->
         s.addSource(GeoJsonSource(FUENTE_RUTA))
         s.addSource(GeoJsonSource(FUENTE_POSICION))
         s.addLayer(

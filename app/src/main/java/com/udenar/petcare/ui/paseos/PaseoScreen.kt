@@ -5,6 +5,13 @@ import android.Manifest
 import android.os.Build
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.rounded.Check
+import androidx.compose.material3.Icon
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.background
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
@@ -121,15 +128,6 @@ fun PaseoScreen(onVolver: () -> Unit, avisar: (String) -> Unit, viewModel: Paseo
     var confirmarFin by remember { mutableStateOf(false) }
     LaunchedEffect(mascotas) { if (elegidas.isEmpty() && mascotas.size == 1) elegidas = setOf(mascotas.first().id) }
 
-    // El reloj del paseo avanza cada segundo en pantalla
-    var ahora by remember { mutableLongStateOf(System.currentTimeMillis()) }
-    LaunchedEffect(s.fase) {
-        while (s.fase == FaseSesion.ACTIVO) {
-            ahora = System.currentTimeMillis()
-            delay(1_000)
-        }
-    }
-
     val permisos = rememberLauncherForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { r ->
         if (r[Manifest.permission.ACCESS_FINE_LOCATION] == true) {
             viewModel.iniciar(elegidas.toList())
@@ -139,6 +137,7 @@ fun PaseoScreen(onVolver: () -> Unit, avisar: (String) -> Unit, viewModel: Paseo
         }
     }
 
+    if (s.fase == FaseSesion.INACTIVO) {
     Column(
         Modifier
             .fillMaxSize()
@@ -151,21 +150,61 @@ fun PaseoScreen(onVolver: () -> Unit, avisar: (String) -> Unit, viewModel: Paseo
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             BotonCircular(Icons.AutoMirrored.Rounded.ArrowBack, "Volver", onClick = onVolver)
-            Text(if (s.fase == FaseSesion.INACTIVO) "Nuevo paseo" else "Paseo en curso", style = MaterialTheme.typography.headlineMedium, modifier = Modifier.padding(start = 16.dp))
+            Text("Nuevo paseo", style = MaterialTheme.typography.headlineMedium, modifier = Modifier.padding(start = 16.dp))
         }
 
-        if (s.fase == FaseSesion.INACTIVO) {
+        run {
+            // Portada: Michi listo para salir
+            Row(
+                Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(30.dp))
+                    .background(androidx.compose.ui.graphics.Brush.linearGradient(listOf(Pc.Durazno, Pc.SolClaro)))
+                    .padding(start = 20.dp, top = 12.dp, end = 8.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Column(Modifier.weight(1f).padding(bottom = 12.dp)) {
+                    Text("¿Listos para salir?", style = MaterialTheme.typography.titleLarge)
+                    Text("Con GPS verás la ruta, el tiempo y la distancia en vivo.", style = MaterialTheme.typography.bodySmall, color = Pc.TintaSuave)
+                }
+                androidx.compose.foundation.Image(
+                    androidx.compose.ui.res.painterResource(com.udenar.petcare.R.drawable.gato_celebra),
+                    contentDescription = null,
+                    modifier = Modifier.height(110.dp),
+                )
+            }
             Seccion("¿Con quién?") {
-                Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(14.dp)) {
                     mascotas.forEach { m ->
-                        ChipOpcion(m.nombre, m.id in elegidas, onClick = { elegidas = if (m.id in elegidas) elegidas - m.id else elegidas + m.id }, modifier = Modifier.testTag("paseo_${m.nombre}"))
+                        val elegida = m.id in elegidas
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            modifier = Modifier
+                                .clip(MaterialTheme.shapes.medium)
+                                .clickable { elegidas = if (elegida) elegidas - m.id else elegidas + m.id }
+                                .padding(4.dp)
+                                .testTag("paseo_${m.nombre}"),
+                        ) {
+                            Box {
+                                com.udenar.petcare.ui.componentes.AvatarMascota(
+                                    m.especie, m.fotoLocal, tam = 60.dp,
+                                    modifier = Modifier.border(3.dp, if (elegida) Pc.Naranja else Pc.Linea, CircleShape),
+                                )
+                                if (elegida) Box(
+                                    Modifier.align(Alignment.BottomEnd).size(22.dp).clip(CircleShape).background(Pc.Naranja),
+                                    contentAlignment = Alignment.Center,
+                                ) { Icon(Icons.Rounded.Check, contentDescription = null, tint = Pc.SobreAcento, modifier = Modifier.size(14.dp)) }
+                            }
+                            Text(m.nombre, style = MaterialTheme.typography.labelLarge, color = if (elegida) Pc.Tinta else Pc.TintaSuave, modifier = Modifier.padding(top = 4.dp))
+                        }
                     }
                 }
                 Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     TipoPaseo.entries.forEach { t -> ChipOpcion(t.etiqueta, tipo == t, onClick = { tipo = t }, icono = t.icono) }
                 }
             }
-            BotonPrincipal("Iniciar con GPS", habilitado = elegidas.isNotEmpty(), onClick = {
+            com.udenar.petcare.ui.componentes.BotonEmpezar("Empezar paseo con GPS", modifier = Modifier.testTag("iniciar_paseo"), onClick = {
+                if (elegidas.isEmpty()) return@BotonEmpezar avisar("Elige al menos una mascota")
                 val pedir = buildList {
                     add(Manifest.permission.ACCESS_FINE_LOCATION)
                     add(Manifest.permission.ACCESS_COARSE_LOCATION)
@@ -175,24 +214,17 @@ fun PaseoScreen(onVolver: () -> Unit, avisar: (String) -> Unit, viewModel: Paseo
             })
             BotonSecundario("Registrar paseo sin GPS", onClick = { manual = true }, modifier = Modifier.testTag("paseo_manual"))
             if (elegidas.isEmpty()) Text("Elige al menos una mascota.", style = MaterialTheme.typography.bodySmall, color = Pc.TintaSuave)
-        } else {
-            MapaPaseo(
-                ruta = s.ruta, posicion = s.posicion, seguir = true,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(320.dp)
-                    .clip(MaterialTheme.shapes.large),
-            )
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
-                Estadistica(textoDistancia(s.distanciaM.toInt()), "distancia")
-                Estadistica(textoDuracion(s.duracionS(Instant.ofEpochMilli(ahora)).toInt()), "tiempo")
-            }
-            if (s.ruta.isEmpty()) Text("Buscando señal de GPS…", style = MaterialTheme.typography.bodySmall, color = Pc.TintaSuave)
-            if (s.fase == FaseSesion.ACTIVO) BotonSecundario("Pausar", onClick = viewModel::pausar)
-            else BotonSecundario("Reanudar", onClick = viewModel::reanudar)
-            BotonPrincipal("Finalizar", onClick = { confirmarFin = true })
-            Text("© OpenFreeMap © OpenMapTiles · Datos de © colaboradores de OpenStreetMap", style = MaterialTheme.typography.labelSmall, color = Pc.TintaSuave)
         }
+    }
+    } else {
+        PaseoActivo(
+            s = s,
+            mascotas = mascotas,
+            onVolver = onVolver,
+            onPausar = viewModel::pausar,
+            onReanudar = viewModel::reanudar,
+            onFinalizar = { confirmarFin = true },
+        )
     }
 
     if (confirmarFin) {

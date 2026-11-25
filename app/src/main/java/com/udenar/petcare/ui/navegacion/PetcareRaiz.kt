@@ -10,6 +10,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
 import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavHostController
@@ -42,12 +43,17 @@ fun PetcareRaiz() {
     val apertura by aperturaVm.pendiente.collectAsStateWithLifecycle()
     androidx.compose.runtime.LaunchedEffect(apertura) {
         aperturaVm.tomar(com.udenar.petcare.domain.modelo.ModoUso.PERSONAL)?.let { a ->
+            if (a.destino == com.udenar.petcare.data.avisos.DestinoAviso.PASEO) {
+                // Notificación del paseo: vuelve al mapa en vivo (si ya está abierto, no lo repite)
+                if (nav.currentDestination?.hasRoute(RutaPaseo::class) != true) nav.navigate(RutaPaseo())
+                return@let
+            }
             nav.irAPestana(
                 when (a.destino) {
                     com.udenar.petcare.data.avisos.DestinoAviso.MASCOTAS -> PestanaPersonal.MASCOTAS
                     com.udenar.petcare.data.avisos.DestinoAviso.SERVICIOS, com.udenar.petcare.data.avisos.DestinoAviso.SOLICITUDES -> PestanaPersonal.SERVICIOS
                     com.udenar.petcare.data.avisos.DestinoAviso.PERFIL -> PestanaPersonal.PERFIL
-                    com.udenar.petcare.data.avisos.DestinoAviso.HOY -> PestanaPersonal.HOY
+                    com.udenar.petcare.data.avisos.DestinoAviso.HOY, com.udenar.petcare.data.avisos.DestinoAviso.PASEO -> PestanaPersonal.HOY
                 },
             )
         }
@@ -77,7 +83,17 @@ fun PetcareRaiz() {
         containerColor = Pc.Crema,
         snackbarHost = { SnackbarHost(avisos) { datos -> com.udenar.petcare.ui.componentes.AvisoMichi(datos.visuals.message) } },
         // La barra solo se ve en las 4 pestañas (no en pantallas completas como Intenciones)
-        bottomBar = { if (actual != null) BarraInferior(PestanaPersonal.entries, actual = actual, onElegir = { nav.irAPestana(it) }) },
+        bottomBar = {
+            if (actual != null) {
+                androidx.compose.foundation.layout.Column {
+                    // Paseo en curso: visible desde cualquier pestaña (en Hoy ya está su tarjeta grande)
+                    if (actual != PestanaPersonal.HOY) {
+                        com.udenar.petcare.ui.paseos.BarraPaseoEnCurso(onAbrir = { nav.navigate(RutaPaseo()) }, modifier = Modifier.padding(top = 8.dp))
+                    }
+                    BarraInferior(PestanaPersonal.entries, actual = actual, onElegir = { nav.irAPestana(it) })
+                }
+            }
+        },
     ) { relleno ->
         NavHost(
             navController = nav,

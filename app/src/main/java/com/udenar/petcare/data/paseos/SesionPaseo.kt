@@ -181,7 +181,15 @@ class ServicioPaseo : Service() {
             .setOngoing(true)
             .setOnlyAlertOnce(true)
             .setContentIntent(
-                PendingIntent.getActivity(this, 0, Intent(this, MainActivity::class.java).setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP), PendingIntent.FLAG_IMMUTABLE),
+                // Al tocarla se abre el mapa del paseo en la app (modo personal)
+                PendingIntent.getActivity(
+                    this, 0,
+                    Intent(this, MainActivity::class.java)
+                        .setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP)
+                        .putExtra(com.udenar.petcare.data.alarmas.Notificador.EXTRA_MODO, com.udenar.petcare.domain.modelo.ModoUso.PERSONAL.name)
+                        .putExtra(com.udenar.petcare.data.alarmas.Notificador.EXTRA_DESTINO, com.udenar.petcare.data.avisos.DestinoAviso.PASEO.name),
+                    PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
+                ),
             )
             .build()
     }
