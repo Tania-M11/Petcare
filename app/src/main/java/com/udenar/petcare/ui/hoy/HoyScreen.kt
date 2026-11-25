@@ -307,10 +307,10 @@ fun HoyScreen(
                     .testTag("nuevo_cuidado"),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                Icon(Icons.Rounded.Add, contentDescription = "Registrar", tint = Pc.Blanco)
+                Icon(Icons.Rounded.Add, contentDescription = "Registrar", tint = Pc.SobreAcento)
                 // Arriba se ve "Registrar"; al bajar queda solo el + para no tapar las tarjetas
                 androidx.compose.animation.AnimatedVisibility(desplazamiento.value < 60) {
-                    Text("Registrar", style = MaterialTheme.typography.labelLarge, color = Pc.Blanco, modifier = Modifier.padding(start = 6.dp, end = 4.dp))
+                    Text("Registrar", style = MaterialTheme.typography.labelLarge, color = Pc.SobreAcento, modifier = Modifier.padding(start = 6.dp, end = 4.dp))
                 }
             }
         }

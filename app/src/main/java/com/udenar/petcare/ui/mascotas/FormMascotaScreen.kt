@@ -127,9 +127,9 @@ fun FormMascotaScreen(
                 contentAlignment = Alignment.Center,
             ) {
                 if (f.procesandoFoto) {
-                    CircularProgressIndicator(color = Pc.Blanco, strokeWidth = 2.dp, modifier = Modifier.size(20.dp))
+                    CircularProgressIndicator(color = Pc.SobreAcento, strokeWidth = 2.dp, modifier = Modifier.size(20.dp))
                 } else {
-                    Icon(Icons.Rounded.PhotoCamera, contentDescription = "Elegir foto", tint = Pc.Blanco, modifier = Modifier.size(22.dp))
+                    Icon(Icons.Rounded.PhotoCamera, contentDescription = "Elegir foto", tint = Pc.SobreAcento, modifier = Modifier.size(22.dp))
                 }
             }
         }

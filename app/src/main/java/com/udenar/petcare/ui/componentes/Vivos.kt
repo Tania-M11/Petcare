@@ -212,7 +212,7 @@ fun TarjetaRecomendacion(r: Recomendacion, onAccion: () -> Unit, onDescartar: ()
             Text(
                 r.textoAccion,
                 style = MaterialTheme.typography.labelLarge,
-                color = Pc.Blanco,
+                color = Pc.SobreAcento,
                 modifier = Modifier
                     .clip(RoundedCornerShape(50))
                     .background(borde)

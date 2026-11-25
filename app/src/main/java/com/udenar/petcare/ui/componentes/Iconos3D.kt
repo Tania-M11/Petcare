@@ -126,7 +126,7 @@ fun BaldosaIcono(icono: Icono, modifier: Modifier = Modifier, fondo: Color = Pc.
         modifier
             .size(tam)
             .clip(RoundedCornerShape(tam * 0.32f))
-            .background(Brush.linearGradient(listOf(Color.White.copy(alpha = 0.55f), fondo, fondo))),
+            .background(Brush.linearGradient(listOf(Color.White.copy(alpha = if (Pc.oscuro) 0.08f else 0.55f), fondo, fondo))),
         contentAlignment = Alignment.Center,
     ) {
         Icono3D(icono, tam = tam * 0.66f)

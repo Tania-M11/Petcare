@@ -7,13 +7,14 @@ import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.unit.dp
 
-private val Colores = lightColorScheme(
+/** Se arma en cada composición: los colores de [Pc] cambian con el modo. */
+private fun colores() = (if (Pc.oscuro) androidx.compose.material3.darkColorScheme() else lightColorScheme()).copy(
     primary = Pc.Naranja,
-    onPrimary = Pc.Blanco,
+    onPrimary = Pc.SobreAcento,
     primaryContainer = Pc.Durazno,
     onPrimaryContainer = Pc.Tinta,
     secondary = Pc.Lavanda,
-    onSecondary = Pc.Blanco,
+    onSecondary = Pc.SobreAcento,
     secondaryContainer = Pc.LavandaClara,
     onSecondaryContainer = Pc.Tinta,
     tertiary = Pc.Cielo,
@@ -40,11 +41,32 @@ val FormasPetcare = Shapes(
     extraLarge = RoundedCornerShape(36.dp),
 )
 
-/** Tema claro único: la identidad de PetCare se basa en fondos cálidos. */
+/** Tema cálido en claro u oscuro: sigue al teléfono salvo que se elija otro en Perfil. */
 @Composable
 fun PetcareTheme(contenido: @Composable () -> Unit) {
+    val contexto = androidx.compose.ui.platform.LocalContext.current
+    androidx.compose.runtime.remember { Apariencia.cargar(contexto) }
+    val sistema = androidx.compose.foundation.isSystemInDarkTheme()
+    val oscuro = when (Apariencia.actual) {
+        Apariencia.SISTEMA -> sistema
+        Apariencia.CLARO -> false
+        Apariencia.OSCURO -> true
+    }
+    // Se fija antes de que cualquier pantalla lea los colores
+    if (Pc.oscuro != oscuro) Pc.oscuro = oscuro
+    val vista = androidx.compose.ui.platform.LocalView.current
+    if (!vista.isInEditMode) {
+        androidx.compose.runtime.SideEffect {
+            (vista.context as? android.app.Activity)?.window?.let { w ->
+                androidx.core.view.WindowCompat.getInsetsController(w, vista).apply {
+                    isAppearanceLightStatusBars = !oscuro
+                    isAppearanceLightNavigationBars = !oscuro
+                }
+            }
+        }
+    }
     MaterialTheme(
-        colorScheme = Colores,
+        colorScheme = colores(),
         typography = TipografiaPetcare,
         shapes = FormasPetcare,
         content = contenido,

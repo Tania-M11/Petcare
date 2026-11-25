@@ -102,7 +102,7 @@ fun TarjetaIlustrada(
     modifier: Modifier = Modifier,
     chip: String? = null,
     texto: String? = null,
-    colorTexto: Color = Pc.Blanco,
+    colorTexto: Color = Pc.SobreAcento,
     alto: Dp = 190.dp,
     onClick: (() -> Unit)? = null,
 ) {
@@ -118,7 +118,7 @@ fun TarjetaIlustrada(
             .then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier),
     ) {
         BlobDecorativo(
-            colores = listOf(Pc.Blanco.suave(0.45f), Pc.Blanco.suave(0.05f)),
+            colores = listOf(Pc.SobreAcento.suave(0.45f), Pc.SobreAcento.suave(0.05f)),
             semilla = titulo.length,
             modifier = Modifier
                 .align(Alignment.BottomEnd)
@@ -140,7 +140,7 @@ fun TarjetaIlustrada(
                 .fillMaxSize()
                 .padding(20.dp),
         ) {
-            if (chip != null) Chip(chip, color = if (colorTexto == Pc.Blanco) degradado.last() else Pc.Tinta)
+            if (chip != null) Chip(chip, color = if (colorTexto == Pc.SobreAcento) degradado.last() else Pc.Tinta)
             Spacer(Modifier.weight(1f))
             Text(
                 titulo,
@@ -167,7 +167,7 @@ fun TarjetaIlustrada(
                     .size(38.dp)
                     .clip(CircleShape)
                     .background(Pc.Blanco.suave(0.35f))
-                    .border(1.dp, Pc.Blanco.suave(0.6f), CircleShape),
+                    .border(1.dp, Pc.SobreAcento.suave(0.6f), CircleShape),
                 contentAlignment = Alignment.Center,
             ) {
                 Icon(Icons.AutoMirrored.Rounded.ArrowForward, contentDescription = null, tint = colorTexto, modifier = Modifier.size(20.dp))

@@ -128,7 +128,7 @@ private fun FilaPaso(paso: PasoGuia, estado: EstadoPaso, onPaso: (PasoGuia) -> U
             contentAlignment = Alignment.Center,
         ) {
             when (estado) {
-                EstadoPaso.HECHO -> Icon(Icons.Rounded.Check, contentDescription = "Hecho", tint = Pc.Blanco, modifier = Modifier.size(18.dp))
+                EstadoPaso.HECHO -> Icon(Icons.Rounded.Check, contentDescription = "Hecho", tint = Pc.SobreAcento, modifier = Modifier.size(18.dp))
                 EstadoPaso.OMITIDO -> Icon(Icons.Rounded.Remove, contentDescription = "Omitido", tint = Pc.TintaSuave, modifier = Modifier.size(18.dp))
                 EstadoPaso.PENDIENTE -> Unit
             }

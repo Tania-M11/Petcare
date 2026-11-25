@@ -158,7 +158,7 @@ private fun TarjetaIntencion(intencion: Intencion, elegida: Boolean, onAlternar:
                     .background(if (elegida) Pc.Naranja else Pc.Blanco.copy(alpha = 0.7f)),
                 contentAlignment = Alignment.Center,
             ) {
-                if (elegida) Icon(Icons.Rounded.Check, contentDescription = null, tint = Pc.Blanco, modifier = Modifier.size(18.dp))
+                if (elegida) Icon(Icons.Rounded.Check, contentDescription = null, tint = Pc.SobreAcento, modifier = Modifier.size(18.dp))
             }
         }
         Text(intencion.titulo, style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(top = 10.dp))

@@ -131,7 +131,7 @@ fun TarjetaToma(
                 Text(
                     if (e.tipo == TipoCuidado.COMIDA) "Dada" else "Hecho",
                     style = MaterialTheme.typography.labelLarge,
-                    color = Pc.Blanco,
+                    color = Pc.SobreAcento,
                     modifier = Modifier
                         .clip(RoundedCornerShape(50))
                         .background(Pc.Naranja)
@@ -156,7 +156,7 @@ fun TarjetaToma(
                         .clip(CircleShape)
                         .background(if (r?.estado == EstadoRegistro.OMITIDA) Pc.Linea else Pc.Menta),
                     contentAlignment = Alignment.Center,
-                ) { Icon(Icons.Rounded.Check, contentDescription = null, tint = Pc.Blanco, modifier = Modifier.size(20.dp)) }
+                ) { Icon(Icons.Rounded.Check, contentDescription = null, tint = Pc.SobreAcento, modifier = Modifier.size(20.dp)) }
                 TextButton(onClick = onDeshacer) { Text("Deshacer", style = MaterialTheme.typography.labelMedium, color = Pc.TintaSuave) }
             }
         }
@@ -217,7 +217,7 @@ fun CalendarioMes(
                                 horizontalAlignment = Alignment.CenterHorizontally,
                                 verticalArrangement = Arrangement.Center,
                             ) {
-                                Text("$n", fontFamily = Kalnia, fontSize = 16.sp, color = if (elegido) Pc.Blanco else Pc.Tinta)
+                                Text("$n", fontFamily = Kalnia, fontSize = 16.sp, color = if (elegido) Pc.SobreAcento else Pc.Tinta)
                                 Spacer(Modifier.height(2.dp))
                                 Box(
                                     Modifier
@@ -226,7 +226,7 @@ fun CalendarioMes(
                                         .background(
                                             when {
                                                 r == null || r.total == 0 -> Pc.Blanco.copy(alpha = 0f)
-                                                elegido -> Pc.Blanco
+                                                elegido -> Pc.SobreAcento
                                                 dia.isBefore(hoy) && r.pendientes > 0 -> Pc.Naranja
                                                 else -> Pc.Lavanda
                                             },
@@ -311,7 +311,7 @@ fun TarjetaSolicitudes(
                     Text(
                         "Aprobar",
                         style = MaterialTheme.typography.labelLarge,
-                        color = Pc.Blanco,
+                        color = Pc.SobreAcento,
                         modifier = Modifier
                             .clip(RoundedCornerShape(50))
                             .background(Pc.Naranja)

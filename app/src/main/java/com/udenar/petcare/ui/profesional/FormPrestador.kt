@@ -425,7 +425,7 @@ fun FormPrestadorScreen(onVolver: () -> Unit, onGuardado: (activado: Boolean) ->
                     Box {
                         AsyncImage(url, contentDescription = "Foto de trabajo", contentScale = ContentScale.Crop, modifier = Modifier.size(96.dp).clip(MaterialTheme.shapes.medium))
                         Icon(
-                            Icons.Rounded.Close, contentDescription = "Quitar foto", tint = Pc.Blanco,
+                            Icons.Rounded.Close, contentDescription = "Quitar foto", tint = Pc.SobreAcento,
                             modifier = Modifier.align(Alignment.TopEnd).padding(4.dp).clip(MaterialTheme.shapes.small).background(Pc.Tinta.copy(alpha = 0.5f)).clickable { viewModel.quitarFoto(url) },
                         )
                     }

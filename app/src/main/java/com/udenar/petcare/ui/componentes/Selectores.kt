@@ -144,7 +144,7 @@ fun SelectorDias(dias: Set<DayOfWeek>, onCambio: (Set<DayOfWeek>) -> Unit, modif
                 Text(
                     d.getDisplayName(TextStyle.NARROW, ES).uppercase(),
                     style = MaterialTheme.typography.labelLarge,
-                    color = if (activo) Pc.Blanco else Pc.TintaSuave,
+                    color = if (activo) Pc.SobreAcento else Pc.TintaSuave,
                 )
             }
         }

@@ -118,9 +118,9 @@ fun BotonPrincipal(
         shape = RoundedCornerShape(50),
         colors = ButtonDefaults.buttonColors(
             containerColor = Pc.Naranja,
-            contentColor = Pc.Blanco,
+            contentColor = Pc.SobreAcento,
             disabledContainerColor = Pc.NaranjaClaro,
-            disabledContentColor = Pc.Blanco,
+            disabledContentColor = Pc.SobreAcento,
         ),
         modifier = modifier
             .fillMaxWidth()
@@ -128,7 +128,7 @@ fun BotonPrincipal(
     ) {
         Box(contentAlignment = Alignment.Center) {
             if (cargando) {
-                CircularProgressIndicator(color = Pc.Blanco, strokeWidth = 2.5.dp, modifier = Modifier.size(24.dp))
+                CircularProgressIndicator(color = Pc.SobreAcento, strokeWidth = 2.5.dp, modifier = Modifier.size(24.dp))
             } else {
                 Text(texto, style = MaterialTheme.typography.titleMedium)
             }

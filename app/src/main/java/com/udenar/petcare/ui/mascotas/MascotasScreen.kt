@@ -82,7 +82,7 @@ fun MascotasScreen(
                     descripcion = "Agregar",
                     onClick = { menuAbierto = true },
                     fondo = Pc.Naranja,
-                    tinte = Pc.Blanco,
+                    tinte = Pc.SobreAcento,
                     modifier = Modifier.testTag("boton_mas"),
                 )
             }

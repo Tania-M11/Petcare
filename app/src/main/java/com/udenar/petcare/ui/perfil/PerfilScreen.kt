@@ -235,6 +235,20 @@ fun PerfilScreen(
                 },
                 modifier = Modifier.testTag("fila_resumen"),
             )
+            // Apariencia (Fase 6.1): como el teléfono → claro → oscuro
+            val apariencia = com.udenar.petcare.ui.theme.Apariencia.actual
+            FilaOpcion(
+                icono = Icons.Rounded.Info, icono3d = if (com.udenar.petcare.ui.theme.Pc.oscuro) com.udenar.petcare.domain.modelo.Icono.LUNA else com.udenar.petcare.domain.modelo.Icono.SOL,
+                titulo = "Apariencia",
+                subtitulo = apariencia.etiqueta + " · toca para cambiar",
+                fondoIcono = Pc.LavandaClara,
+                colorIcono = Pc.Lavanda,
+                onClick = {
+                    val siguiente = com.udenar.petcare.ui.theme.Apariencia.entries.let { it[(apariencia.ordinal + 1) % it.size] }
+                    com.udenar.petcare.ui.theme.Apariencia.guardar(contexto, siguiente)
+                },
+                modifier = Modifier.testTag("fila_apariencia"),
+            )
             FilaOpcion(
                 icono = Icons.Rounded.CloudSync, icono3d = com.udenar.petcare.domain.modelo.Icono.NUBE,
                 titulo = "Sincronización",
