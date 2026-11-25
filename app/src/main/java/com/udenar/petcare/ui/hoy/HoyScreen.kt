@@ -2,6 +2,7 @@ package com.udenar.petcare.ui.hoy
 
 import com.udenar.petcare.ui.componentes.BaldosaIcono
 import com.udenar.petcare.ui.componentes.Simbolo
+import com.udenar.petcare.ui.cuidados.icono
 import com.udenar.petcare.domain.modelo.Icono
 import android.Manifest
 import android.content.pm.PackageManager
@@ -172,11 +173,21 @@ fun HoyScreen(
             val portada: @Composable () -> Unit = {
                 TarjetaSaludo(
                     etiqueta = estado.hoy.format(FORMATO_DIA).replaceFirstChar { it.uppercase() },
-                    titulo = if (mascotas.isEmpty()) "Bienvenida" else "Toda la casa",
+                    titulo = if (mascotas.isEmpty()) "Bienvenida" else "Tu día en casa",
                     cabecera = cabecera,
                     hechos = totalHoy - pendientesHoy,
                     total = totalHoy,
                     consejos = remember(estado.hoy) { com.udenar.petcare.domain.recomendaciones.Michi.consejos(estado.hoy) },
+                    modifier = Modifier.height(if (mascotas.isEmpty()) 300.dp else ALTO_CARRUSEL),
+                    proximos = resumenes.mapNotNull { r -> r.proxima?.let { it to r.mascota.nombre } }
+                        .sortedBy { it.first.fechaHora }
+                        .map { (t, nombre) ->
+                            ProximoHoy(
+                                t.evento.tipo.icono,
+                                "${t.evento.titulo} · $nombre",
+                                if (t.conHora) t.fechaHora.format(java.time.format.DateTimeFormatter.ofPattern("h:mm a", java.util.Locale.forLanguageTag("es-CO"))) else "Hoy",
+                            )
+                        },
                 )
             }
             if (mascotas.isEmpty()) {
@@ -360,11 +371,8 @@ fun HoyScreen(
                     .testTag("nuevo_cuidado"),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                Icon(Icons.Rounded.Add, contentDescription = "Registrar", tint = Pc.SobreAcento)
-                // Arriba se ve "Registrar"; al bajar queda solo el + para no tapar las tarjetas
-                androidx.compose.animation.AnimatedVisibility(desplazamiento.value < 60) {
-                    Text("Registrar", style = MaterialTheme.typography.labelLarge, color = Pc.SobreAcento, modifier = Modifier.padding(start = 6.dp, end = 4.dp))
-                }
+                // Solo el +: así no tapa la tira de la semana ni las tarjetas
+                Icon(Icons.Rounded.Add, contentDescription = "Registrar", tint = Pc.SobreAcento, modifier = Modifier.size(28.dp))
             }
         }
     }

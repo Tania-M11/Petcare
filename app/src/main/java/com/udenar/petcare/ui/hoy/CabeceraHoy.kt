@@ -22,6 +22,8 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
@@ -69,27 +71,48 @@ fun TarjetaSaludo(
     total: Int,
     consejos: List<Consejo>,
     modifier: Modifier = Modifier,
+    proximos: List<ProximoHoy> = emptyList(),
 ) {
-    val pulso = rememberInfiniteTransition(label = "chopper")
+    val pulso = rememberInfiniteTransition(label = "michi")
     val escala by pulso.animateFloat(1f, 1.05f, infiniteRepeatable(tween(1700, easing = FastOutSlowInEasing), RepeatMode.Reverse), label = "respira")
     val fraccion by animateFloatAsState(if (total == 0) 0f else hechos.toFloat() / total, spring(dampingRatio = 0.7f, stiffness = 120f), label = "progreso")
     val forma = RoundedCornerShape(30.dp)
+    // Alto fijo (lo da quien la usa): el título arriba, el estado abajo y Michi grande en la esquina
     Column(
         modifier
             .fillMaxWidth()
             .clip(forma)
             .background(Brush.linearGradient(listOf(Pc.LavandaClara, Pc.Durazno, Pc.SolClaro)))
             .grano(0.35f)
-            .testTag("mensaje_chopper"),
+            .testTag("mensaje_michi"),
     ) {
-        Row(Modifier.fillMaxWidth().padding(start = 20.dp, top = 18.dp, end = 8.dp), verticalAlignment = Alignment.Bottom) {
-            Column(Modifier.weight(1f).padding(bottom = 14.dp), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+        Box(Modifier.fillMaxWidth().weight(1f)) {
+            AnimatedContent(
+                cabecera.pose,
+                transitionSpec = { fadeIn(tween(300)) togetherWith fadeOut(tween(200)) },
+                label = "pose",
+                modifier = Modifier.align(Alignment.BottomEnd).padding(end = 6.dp),
+            ) { p ->
+                Image(painterResource(p.dibujo()), contentDescription = "Michi", modifier = Modifier.size(150.dp).offset(y = 8.dp).scale(escala))
+            }
+            Column(Modifier.fillMaxSize().padding(start = 20.dp, top = 18.dp, end = 20.dp, bottom = 16.dp)) {
                 Text(etiqueta, style = MaterialTheme.typography.labelLarge, color = Pc.TintaSuave)
-                Text(
-                    titulo,
-                    fontFamily = Kalnia, fontSize = 32.sp, lineHeight = 36.sp, color = Pc.Tinta, maxLines = 1, overflow = TextOverflow.Ellipsis,
-                )
-                Row(Modifier.padding(top = 10.dp), verticalAlignment = Alignment.CenterVertically) {
+                Text(titulo, fontFamily = Kalnia, fontSize = 30.sp, lineHeight = 34.sp, color = Pc.Tinta, maxLines = 2, overflow = TextOverflow.Ellipsis)
+                // Lo que viene: los próximos cuidados del día en píldoras
+                Column(Modifier.padding(top = 10.dp).fillMaxWidth(0.72f), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                    proximos.take(2).forEach { p ->
+                        Row(
+                            Modifier.fillMaxWidth().clip(RoundedCornerShape(50)).background(Pc.Blanco.copy(alpha = 0.75f)).padding(horizontal = 10.dp, vertical = 6.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            Simbolo(p.icono, tam = 16.dp)
+                            Text(p.texto, style = MaterialTheme.typography.labelLarge, color = Pc.Tinta, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f).padding(start = 8.dp))
+                            Text(p.hora, style = MaterialTheme.typography.labelMedium, color = Pc.TintaSuave, modifier = Modifier.padding(start = 6.dp))
+                        }
+                    }
+                }
+                Spacer(Modifier.weight(1f))
+                Row(Modifier.padding(end = 140.dp), verticalAlignment = Alignment.CenterVertically) {
                     AnimatedContent(cabecera.icono, transitionSpec = { fadeIn() togetherWith fadeOut() }, label = "icono") { i ->
                         BaldosaIcono(i, fondo = Pc.Blanco.copy(alpha = 0.75f), tam = 34.dp)
                     }
@@ -98,7 +121,7 @@ fun TarjetaSaludo(
                     }
                 }
                 if (total > 0) {
-                    Row(Modifier.padding(top = 10.dp), verticalAlignment = Alignment.CenterVertically) {
+                    Row(Modifier.padding(top = 10.dp, end = 140.dp), verticalAlignment = Alignment.CenterVertically) {
                         Box(Modifier.weight(1f).height(10.dp).clip(RoundedCornerShape(50)).background(Pc.Blanco.copy(alpha = 0.7f))) {
                             Box(
                                 Modifier
@@ -112,13 +135,13 @@ fun TarjetaSaludo(
                     }
                 }
             }
-            AnimatedContent(cabecera.pose, transitionSpec = { fadeIn(tween(300)) togetherWith fadeOut(tween(200)) }, label = "pose") { p ->
-                Image(painterResource(p.dibujo()), contentDescription = "Michi", modifier = Modifier.size(118.dp).offset(y = 6.dp).scale(escala))
-            }
         }
         if (consejos.isNotEmpty()) FranjaConsejos(consejos)
     }
 }
+
+/** Próximo cuidado del día para la portada: "Desayuno · Venus" a las "7:00 a. m.". */
+data class ProximoHoy(val icono: com.udenar.petcare.domain.modelo.Icono, val texto: String, val hora: String)
 
 /** Una línea con el truco del momento; cambia sola cada pocos segundos o al tocarla. */
 @Composable

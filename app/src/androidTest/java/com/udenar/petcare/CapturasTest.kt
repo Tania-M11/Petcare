@@ -73,10 +73,11 @@ class CapturasTest {
         }
         compose.waitUntil(5_000) { compose.onAllNodesWithTextExists("3 pendientes") }
         guardar("01_hoy")
-        compose.onRoot().performTouchInput { swipeUp() }
-        guardar("02_hoy_abajo")
-        compose.onNodeWithTag("nuevo_cuidado").performClick()
-        guardar("03_registrar")
+        compose.onNodeWithTag("filtro_Venus").performClick()
+        compose.waitUntil(5_000) { compose.onAllNodesWithTagExists("hero_Venus") }
+        guardar("02_hoy_mascota")
+        compose.onNode(androidx.compose.ui.test.hasTestTag("animo_FELIZ") and androidx.compose.ui.test.hasAnyAncestor(androidx.compose.ui.test.hasTestTag("hero_Venus"))).performClick()
+        guardar("03_hoy_animo")
     }
 
     @Test

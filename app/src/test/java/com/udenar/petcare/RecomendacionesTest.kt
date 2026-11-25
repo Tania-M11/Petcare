@@ -94,7 +94,7 @@ class RecomendacionesTest {
     }
 
     @Test
-    fun chopperSaludaSegunElDia() {
+    fun michiSaludaSegunElDia() {
         assertEquals(PoseMichi.SALUDO, Michi.cabecera(8, 0, 0, hayMascotas = false).pose)
         val manana = Michi.cabecera(8, 3, 3, hayMascotas = true)
         assertEquals("Buenos días", manana.momento)

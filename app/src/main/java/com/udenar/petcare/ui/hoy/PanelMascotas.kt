@@ -66,6 +66,9 @@ import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.util.Locale
 
+/** Alto de cada página del carrusel: todas iguales para que no queden huecos al deslizar. */
+val ALTO_CARRUSEL = 350.dp
+
 private val HORA = DateTimeFormatter.ofPattern("h:mm a", Locale.forLanguageTag("es-CO"))
 
 /**
@@ -128,7 +131,7 @@ fun CarruselHoy(estado: PagerState, resumenes: List<ResumenMascotaHoy>, onAnimo:
         state = estado,
         pageSpacing = 12.dp,
         beyondViewportPageCount = 1,
-        modifier = Modifier.fillMaxWidth().testTag("carrusel_hoy"),
+        modifier = Modifier.fillMaxWidth().height(ALTO_CARRUSEL).testTag("carrusel_hoy"),
     ) { pagina ->
         if (pagina == 0) portada()
         else resumenes.getOrNull(pagina - 1)?.let { r -> TarjetaMascotaHoy(r, onAnimo = { onAnimo(r.mascota.id, it) }, onAbrir = { onAbrir(r.mascota.id) }) }
@@ -147,12 +150,13 @@ private fun TarjetaMascotaHoy(r: ResumenMascotaHoy, onAnimo: (Animo) -> Unit, on
     Column(
         Modifier
             .fillMaxWidth()
+            .height(ALTO_CARRUSEL)
             .clip(forma)
             .background(Brush.linearGradient(listOf(colores.first(), colores.last().copy(alpha = 0.55f))))
             .grano(0.3f)
             .testTag("hero_${m.nombre}"),
     ) {
-        Box(Modifier.fillMaxWidth().clickable(onClick = onAbrir)) {
+        Box(Modifier.fillMaxWidth().weight(1f).clickable(onClick = onAbrir)) {
             // Foto o ilustración grande, recortada contra la esquina
             Box(
                 Modifier
@@ -183,23 +187,17 @@ private fun TarjetaMascotaHoy(r: ResumenMascotaHoy, onAnimo: (Animo) -> Unit, on
                         when {
                             r.total == 0 -> "Sin cuidados hoy"
                             r.hechos == r.total -> "¡Todo listo hoy!"
-                            else -> "${r.hechos} de ${r.total} cuidados"
+                            else -> "${r.hechos} de ${r.total} ${if (r.total == 1) "cuidado" else "cuidados"}"
                         },
                     )
                     r.proxima?.let { t ->
                         DatoHero(t.evento.tipo.icono, if (t.conHora) "${t.evento.titulo} · ${t.fechaHora.format(HORA)}" else t.evento.titulo)
                     }
-                    DatoHero(Icono.PASEO, if (r.paseos == 0) "Sin paseos esta semana" else "${r.paseos} ${if (r.paseos == 1) "paseo" else "paseos"} · ${textoDistancia(r.metros)}")
+                    DatoHero(Icono.PASEO, if (r.paseos == 0) "Aún sin paseos" else "${r.paseos} ${if (r.paseos == 1) "paseo" else "paseos"} · ${textoDistancia(r.metros)}")
                 }
             }
         }
-        SelectorAnimo(m.nombre, r.animo, r.semana.map { it.fecha to it.animo }, onAnimo)
-        r.nota?.let {
-            Row(Modifier.fillMaxWidth().background(Pc.Blanco.copy(alpha = 0.8f)).padding(horizontal = 18.dp, vertical = 10.dp), verticalAlignment = Alignment.CenterVertically) {
-                Simbolo(Icono.VETERINARIO, tam = 18.dp)
-                Text(it, style = MaterialTheme.typography.bodySmall, color = Pc.Tinta, modifier = Modifier.padding(start = 8.dp).testTag("nota_animo"))
-            }
-        }
+        SelectorAnimo(m.nombre, r.animo, r.semana.map { it.fecha to it.animo }, r.nota, onAnimo)
     }
 }
 
@@ -218,7 +216,7 @@ private fun DatoHero(icono: Icono, texto: String) {
  * puntos de color para ver de un vistazo cómo ha estado.
  */
 @Composable
-private fun SelectorAnimo(nombre: String, hoy: Animo?, semana: List<Pair<LocalDate, Animo>>, onAnimo: (Animo) -> Unit) {
+private fun SelectorAnimo(nombre: String, hoy: Animo?, semana: List<Pair<LocalDate, Animo>>, nota: String?, onAnimo: (Animo) -> Unit) {
     Column(
         Modifier
             .padding(10.dp)
@@ -237,6 +235,13 @@ private fun SelectorAnimo(nombre: String, hoy: Animo?, semana: List<Pair<LocalDa
             }
             androidx.compose.foundation.layout.Spacer(Modifier.weight(1f))
             SemanaAnimo(semana)
+        }
+        // Varios días decaído: una línea amable que remite a su veterinario
+        nota?.let {
+            Row(Modifier.padding(top = 4.dp), verticalAlignment = Alignment.CenterVertically) {
+                Simbolo(Icono.VETERINARIO, tam = 14.dp)
+                Text(it, style = MaterialTheme.typography.labelSmall, color = Pc.TintaSuave, maxLines = 2, modifier = Modifier.padding(start = 6.dp).testTag("nota_animo"))
+            }
         }
         Row(Modifier.fillMaxWidth().padding(top = 8.dp), horizontalArrangement = Arrangement.SpaceBetween) {
             Animo.entries.forEach { a ->

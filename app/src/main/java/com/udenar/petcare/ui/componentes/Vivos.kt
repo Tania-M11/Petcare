@@ -96,7 +96,7 @@ fun Especie.acento(): Color = colores().last()
 @Composable
 fun BurbujaMichi(texto: String, pose: PoseMichi, modifier: Modifier = Modifier, tamMichi: Dp = 84.dp) {
     // Respiración suave para que se sienta vivo
-    val pulso = rememberInfiniteTransition(label = "chopper")
+    val pulso = rememberInfiniteTransition(label = "michi")
     val escala by pulso.animateFloat(1f, 1.04f, infiniteRepeatable(tween(1600, easing = FastOutSlowInEasing), RepeatMode.Reverse), label = "respira")
     var visible by remember { mutableStateOf(false) }
     LaunchedEffect(Unit) { visible = true }
@@ -112,7 +112,7 @@ fun BurbujaMichi(texto: String, pose: PoseMichi, modifier: Modifier = Modifier, 
                     .clip(RoundedCornerShape(topStart = 22.dp, topEnd = 22.dp, bottomEnd = 22.dp, bottomStart = 4.dp))
                     .background(Pc.Blanco)
                     .padding(horizontal = 16.dp, vertical = 12.dp)
-                    .testTag("mensaje_chopper"),
+                    .testTag("mensaje_michi"),
             ) {
                 AnimatedContent(texto, transitionSpec = { fadeIn(tween(250)) togetherWith fadeOut(tween(150)) }, label = "texto") { t ->
                     Text(t, style = MaterialTheme.typography.bodyMedium, color = Pc.Tinta)
@@ -257,7 +257,7 @@ fun AvisoMichi(texto: String, modifier: Modifier = Modifier) {
             .clip(RoundedCornerShape(28.dp))
             .background(if (error) Pc.Durazno else Pc.Blanco)
             .padding(end = 18.dp)
-            .testTag("aviso_chopper"),
+            .testTag("aviso_michi"),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Image(painterResource(pose.dibujo()), contentDescription = null, modifier = Modifier.size(56.dp).padding(6.dp))
