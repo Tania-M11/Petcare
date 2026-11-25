@@ -143,6 +143,11 @@ fun NuevoCuidadoScreen(onListo: () -> Unit, onGuardado: () -> Unit = onListo, vi
                 val aviso = f.avisoDias.toIntOrNull() ?: 7
                 Stepper(aviso.toDouble(), { v -> viewModel.editar { it.copy(avisoDias = v.toInt().toString()) } }, paso = 1.0, unidad = if (aviso == 1) "día" else "días", minimo = 0.0, maximo = 90.0, decimales = 0)
             },
+            Paso("certificado", saltable = true) {
+                PreguntaMichi("¿Tienes el certificado?", "Una foto del carné o certificado; queda en sus Documentos", PoseMichi.DOCUMENTOS)
+                com.udenar.petcare.ui.componentes.ElegirFoto(f.foto, { u -> viewModel.editar { it.copy(foto = u) } }, prefijoTag = "certificado")
+                CampoTexto(f.detalle["lote"].orEmpty(), { viewModel.detalle("lote", it.take(40)) }, "Número de lote (opcional)", modifier = Modifier.testTag("lote_vacuna"))
+            },
             resumen(f, viewModel, nota = "observaciones"),
         )
         ClaseCuidado.DESPARASITACION -> listOf(
@@ -213,6 +218,11 @@ fun NuevoCuidadoScreen(onListo: () -> Unit, onGuardado: () -> Unit = onListo, vi
             Paso("desde", { f.fecha != null }) {
                 PreguntaMichi(if (f.modo == ModoFrecuencia.UNA_VEZ) "¿Qué día?" else "¿Desde cuándo?", null, PoseMichi.AGENDA)
                 FechaRapida("Fecha", f.fecha, hoy) { d -> viewModel.editar(CampoCuidado.FECHA) { it.copy(fecha = d) } }
+            },
+            Paso("detalles", saltable = true) {
+                PreguntaMichi("¿Cuánto dura?", "Duración y una foto si quieres (opcional)", PoseMichi.CELEBRA)
+                CampoTexto(f.detalle["duracionMin"].orEmpty(), { viewModel.detalle("duracionMin", it.filter(Char::isDigit).take(4)) }, "Duración en minutos", teclado = androidx.compose.ui.text.input.KeyboardType.Number, modifier = Modifier.testTag("duracion_actividad"))
+                com.udenar.petcare.ui.componentes.ElegirFoto(f.foto, { u -> viewModel.editar { it.copy(foto = u) } }, prefijoTag = "actividad_foto")
             },
             resumen(f, viewModel, nota = "observaciones"),
         )

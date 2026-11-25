@@ -156,11 +156,21 @@ fun PetcareRaiz() {
                     onPasear = { nav.navigate(RutaPaseo(it)) },
                     onPaseo = { nav.navigate(RutaDetallePaseo(it)) },
                     onVeterinarios = { nav.navigate(RutaDirectorioVet) },
+                    onSintoma = { nav.navigate(RutaNuevoSintoma(it)) },
                     onVisita = { idVisita ->
                         val mascotaId = nav.currentBackStackEntry?.toRoute<RutaDetalleMascota>()?.id ?: return@DetalleMascotaScreen
                         nav.navigate(RutaFormVisita(mascotaId, idVisita))
                     },
                     avisar = avisar,
+                )
+            }
+            composable<RutaNuevoSintoma> {
+                com.udenar.petcare.ui.mascotas.NuevoSintomaScreen(
+                    onCerrar = { nav.popBackStack() },
+                    onGuardado = {
+                        nav.popBackStack()
+                        avisar("Anotado. Si te preocupa, muéstraselo a su veterinario")
+                    },
                 )
             }
             composable<RutaFormCuidado> {

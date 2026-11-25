@@ -63,7 +63,14 @@ class DetalleMascotaViewModel @Inject constructor(
     private val paseosRepo: com.udenar.petcare.domain.paseos.RepositorioPaseos,
     private val atencion: com.udenar.petcare.domain.profesionales.RepositorioAtencionVet,
     private val descartes: com.udenar.petcare.data.local.Descartes,
+    private val sintomasRepo: com.udenar.petcare.domain.salud.RepositorioSintomas,
 ) : ViewModel() {
+
+    val sintomas: StateFlow<List<com.udenar.petcare.domain.salud.Sintoma>> by lazy {
+        sintomasRepo.observar(id).stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
+    }
+
+    fun eliminarSintoma(sintomaId: String) = viewModelScope.launch { sintomasRepo.eliminar(sintomaId) }
 
     val paseos: StateFlow<List<com.udenar.petcare.domain.paseos.Paseo>> by lazy {
         paseosRepo.observar(id).stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
@@ -209,7 +216,10 @@ class DetalleMascotaViewModel @Inject constructor(
 
     fun descartar(r: String) = descartes.descartar(r)
 
-    val historial: StateFlow<List<ItemHistorial>> = combine(cuidados.observarEventos(), cuidados.observarRegistros(), pesos, visitas, paseosRepo.observar(id)) { ev, reg, ps, vs, pas ->
+    val historial: StateFlow<List<ItemHistorial>> = combine(
+        cuidados.observarEventos(), cuidados.observarRegistros(), pesos, visitas,
+        combine(paseosRepo.observar(id), sintomasRepo.observar(id), ::Pair),
+    ) { ev, reg, ps, vs, (pas, sin) ->
         val porId = ev.associateBy { it.id }
         val zona = reloj.zone
         buildList {
@@ -236,6 +246,9 @@ class DetalleMascotaViewModel @Inject constructor(
                         "${p.tipo.etiqueta}${p.registradoPor?.nombre?.let { " · ${it.substringBefore(' ')}" } ?: ""}",
                     ),
                 )
+            }
+            sin.forEach { s ->
+                add(ItemHistorial(s.fechaHora, CategoriaHistorial.SINTOMAS, s.tipo.icono, s.tipo.etiqueta, listOfNotNull(s.descripcion, s.registradoPor?.nombre?.substringBefore(' ')).joinToString(" · ").ifEmpty { "Síntoma anotado" }))
             }
             vs.forEach { v ->
                 add(ItemHistorial(v.fecha.atTime(12, 0), CategoriaHistorial.VISITAS, Icono.VETERINARIO, v.motivo, listOfNotNull("Visita veterinaria", v.veterinario, v.clinica).joinToString(" · ")))

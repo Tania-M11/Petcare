@@ -70,6 +70,8 @@ data class FormCuidado(
     val fechaAnterior: LocalDate? = null,
     val avisoDias: String = MotorCuidados.AVISO_POR_DEFECTO.toString(),
     val detalle: Map<String, String> = emptyMap(),
+    /** Foto nueva para guardar como documento ligado: certificado (vacuna) o foto (actividad). */
+    val foto: String? = null,
     val errores: Map<CampoCuidado, String> = emptyMap(),
     val mensaje: String? = null,
     val guardando: Boolean = false,
@@ -83,6 +85,7 @@ class FormCuidadoViewModel @Inject constructor(
     private val reloj: Clock,
     private val pegatinas: com.udenar.petcare.data.fotos.Pegatinas,
     private val lector: com.udenar.petcare.data.fotos.LectorEtiquetas,
+    private val documentos: com.udenar.petcare.domain.documentos.RepositorioDocumentos,
 ) : ViewModel() {
 
     /** Escanear etiqueta (Fase 6.3): lo leído se ofrece como opciones; nada se llena solo. */
@@ -176,6 +179,17 @@ class FormCuidadoViewModel @Inject constructor(
         _form.update { it.copy(guardando = true) }
         viewModelScope.launch {
             repo.guardarEvento(evento)
+            // Certificado de la vacuna o foto de la actividad: queda en Documentos ligado a este cuidado
+            f.foto?.let { uri ->
+                val esVacuna = evento.tipo == TipoCuidado.VACUNA
+                runCatching {
+                    documentos.agregar(
+                        evento.mascotaId, uri, if (esVacuna) "Certificado · ${evento.titulo}" else evento.titulo,
+                        if (esVacuna) com.udenar.petcare.domain.documentos.TipoDocumento.CERTIFICADO else com.udenar.petcare.domain.documentos.TipoDocumento.FOTO,
+                        f.fechaAnterior ?: evento.fechaInicio, null, eventoId = evento.id,
+                    )
+                }
+            }
             _form.update { it.copy(guardando = false, listo = true) }
         }
     }

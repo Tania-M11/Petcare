@@ -137,6 +137,8 @@ fun FormCuidadoScreen(onListo: () -> Unit, viewModel: FormCuidadoViewModel = hil
                         )
                         Text("días antes", style = MaterialTheme.typography.bodyLarge)
                     }
+                    Text("Foto del certificado (queda en Documentos)", style = MaterialTheme.typography.labelLarge, color = Pc.TintaSuave)
+                    com.udenar.petcare.ui.componentes.ElegirFoto(f.foto, { u -> viewModel.editar { it.copy(foto = u) } }, prefijoTag = "certificado")
                 }
                 Seccion("Más datos (opcional)") {
                     CampoTexto(f.detalle["veterinario"].orEmpty(), { viewModel.detalle("veterinario", it) }, "Veterinario")
@@ -214,6 +216,8 @@ fun FormCuidadoScreen(onListo: () -> Unit, viewModel: FormCuidadoViewModel = hil
                     }
                     CampoTexto(f.detalle["duracionMin"].orEmpty(), { viewModel.detalle("duracionMin", it.filter(Char::isDigit).take(4)) }, "Duración en minutos (opcional)", teclado = KeyboardType.Number)
                     CampoTexto(f.detalle["observaciones"].orEmpty(), { viewModel.detalle("observaciones", it) }, "Observaciones (opcional)", lineas = 2)
+                    Text("Foto (opcional, queda en Documentos)", style = MaterialTheme.typography.labelLarge, color = Pc.TintaSuave)
+                    com.udenar.petcare.ui.componentes.ElegirFoto(f.foto, { u -> viewModel.editar { it.copy(foto = u) } }, prefijoTag = "actividad_foto")
                 }
             }
         }

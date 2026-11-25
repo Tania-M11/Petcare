@@ -84,8 +84,10 @@ fun DetalleMascotaScreen(
     onPaseo: (String) -> Unit,
     avisar: (String) -> Unit,
     onVeterinarios: () -> Unit = {},
+    onSintoma: (String) -> Unit = {},
     viewModel: DetalleMascotaViewModel = hiltViewModel(),
 ) {
+    val sintomas by viewModel.sintomas.collectAsStateWithLifecycle()
     val m by viewModel.mascota.collectAsStateWithLifecycle()
     val codigo by viewModel.codigo.collectAsStateWithLifecycle()
     val cuidados by viewModel.cuidados.collectAsStateWithLifecycle()
@@ -182,6 +184,8 @@ fun DetalleMascotaScreen(
                 }
                 2 -> {
                     SaludBasica(mascota)
+                    // Lo puede anotar el dueño o quien la cuida
+                    TarjetaSintomas(sintomas, onNuevo = { onSintoma(mascota.id) }, onEliminar = viewModel::eliminarSintoma, onVeterinarios = onVeterinarios)
                     TarjetaPeso(pesos, viewModel.hoy, onRegistrar = viewModel::registrarPeso, onEliminar = { viewModel.eliminarPeso(it) }, editable = mascota.esPropietario)
                     // Las visitas veterinarias no se comparten con los cuidadores (sección 5)
                     if (mascota.esPropietario) {
