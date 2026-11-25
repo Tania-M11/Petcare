@@ -424,6 +424,7 @@ private fun FichaYCodigo(
         }
         mascota.pesoGramos?.let { Dato("Peso", FichaMascota.peso(it)) }
         mascota.color?.let { Dato("Color", it) }
+        mascota.microchip?.let { Dato("Microchip", it) }
         mascota.notas?.let { Dato("Notas", it) }
     }
     TarjetaCodigo(mascota, codigo, contexto, avisar, onReintentar = viewModel::cargarCodigo, onRegenerar = onRegenerar, onDesactivar = onDesactivar)
@@ -439,6 +440,7 @@ private fun SaludBasica(mascota: com.udenar.petcare.domain.modelo.Mascota) {
         mascota.alergias?.let { "Alergias" to it },
         mascota.condiciones?.let { "Condiciones" to it },
         mascota.medicamentosActuales?.let { "Medicamentos actuales" to it },
+        mascota.alimentacionEspecial?.let { "Alimentación especial" to it },
         mascota.observaciones?.let { "Observaciones" to it },
     )
     Seccion("Salud básica") {

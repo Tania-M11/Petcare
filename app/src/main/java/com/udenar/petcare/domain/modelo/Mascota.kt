@@ -38,6 +38,10 @@ data class Mascota(
     val condiciones: String? = null,
     val medicamentosActuales: String? = null,
     val observaciones: String? = null,
+    /** Número de microchip, tal como aparece en su registro. */
+    val microchip: String? = null,
+    /** Alimentación especial que indicó su veterinario (la app no la sugiere). */
+    val alimentacionEspecial: String? = null,
     val fotoUrl: String? = null,
     /** Archivo de la foto en el teléfono (para mostrarla sin internet). */
     val fotoLocal: String? = null,

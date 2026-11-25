@@ -47,6 +47,8 @@ data class FormMascota(
     val condiciones: String = "",
     val medicamentos: String = "",
     val observaciones: String = "",
+    val microchip: String = "",
+    val alimentacionEspecial: String = "",
     val vet: com.udenar.petcare.domain.modelo.VeterinarioManual = com.udenar.petcare.domain.modelo.VeterinarioManual(),
     /** Foto que se muestra (la actual o la recién elegida). */
     val foto: String? = null,
@@ -122,6 +124,7 @@ class FormMascotaViewModel @Inject constructor(
                         pesoTexto = peso, unidad = unidad, tamano = m.tamano, color = m.color.orEmpty(), esterilizado = m.esterilizado,
                         notas = m.notas.orEmpty(), alergias = m.alergias.orEmpty(), condiciones = m.condiciones.orEmpty(),
                         medicamentos = m.medicamentosActuales.orEmpty(), observaciones = m.observaciones.orEmpty(), foto = m.fotoLocal,
+                        microchip = m.microchip.orEmpty(), alimentacionEspecial = m.alimentacionEspecial.orEmpty(),
                         vet = m.veterinario ?: com.udenar.petcare.domain.modelo.VeterinarioManual(),
                     )
                 }
@@ -163,6 +166,7 @@ class FormMascotaViewModel @Inject constructor(
                     pesoGramos = FichaMascota.gramos(f.pesoTexto, f.unidad), tamano = f.tamano, color = f.color,
                     esterilizado = f.esterilizado, notas = f.notas, alergias = f.alergias, condiciones = f.condiciones,
                     medicamentosActuales = f.medicamentos, observaciones = f.observaciones, veterinario = f.vet,
+                    microchip = f.microchip.filter { !it.isWhitespace() }.take(30), alimentacionEspecial = f.alimentacionEspecial.take(500),
                 ),
                 fotoNueva = f.fotoNueva,
             )

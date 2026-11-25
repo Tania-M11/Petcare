@@ -44,6 +44,8 @@ data class MascotaEntidad(
     @ColumnInfo(defaultValue = "0") val fotoPendiente: Boolean = false,
     /** Veterinario manual como objeto JSON (RF-04). */
     val veterinario: String? = null,
+    val microchip: String? = null,
+    val alimentacionEspecial: String? = null,
 )
 
 @Dao

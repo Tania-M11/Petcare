@@ -123,6 +123,8 @@ private fun Mascota.comoEntidad(anterior: MascotaEntidad?, ahora: Long) = Mascot
     condiciones = condiciones?.trim()?.ifBlank { null },
     medicamentosActuales = medicamentosActuales?.trim()?.ifBlank { null },
     observaciones = observaciones?.trim()?.ifBlank { null },
+    microchip = microchip?.trim()?.ifBlank { null },
+    alimentacionEspecial = alimentacionEspecial?.trim()?.ifBlank { null },
     fotoUrl = anterior?.fotoUrl ?: fotoUrl,
     veterinario = veterinario?.takeIf { !it.vacio }?.let { v ->
         kotlinx.serialization.json.buildJsonObject {
@@ -157,6 +159,8 @@ internal fun MascotaEntidad.comoDominio(yo: String? = null) = Mascota(
     condiciones = condiciones,
     medicamentosActuales = medicamentosActuales,
     observaciones = observaciones,
+    microchip = microchip,
+    alimentacionEspecial = alimentacionEspecial,
     fotoUrl = fotoUrl,
     fotoLocal = fotoLocal?.takeIf { File(it).exists() },
     veterinario = veterinario?.let { texto ->

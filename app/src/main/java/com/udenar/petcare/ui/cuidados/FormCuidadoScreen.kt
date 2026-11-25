@@ -89,8 +89,8 @@ fun FormCuidadoScreen(onListo: () -> Unit, viewModel: FormCuidadoViewModel = hil
                     Text("¿Qué días?", style = MaterialTheme.typography.labelLarge, color = Pc.TintaSuave)
                     SelectorDias(f.dias, { d -> viewModel.editar(CampoCuidado.DIAS) { it.copy(dias = d) } })
                     f.errores[CampoCuidado.DIAS]?.let { Text(it, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall) }
+                    DatosAlimento(f.detalle, viewModel::detalle)
                     CampoTexto(f.detalle["texto"].orEmpty(), { viewModel.detalle("texto", it) }, "Nota para quien la dé (opcional)", lineas = 2)
-                    Text("PetCare solo te recuerda la hora: no calcula porciones ni sugiere alimentos.", style = MaterialTheme.typography.bodySmall, color = Pc.TintaSuave)
                 }
             }
 

@@ -6,9 +6,11 @@ import java.time.LocalDate
 
 enum class TipoDocumento(val etiqueta: String, val icono: Icono) {
     CARNE("Carné", Icono.CARNE),
+    CERTIFICADO("Certificado", Icono.ESCUDO),
     FORMULA("Fórmula", Icono.NOTA),
     EXAMEN("Examen", Icono.EXAMEN),
     INFORME("Informe", Icono.DOCUMENTO),
+    FOTO("Foto", Icono.CAMARA),
     OTRO("Otro", Icono.ADJUNTO),
 }
 
@@ -39,7 +41,7 @@ interface RepositorioDocumentos {
      * Guarda en el teléfono (imagen comprimida o PDF de hasta 5 MB) y lo sube al sincronizar.
      * [origen] es la Uri elegida por la persona.
      */
-    suspend fun agregar(mascotaId: String, origen: String, nombre: String, tipo: TipoDocumento, fecha: LocalDate, visitaId: String?)
+    suspend fun agregar(mascotaId: String, origen: String, nombre: String, tipo: TipoDocumento, fecha: LocalDate, visitaId: String?, eventoId: String? = null): String
     suspend fun eliminar(id: String)
 
     /** Descarga el archivo si este teléfono no lo tiene; devuelve la ruta local o null sin internet. */

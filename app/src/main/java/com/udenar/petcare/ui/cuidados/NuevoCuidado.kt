@@ -86,6 +86,10 @@ fun NuevoCuidadoScreen(onListo: () -> Unit, onGuardado: () -> Unit = onListo, vi
                 PreguntaMichi("¿Qué días?", null, PoseMichi.AGENDA)
                 DiasRapidos(f.dias) { d -> viewModel.editar(CampoCuidado.DIAS) { it.copy(dias = d, modo = ModoFrecuencia.DIAS_SEMANA) } }
             },
+            Paso("alimento", { true }) {
+                PreguntaMichi("¿Qué le das?", "Todo es opcional; sirve para que quien la cuide le dé lo mismo", PoseMichi.LEYENDO)
+                DatosAlimento(f.detalle, viewModel::detalle)
+            },
             resumen(f, viewModel, nota = "texto"),
         )
         ClaseCuidado.MEDICAMENTO -> listOf(
@@ -191,8 +195,9 @@ fun NuevoCuidadoScreen(onListo: () -> Unit, onGuardado: () -> Unit = onListo, vi
         ClaseCuidado.PERSONALIZADO -> listOf(
             Paso("nombre", { f.titulo.isNotBlank() }) {
                 PreguntaMichi("¿Qué actividad quieres recordar?", null, PoseMichi.AGENDA)
-                OpcionesGrandes(listOf("Juego" to Icono.JUEGO, "Entrenamiento" to Icono.HUESO, "Cepillar dientes" to Icono.CEPILLO_DIENTES, "Socializar" to Icono.HUELLAS), f.titulo) { nombre ->
-                    viewModel.editar(CampoCuidado.TITULO) { it.copy(titulo = nombre) }
+                OpcionesGrandes(listOf("Paseo" to Icono.PASEO, "Juego" to Icono.JUEGO, "Entrenamiento" to Icono.HUESO, "Cepillar dientes" to Icono.CEPILLO_DIENTES, "Socializar" to Icono.HUELLAS), f.titulo) { nombre ->
+                    // "Paseo" queda como recordatorio de paseo (su propio tipo); lo demás, actividad personalizada
+                    viewModel.editar(CampoCuidado.TITULO) { it.copy(titulo = nombre, tipo = if (nombre == "Paseo") com.udenar.petcare.domain.cuidados.TipoCuidado.PASEO else com.udenar.petcare.domain.cuidados.TipoCuidado.PERSONALIZADO) }
                     paso++
                 }
                 CampoTexto(f.titulo, { v -> viewModel.editar(CampoCuidado.TITULO) { it.copy(titulo = v.take(80)) } }, "U otro nombre", modifier = Modifier.testTag("titulo_cuidado"))
@@ -382,4 +387,24 @@ private fun Escanear(viewModel: FormCuidadoViewModel, f: FormCuidado) {
             }
         }
     }
+}
+
+private val TIPOS_ALIMENTO = listOf("Concentrado", "Húmedo", "Casera", "Otro")
+
+/**
+ * Tipo, marca, cantidad y premios de una comida. Solo guarda lo que escribe la persona (o lo
+ * que indicó su veterinario): la app no calcula porciones ni sugiere alimentos.
+ */
+@Composable
+internal fun DatosAlimento(detalle: Map<String, String>, onCambio: (String, String) -> Unit) {
+    Text("Tipo de alimento", style = MaterialTheme.typography.titleSmall)
+    androidx.compose.foundation.layout.FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        TIPOS_ALIMENTO.forEach { t ->
+            com.udenar.petcare.ui.componentes.ChipOpcion(t, detalle["tipo_alimento"] == t, onClick = { onCambio("tipo_alimento", if (detalle["tipo_alimento"] == t) "" else t) }, modifier = Modifier.testTag("alimento_$t"))
+        }
+    }
+    CampoTexto(detalle["marca"].orEmpty(), { onCambio("marca", it.take(80)) }, "Marca (opcional)", modifier = Modifier.testTag("marca_alimento"))
+    CampoTexto(detalle["cantidad"].orEmpty(), { onCambio("cantidad", it.take(80)) }, "Cantidad (la que tú o su veterinario definieron)", modifier = Modifier.testTag("cantidad_alimento"))
+    CampoTexto(detalle["premios"].orEmpty(), { onCambio("premios", it.take(200)) }, "Premios o snacks que le das (opcional)", lineas = 2, modifier = Modifier.testTag("premios"))
+    Text("PetCare solo guarda lo que escribes: no calcula porciones ni sugiere alimentos.", style = MaterialTheme.typography.bodySmall, color = Pc.TintaSuave)
 }

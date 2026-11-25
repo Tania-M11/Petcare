@@ -195,7 +195,7 @@ fun NuevaMascotaScreen(onVolver: () -> Unit, onGuardada: (String) -> Unit, viewM
                         listOfNotNull(f.sexo.takeIf { it != Sexo.DESCONOCIDO }?.etiqueta, f.tamano?.etiqueta, f.pesoTexto.takeIf { (it.replace(',', '.').toDoubleOrNull() ?: 0.0) > 0 }?.let { "$it kg" }).joinToString(" · ").ifEmpty { "Sin datos" },
                         onEditar = { paso = PasoMascota.DETALLES.ordinal },
                     )
-                    FilaResumen("Salud", listOfNotNull(f.alergias.ifBlank { null }?.let { "Alergias" }, f.medicamentos.ifBlank { null }?.let { "Medicamentos" }).joinToString(" · ").ifEmpty { "Sin datos" }, onEditar = { paso = PasoMascota.SALUD.ordinal })
+                    FilaResumen("Salud", listOfNotNull(f.alergias.ifBlank { null }?.let { "Alergias" }, f.medicamentos.ifBlank { null }?.let { "Medicamentos" }, f.alimentacionEspecial.ifBlank { null }?.let { "Dieta especial" }, f.microchip.ifBlank { null }?.let { "Microchip" }).joinToString(" · ").ifEmpty { "Sin datos" }, onEditar = { paso = PasoMascota.SALUD.ordinal })
                 }
             }
         }
@@ -298,4 +298,14 @@ private fun androidx.compose.foundation.layout.ColumnScope.PasoSalud(nombre: Str
             Text("Después podrás crear su recordatorio con las horas.", style = MaterialTheme.typography.bodySmall, color = Pc.TintaSuave)
         }
     }
+    var dieta by remember { mutableStateOf<Boolean?>(if (f.alimentacionEspecial.isNotBlank()) true else null) }
+    Text("¿Su veterinario le indicó una alimentación especial?", style = MaterialTheme.typography.titleMedium)
+    Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+        TarjetaOpcionGrande("Sí", dieta == true, onClick = { dieta = true }, icono = Icono.COMIDA, modifier = Modifier.weight(1f).testTag("dieta_si"))
+        TarjetaOpcionGrande("No", dieta == false, onClick = { dieta = false; viewModel.editar { it.copy(alimentacionEspecial = "") } }, icono = Icono.PULGAR, modifier = Modifier.weight(1f))
+    }
+    AnimatedVisibility(dieta == true) {
+        CampoTexto(f.alimentacionEspecial, { v -> viewModel.editar { it.copy(alimentacionEspecial = v) } }, "¿Cuál? (tal como te la indicaron)", modifier = Modifier.testTag("alimentacion_especial"))
+    }
+    CampoTexto(f.microchip, { v -> viewModel.editar { it.copy(microchip = v) } }, "Número de microchip (si tiene)", teclado = androidx.compose.ui.text.input.KeyboardType.Number, modifier = Modifier.testTag("microchip"))
 }

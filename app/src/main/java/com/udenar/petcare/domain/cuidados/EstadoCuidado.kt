@@ -10,6 +10,7 @@ enum class AreaCuidado(val titulo: String, val icono: Icono) {
     HIGIENE("Higiene", Icono.BANO),
     COMIDAS("Comidas", Icono.COMIDA),
     CITAS("Citas", Icono.VETERINARIO),
+    ACTIVIDAD("Actividad física", Icono.PASEO),
 }
 
 enum class NivelCuidado(val etiqueta: String) { AL_DIA("Al día"), PROXIMO("Próximo"), PENDIENTE("Pendiente") }
@@ -27,7 +28,8 @@ object EstadoCuidado {
         TipoCuidado.LIMPIEZA_DENTAL, TipoCuidado.LIMPIEZA_OIDOS, TipoCuidado.LIMPIEZA_OJOS -> AreaCuidado.HIGIENE
         TipoCuidado.COMIDA -> AreaCuidado.COMIDAS
         TipoCuidado.CITA_VET, TipoCuidado.SERVICIO_CONTRATADO -> AreaCuidado.CITAS
-        TipoCuidado.PESAJE, TipoCuidado.PERSONALIZADO -> null
+        TipoCuidado.PASEO, TipoCuidado.PERSONALIZADO -> AreaCuidado.ACTIVIDAD
+        TipoCuidado.PESAJE -> null
     }
 
     /**

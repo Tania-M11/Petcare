@@ -51,8 +51,8 @@ interface CursorDao {
  * Cada parte agrega sus tablas subiendo la versión con una migración automática.
  */
 @Database(
-    entities = [MascotaEntidad::class, CursorEntidad::class, EventoEntidad::class, RegistroEntidad::class, AlarmaEntidad::class, PesoEntidad::class, VisitaEntidad::class, PreferenciaMascota::class, ConfigQrEntidad::class, com.udenar.petcare.data.documentos.DocumentoEntidad::class, com.udenar.petcare.data.paseos.PaseoEntidad::class, com.udenar.petcare.data.animo.AnimoEntidad::class],
-    version = 10,
+    entities = [MascotaEntidad::class, CursorEntidad::class, EventoEntidad::class, RegistroEntidad::class, AlarmaEntidad::class, PesoEntidad::class, VisitaEntidad::class, PreferenciaMascota::class, ConfigQrEntidad::class, com.udenar.petcare.data.documentos.DocumentoEntidad::class, com.udenar.petcare.data.paseos.PaseoEntidad::class, com.udenar.petcare.data.animo.AnimoEntidad::class, com.udenar.petcare.data.salud.SintomaEntidad::class],
+    version = 11,
     exportSchema = true,
     autoMigrations = [
         AutoMigration(from = 1, to = 2), // 2.2: foto local de la mascota
@@ -64,6 +64,7 @@ interface CursorDao {
         AutoMigration(from = 7, to = 8), // 3.3: documentos
         AutoMigration(from = 8, to = 9), // 3.4: paseos
         AutoMigration(from = 9, to = 10), // Fase 6: cómo está hoy (ánimo anotado)
+        AutoMigration(from = 10, to = 11), // síntomas; microchip y alimentación especial en la ficha
     ],
 )
 abstract class PetcareDb : RoomDatabase() {
@@ -79,4 +80,5 @@ abstract class PetcareDb : RoomDatabase() {
     abstract fun documentos(): com.udenar.petcare.data.documentos.DocumentoDao
     abstract fun paseos(): com.udenar.petcare.data.paseos.PaseoDao
     abstract fun animos(): com.udenar.petcare.data.animo.AnimoDao
+    abstract fun sintomas(): com.udenar.petcare.data.salud.SintomaDao
 }

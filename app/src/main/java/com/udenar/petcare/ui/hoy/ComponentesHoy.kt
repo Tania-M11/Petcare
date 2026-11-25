@@ -100,7 +100,7 @@ fun TarjetaToma(
             Text(e.titulo, style = MaterialTheme.typography.titleSmall)
             val cuando = if (t.conHora) DescripcionCuidados.hora(t.fechaHora.toLocalTime()) else "Todo el día"
             Text(
-                listOfNotNull(cuando, item.mascota.nombre, e.detalle["dosis"], e.detalle["texto"]).joinToString(" · "),
+                listOfNotNull(cuando, item.mascota.nombre, e.detalle["dosis"], e.detalle["cantidad"]?.ifBlank { null }, e.detalle["texto"]).joinToString(" · "),
                 style = MaterialTheme.typography.bodySmall,
                 color = Pc.TintaSuave,
             )

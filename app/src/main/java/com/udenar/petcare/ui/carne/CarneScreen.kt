@@ -184,6 +184,8 @@ fun CarneScreen(onVolver: () -> Unit, avisar: (String) -> Unit, viewModel: Carne
         }
         Seccion("Salud básica") {
             Dato("Alergias", m.alergias ?: "Ninguna registrada")
+            m.microchip?.let { Dato("Microchip", it) }
+            m.alimentacionEspecial?.let { Dato("Alimentación especial", it) }
             m.condiciones?.let { Dato("Condiciones", it) }
             m.medicamentosActuales?.let { Dato("Medicamentos actuales", it) }
         }

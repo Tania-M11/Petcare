@@ -206,7 +206,7 @@ class RepositorioDocumentosLocal @Inject constructor(
         }
     }
 
-    override suspend fun agregar(mascotaId: String, origen: String, nombre: String, tipo: TipoDocumento, fecha: LocalDate, visitaId: String?) {
+    override suspend fun agregar(mascotaId: String, origen: String, nombre: String, tipo: TipoDocumento, fecha: LocalDate, visitaId: String?, eventoId: String?): String {
         propiedad.exigir(mascotaId)
         val uri = Uri.parse(origen)
         val mimeOrigen = contexto.contentResolver.getType(uri).orEmpty()
@@ -233,12 +233,13 @@ class RepositorioDocumentosLocal @Inject constructor(
         dao.guardar(
             DocumentoEntidad(
                 id, mascotaId, nombre.trim().ifBlank { tipo.etiqueta }.take(120), tipo.name, fecha.toString(), mime, archivo.length().toInt(),
-                ruta = null, visitaId = visitaId, eventoId = null, registradoPor = yo?.id, registradoPorNombre = yo?.nombre,
+                ruta = null, visitaId = visitaId, eventoId = eventoId, registradoPor = yo?.id, registradoPorNombre = yo?.nombre,
                 registradoEn = Instant.now(reloj).toString(), eliminado = false, actualizadoEn = null, pendiente = true,
                 cambioLocal = reloj.millis(), archivoLocal = archivo.absolutePath, archivoPendiente = true,
             ),
         )
         sync.solicitar()
+        return id
     }
 
     /** Imagen comprimida: lado mayor ≤ 1600 px, JPEG ~70 % (spec 11.1). */

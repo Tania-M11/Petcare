@@ -2,11 +2,11 @@
   "formatVersion": 1,
   "database": {
     "version": 10,
-    "identityHash": "d5cf22c4b7a38317db855e9fdc42bd7f",
+    "identityHash": "1729da49afdb0ba0e999be7ae7af19c7",
     "entities": [
       {
         "tableName": "mascotas",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `propietarioId` TEXT, `nombre` TEXT NOT NULL, `especie` TEXT NOT NULL, `especieOtro` TEXT, `raza` TEXT, `sexo` TEXT NOT NULL, `fechaNacimiento` TEXT, `nacimientoAproximado` INTEGER NOT NULL, `color` TEXT, `tamano` TEXT, `pesoGramos` INTEGER, `esterilizado` INTEGER, `notas` TEXT, `alergias` TEXT, `condiciones` TEXT, `medicamentosActuales` TEXT, `observaciones` TEXT, `fotoUrl` TEXT, `eliminado` INTEGER NOT NULL, `actualizadoEn` TEXT, `pendiente` INTEGER NOT NULL, `cambioLocal` INTEGER NOT NULL, `fotoLocal` TEXT, `fotoPendiente` INTEGER NOT NULL DEFAULT 0, `veterinario` TEXT, PRIMARY KEY(`id`))",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `propietarioId` TEXT, `nombre` TEXT NOT NULL, `especie` TEXT NOT NULL, `especieOtro` TEXT, `raza` TEXT, `sexo` TEXT NOT NULL, `fechaNacimiento` TEXT, `nacimientoAproximado` INTEGER NOT NULL, `color` TEXT, `tamano` TEXT, `pesoGramos` INTEGER, `esterilizado` INTEGER, `notas` TEXT, `alergias` TEXT, `condiciones` TEXT, `medicamentosActuales` TEXT, `observaciones` TEXT, `fotoUrl` TEXT, `eliminado` INTEGER NOT NULL, `actualizadoEn` TEXT, `pendiente` INTEGER NOT NULL, `cambioLocal` INTEGER NOT NULL, `fotoLocal` TEXT, `fotoPendiente` INTEGER NOT NULL DEFAULT 0, `veterinario` TEXT, `microchip` TEXT, `alimentacionEspecial` TEXT, PRIMARY KEY(`id`))",
         "fields": [
           {
             "fieldPath": "id",
@@ -146,6 +146,16 @@
           {
             "fieldPath": "veterinario",
             "columnName": "veterinario",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "microchip",
+            "columnName": "microchip",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "alimentacionEspecial",
+            "columnName": "alimentacionEspecial",
             "affinity": "TEXT"
           }
         ],
@@ -1068,7 +1078,7 @@
     ],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'd5cf22c4b7a38317db855e9fdc42bd7f')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '1729da49afdb0ba0e999be7ae7af19c7')"
     ]
   }
 }

@@ -9,6 +9,8 @@ enum class CampoQr(val etiqueta: String, val descripcion: String) {
     RAZA("Raza", "Raza"),
     ALERGIAS("Alergias", "Alergias"),
     CONDICIONES("Condiciones", "Condiciones conocidas"),
+    MICROCHIP("Microchip", "Número de microchip"),
+    ALIMENTACION("Alimentacion", "Alimentación especial"),
     CONTACTO("Contacto", "Un teléfono o nombre para contactarte"),
     CODIGO("Codigo", "Código para pedir cuidarla (permite solicitarlo, no da acceso)"),
 }
@@ -48,6 +50,8 @@ object QrMascota {
         agregar(CampoQr.ESPECIE, m.especieOtro ?: m.especie.etiqueta)
         agregar(CampoQr.RAZA, m.raza)
         agregar(CampoQr.ALERGIAS, m.alergias)
+        agregar(CampoQr.MICROCHIP, m.microchip)
+        agregar(CampoQr.ALIMENTACION, m.alimentacionEspecial)
         agregar(CampoQr.CONDICIONES, m.condiciones)
         agregar(CampoQr.CONTACTO, config.contacto)
         agregar(CampoQr.CODIGO, codigo)

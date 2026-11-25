@@ -23,7 +23,10 @@ enum class TipoCuidado(val etiqueta: String, val anclaPorDefecto: Ancla) {
     SERVICIO_CONTRATADO("Servicio contratado", Ancla.CALENDARIO),
     PESAJE("Pesaje", Ancla.ULTIMA_VEZ),
     COMIDA("Comida", Ancla.CALENDARIO),
-    PERSONALIZADO("Actividad personalizada", Ancla.CALENDARIO);
+    PERSONALIZADO("Actividad personalizada", Ancla.CALENDARIO),
+
+    /** Recordatorio de sacarlo a pasear (el paseo en sí se registra en Paseos). */
+    PASEO("Paseo", Ancla.CALENDARIO);
 
     /** Medicamentos se "administran"; lo demás se "realiza". */
     val estadoHecho: EstadoRegistro get() = if (this == MEDICAMENTO) EstadoRegistro.ADMINISTRADA else EstadoRegistro.REALIZADA

@@ -66,6 +66,7 @@ val TipoCuidado.icono: Icono
         TipoCuidado.SERVICIO_CONTRATADO -> Icono.CANASTA
         TipoCuidado.PESAJE -> Icono.PESO
         TipoCuidado.PERSONALIZADO -> Icono.ESTRELLA
+        TipoCuidado.PASEO -> Icono.PASEO
     }
 
 fun GrupoCuidado.color(): Pair<Color, Color> = when (this) {
@@ -157,6 +158,7 @@ private fun FilaCuidado(r: ResumenCuidado, onClick: () -> Unit) {
             val partes = listOfNotNull(
                 r.descripcion,
                 r.evento.detalle["dosis"],
+                listOfNotNull(r.evento.detalle["tipo_alimento"], r.evento.detalle["marca"], r.evento.detalle["cantidad"]).filter { it.isNotBlank() }.joinToString(" · ").ifBlank { null },
                 r.proxima?.let { "Próxima: ${it.format(CORTA)}" }?.takeIf { r.evento.ancla == Ancla.ULTIMA_VEZ || r.evento.tipo == com.udenar.petcare.domain.cuidados.TipoCuidado.VACUNA },
             )
             Text(partes.joinToString(" · "), style = MaterialTheme.typography.bodySmall, color = Pc.TintaSuave)

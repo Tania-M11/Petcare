@@ -226,11 +226,12 @@ fun FormMascotaScreen(
 
         com.udenar.petcare.ui.componentes.SeccionPlegable(
             "Más detalles",
-            listOf(f.raza, f.color).filter { it.isNotBlank() }.joinToString(" · ").ifEmpty { "Raza, color, esterilización y notas" },
+            listOf(f.raza, f.color, f.microchip.ifBlank { "" }.let { if (it.isEmpty()) "" else "Chip $it" }).filter { it.isNotBlank() }.joinToString(" · ").ifEmpty { "Raza, color, microchip, esterilización y notas" },
             abierta == "Más detalles", { alternar("Más detalles") },
         ) {
             CampoTexto(f.raza, { v -> viewModel.editar { it.copy(raza = v) } }, "Raza (opcional)")
             CampoTexto(f.color, { v -> viewModel.editar { it.copy(color = v) } }, "Color (opcional)")
+            CampoTexto(f.microchip, { v -> viewModel.editar { it.copy(microchip = v) } }, "Número de microchip (opcional)", teclado = KeyboardType.Number, modifier = Modifier.testTag("microchip"))
             Text("¿Está esterilizado/a?", style = MaterialTheme.typography.labelLarge, color = Pc.TintaSuave)
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 listOf(true to "Sí", false to "No", null to "No sé").forEach { (valor, texto) ->
@@ -242,7 +243,7 @@ fun FormMascotaScreen(
 
         com.udenar.petcare.ui.componentes.SeccionPlegable(
             "Salud básica",
-            listOf(f.alergias, f.condiciones, f.medicamentos).filter { it.isNotBlank() }.joinToString(" · ").ifEmpty { "Alergias, condiciones y medicamentos actuales" },
+            listOf(f.alergias, f.condiciones, f.medicamentos, f.alimentacionEspecial).filter { it.isNotBlank() }.joinToString(" · ").ifEmpty { "Alergias, condiciones, medicamentos y alimentación especial" },
             abierta == "Salud básica", { alternar("Salud básica") },
         ) {
             Text(
@@ -253,6 +254,7 @@ fun FormMascotaScreen(
             CampoTexto(f.alergias, { v -> viewModel.editar { it.copy(alergias = v) } }, "Alergias", lineas = 2)
             CampoTexto(f.condiciones, { v -> viewModel.editar { it.copy(condiciones = v) } }, "Condiciones conocidas", lineas = 2)
             CampoTexto(f.medicamentos, { v -> viewModel.editar { it.copy(medicamentos = v) } }, "Medicamentos actuales", lineas = 2)
+            CampoTexto(f.alimentacionEspecial, { v -> viewModel.editar { it.copy(alimentacionEspecial = v) } }, "Alimentación especial", lineas = 2, modifier = Modifier.testTag("alimentacion_especial"))
             CampoTexto(f.observaciones, { v -> viewModel.editar { it.copy(observaciones = v) } }, "Observaciones importantes", lineas = 2)
         }
 

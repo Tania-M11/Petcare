@@ -63,7 +63,7 @@ val TipoCuidado.grupo: GrupoCuidado
         TipoCuidado.DESPARASITACION_EXTERNA, TipoCuidado.PESAJE -> GrupoCuidado.SALUD
         TipoCuidado.BANO, TipoCuidado.CORTE_PELO, TipoCuidado.CEPILLADO, TipoCuidado.CORTE_UNAS,
         TipoCuidado.LIMPIEZA_DENTAL, TipoCuidado.LIMPIEZA_OIDOS, TipoCuidado.LIMPIEZA_OJOS -> GrupoCuidado.HIGIENE
-        TipoCuidado.PERSONALIZADO -> GrupoCuidado.ACTIVIDADES
+        TipoCuidado.PERSONALIZADO, TipoCuidado.PASEO -> GrupoCuidado.ACTIVIDADES
         TipoCuidado.CITA_VET, TipoCuidado.SERVICIO_CONTRATADO -> GrupoCuidado.CITAS
     }
 
