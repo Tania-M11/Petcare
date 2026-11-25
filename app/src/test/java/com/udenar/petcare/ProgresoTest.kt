@@ -46,3 +46,34 @@ class ProgresoTest {
         assertEquals(8, p.semanas.size)
     }
 }
+
+class ResumenSemanalTest {
+    private val lunes = java.time.LocalDate.of(2026, 11, 23)
+    private fun p(hechas: Int, total: Int, paseos: Int = 0, km: Double = 0.0, racha: Int = 0) = com.udenar.petcare.domain.recomendaciones.ProgresoMascota(
+        listOf(com.udenar.petcare.domain.recomendaciones.SemanaProgreso(lunes, hechas, total)), racha,
+        listOf(com.udenar.petcare.domain.recomendaciones.SemanaPaseos(lunes, km, 30 * paseos, paseos)), emptyMap(), emptyList(),
+    )
+
+    @org.junit.Test
+    fun resumeLaSemanaDeTodasLasMascotas() {
+        val (titulo, cuerpo) = com.udenar.petcare.domain.recomendaciones.ResumenSemanal.texto(listOf("Venus" to p(14, 14, 3, 4.25, 7), "Apolo" to p(6, 7)))!!
+        org.junit.Assert.assertEquals("Tu semana con Venus y Apolo", titulo)
+        org.junit.Assert.assertEquals("Cuidados: 20 de 21 (95 %). Paseos: 3 · 4,3 km. Racha de Venus: 7 días. ¡Muy buena semana!", cuerpo)
+    }
+
+    @org.junit.Test
+    fun sinRegistrosNoSeEnviaNada() {
+        org.junit.Assert.assertNull(com.udenar.petcare.domain.recomendaciones.ResumenSemanal.texto(listOf("Luna" to p(0, 0))))
+    }
+}
+
+class EsperaResumenTest {
+    @org.junit.Test
+    fun programaElProximoDomingoALasSiete() {
+        val espera = com.udenar.petcare.data.resumen.ProgramadorResumen.Companion::esperaHastaDomingo
+        // Martes 24-nov 10:00 → domingo 29-nov 19:00
+        org.junit.Assert.assertEquals(java.time.Duration.ofDays(5).plusHours(9), espera(java.time.LocalDateTime.of(2026, 11, 24, 10, 0)))
+        // Domingo a las 20:00 ya pasó: el de la otra semana
+        org.junit.Assert.assertEquals(java.time.Duration.ofDays(6).plusHours(23), espera(java.time.LocalDateTime.of(2026, 11, 29, 20, 0)))
+    }
+}

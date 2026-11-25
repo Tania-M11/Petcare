@@ -101,4 +101,16 @@ class SaludTest {
         compose.onNodeWithTag("historial_PESO").performClick()
         compose.onNodeWithText("4 kg").assertExists()
     }
+
+    @Test
+    fun agregarDocumentoEnPasos() {
+        compose.onNodeWithTag("seccion_Salud").performClick()
+        compose.onNodeWithTag("agregar_documento").performScrollTo().performClick()
+        // Primero qué es, luego de dónde se toma (la cámara o el selector del sistema)
+        compose.waitUntil(5_000) { compose.onAllNodesWithTagExists("tipo_doc_CARNE") }
+        compose.onNodeWithTag("tipo_doc_CARNE").performClick()
+        compose.waitUntil(5_000) { compose.onAllNodesWithTagExists("doc_camara") }
+        compose.onNodeWithTag("doc_galeria").assertExists()
+        compose.onNodeWithTag("agregar_pdf").assertExists()
+    }
 }

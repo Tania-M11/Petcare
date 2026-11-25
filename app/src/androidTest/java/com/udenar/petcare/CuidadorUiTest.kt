@@ -65,7 +65,7 @@ class CuidadorUiTest {
         compose.onNodeWithTag("seccion_Salud").performClick()
         assertTrue(compose.onAllNodesWithTagExists("registrar_peso").not())
         assertTrue(compose.onAllNodesWithTagExists("agregar_visita").not())
-        assertTrue("Los cuidadores no ven documentos", compose.onAllNodesWithTagExists("agregar_pdf").not())
+        assertTrue("Los cuidadores no ven documentos", compose.onAllNodesWithTagExists("agregar_documento").not())
     }
 
     @Test

@@ -32,6 +32,11 @@ class Notificador @Inject constructor(@ApplicationContext private val contexto: 
             },
         )
         gestor.createNotificationChannel(
+            NotificationChannel(CANAL_RESUMEN, "Resumen semanal", NotificationManager.IMPORTANCE_DEFAULT).apply {
+                description = "Los domingos: cómo les fue a tus mascotas en la semana"
+            },
+        )
+        gestor.createNotificationChannel(
             NotificationChannel(CANAL_CUIDADORES, "Cuidadores", NotificationManager.IMPORTANCE_DEFAULT).apply {
                 description = "Quién pide cuidar tus mascotas y las respuestas a tus solicitudes"
             },
@@ -85,6 +90,12 @@ class Notificador @Inject constructor(@ApplicationContext private val contexto: 
 
     fun retirarTodas() = gestor.cancelAll()
 
+    /** Resumen del domingo (Fase 6.4): canal propio y sin sonido insistente. */
+    fun mostrarResumen(titulo: String, texto: String) = publicar(
+        "resumen_semanal",
+        base(titulo, texto).setChannelId(CANAL_RESUMEN).setCategory(NotificationCompat.CATEGORY_STATUS).setPriority(NotificationCompat.PRIORITY_DEFAULT).build(),
+    )
+
     private fun base(titulo: String, texto: String?) = NotificationCompat.Builder(contexto, CANAL_RECORDATORIOS)
         .setSmallIcon(R.drawable.ic_notificacion)
         .setColor(0xFFF08A4B.toInt())
@@ -124,6 +135,7 @@ class Notificador @Inject constructor(@ApplicationContext private val contexto: 
         const val CANAL_RECORDATORIOS = "recordatorios"
         const val CANAL_SOLICITUDES = "solicitudes"
         const val CANAL_CUIDADORES = "cuidadores"
+        const val CANAL_RESUMEN = "resumen_semanal"
         const val EXTRA_MODO = "aviso_modo"
         const val EXTRA_DESTINO = "aviso_destino"
         private const val ID = 1

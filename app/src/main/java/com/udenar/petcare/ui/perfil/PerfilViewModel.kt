@@ -31,7 +31,12 @@ class PerfilViewModel @Inject constructor(
     private val modo: com.udenar.petcare.domain.profesionales.RepositorioModo,
     prestadoresRepo: com.udenar.petcare.domain.profesionales.RepositorioPrestadores,
     private val push: com.udenar.petcare.data.avisos.PushFcm,
+    private val resumen: com.udenar.petcare.data.resumen.ProgramadorResumen,
 ) : ViewModel() {
+
+    /** Resumen de los domingos (Fase 6.4). */
+    val resumenSemanal: StateFlow<Boolean> = resumen.activo
+    fun cambiarResumen(activo: Boolean) = resumen.cambiar(activo)
 
     val perfilVet: StateFlow<com.udenar.petcare.domain.profesionales.PerfilVeterinario?> = veterinarios.miPerfil
 

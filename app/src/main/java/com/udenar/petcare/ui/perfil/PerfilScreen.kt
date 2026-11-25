@@ -222,6 +222,19 @@ fun PerfilScreen(
                     },
                 )
             }
+            val resumenActivo by viewModel.resumenSemanal.collectAsStateWithLifecycle()
+            FilaOpcion(
+                icono = Icons.Rounded.Info, icono3d = com.udenar.petcare.domain.modelo.Icono.CALENDARIO,
+                titulo = "Resumen semanal",
+                subtitulo = if (resumenActivo) "Los domingos a las 7 p. m. · toca para apagarlo" else "Apagado · toca para activarlo",
+                fondoIcono = if (resumenActivo) Pc.MentaClara else Pc.Crema,
+                colorIcono = Pc.Menta,
+                onClick = {
+                    viewModel.cambiarResumen(!resumenActivo)
+                    avisar(if (resumenActivo) "Listo, no te enviaré el resumen" else "Te enviaré el resumen los domingos")
+                },
+                modifier = Modifier.testTag("fila_resumen"),
+            )
             FilaOpcion(
                 icono = Icons.Rounded.CloudSync, icono3d = com.udenar.petcare.domain.modelo.Icono.NUBE,
                 titulo = "Sincronización",

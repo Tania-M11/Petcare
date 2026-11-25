@@ -92,3 +92,32 @@ object Progreso {
         return ProgresoMascota(semanasProgreso, racha, paseosSemana, porPersona, logros)
     }
 }
+
+/**
+ * Notificación del domingo (Fase 6.4): un resumen corto y en positivo de la semana. Solo cuenta
+ * lo registrado; no habla de la salud. null = no hubo nada que contar.
+ */
+object ResumenSemanal {
+    fun texto(progresos: List<Pair<String, ProgresoMascota>>): Pair<String, String>? {
+        val conDatos = progresos.filter { (_, p) -> (p.semanas.lastOrNull()?.total ?: 0) > 0 || (p.paseos.lastOrNull()?.cantidad ?: 0) > 0 }
+        if (conDatos.isEmpty()) return null
+        val nombres = conDatos.map { it.first }
+        val quien = if (nombres.size == 1) nombres[0] else nombres.dropLast(1).joinToString(", ") + " y " + nombres.last()
+        val hechas = conDatos.sumOf { it.second.semanas.lastOrNull()?.hechas ?: 0 }
+        val total = conDatos.sumOf { it.second.semanas.lastOrNull()?.total ?: 0 }
+        val paseos = conDatos.sumOf { it.second.paseos.lastOrNull()?.cantidad ?: 0 }
+        val km = conDatos.sumOf { it.second.paseos.lastOrNull()?.km ?: 0.0 }
+        val mejor = conDatos.maxByOrNull { it.second.racha }?.takeIf { it.second.racha >= 2 }
+        val partes = buildList {
+            if (total > 0) add("Cuidados: $hechas de $total (${hechas * 100 / total} %)")
+            if (paseos > 0) add("Paseos: $paseos" + if (km >= 0.1) " · " + String.format(java.util.Locale.forLanguageTag("es-CO"), "%.1f km", km) else "")
+            mejor?.let { add("Racha de ${it.first}: ${it.second.racha} días") }
+        }
+        val cierre = when {
+            total > 0 && hechas == total -> "¡Semana perfecta!"
+            total > 0 && hechas * 10 >= total * 8 -> "¡Muy buena semana!"
+            else -> "La próxima semana va a ir aún mejor."
+        }
+        return "Tu semana con $quien" to (partes.joinToString(". ") + ". " + cierre)
+    }
+}

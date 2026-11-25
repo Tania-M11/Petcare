@@ -19,6 +19,7 @@ class PetcareApp : Application(), Configuration.Provider {
     @Inject lateinit var fabricaTrabajos: HiltWorkerFactory
     @Inject lateinit var notificador: Notificador
     @Inject lateinit var recordatorios: ProgramadorRecordatorios
+    @Inject lateinit var resumen: com.udenar.petcare.data.resumen.ProgramadorResumen
 
     override val workManagerConfiguration: Configuration
         get() = Configuration.Builder().setWorkerFactory(fabricaTrabajos).build()
@@ -30,5 +31,7 @@ class PetcareApp : Application(), Configuration.Provider {
         org.maplibre.android.MapLibre.getInstance(this)
         // Cada vez que arranca la app (también si Android la cerró), las alarmas quedan al día
         CoroutineScope(SupervisorJob() + Dispatchers.Default).launch { recordatorios.reprogramar() }
+        // Resumen de los domingos (Fase 6.4)
+        resumen.programar()
     }
 }

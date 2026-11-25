@@ -1,5 +1,7 @@
 package com.udenar.petcare.ui.mascotas
 
+import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.verticalScroll
 import com.udenar.petcare.ui.componentes.Icono3D
 import com.udenar.petcare.domain.modelo.Icono
 import android.content.Context
@@ -62,6 +64,7 @@ fun abrirDocumento(contexto: Context, ruta: String, mime: String) {
 }
 
 /** Documentos de la mascota (RF-17): solo el propietario. */
+@OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
 @Composable
 fun TarjetaDocumentos(
     documentos: List<Documento>,
@@ -71,10 +74,18 @@ fun TarjetaDocumentos(
     onAbrir: (Documento) -> Unit,
     onEliminar: (Documento) -> Unit,
 ) {
+    // Agregar en pasos (Fase 6.2): qué es → de dónde → detalles con vista previa
+    var agregando by remember { mutableStateOf(false) }
+    var tipo by remember { mutableStateOf<TipoDocumento?>(null) }
     var origen by remember { mutableStateOf<String?>(null) }
+    var esPdf by remember { mutableStateOf(false) }
     var eliminar by remember { mutableStateOf<Documento?>(null) }
-    val imagen = rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri -> uri?.let { origen = it.toString() } }
-    val pdf = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri -> uri?.let { origen = it.toString() } }
+    val contexto = androidx.compose.ui.platform.LocalContext.current
+    var fotoCamara by remember { mutableStateOf<android.net.Uri?>(null) }
+    val imagen = rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri -> uri?.let { origen = it.toString(); esPdf = false } }
+    val pdf = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri -> uri?.let { origen = it.toString(); esPdf = true } }
+    val camara = rememberLauncherForActivityResult(ActivityResultContracts.TakePicture()) { ok -> if (ok) fotoCamara?.let { origen = it.toString(); esPdf = false } }
+    fun cerrar() { agregando = false; tipo = null; origen = null }
 
     Column(
         Modifier
@@ -86,9 +97,7 @@ fun TarjetaDocumentos(
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             com.udenar.petcare.ui.componentes.TituloConIcono("Documentos", Modifier.weight(1f))
-            BotonAgregar("Imagen", "agregar_imagen") { imagen.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)) }
-            Box(Modifier.size(8.dp))
-            BotonAgregar("PDF", "agregar_pdf") { pdf.launch(arrayOf("application/pdf")) }
+            BotonAgregar("Agregar", "agregar_documento") { agregando = true }
         }
         if (documentos.isEmpty()) {
             Text("Carnés, fórmulas, exámenes e informes: guárdalos aquí para tenerlos siempre a mano.", style = MaterialTheme.typography.bodyMedium, color = Pc.TintaSuave)
@@ -118,38 +127,77 @@ fun TarjetaDocumentos(
         }
     }
 
-    origen?.let { o ->
-        var nombre by remember { mutableStateOf("") }
-        var tipo by remember { mutableStateOf(TipoDocumento.CARNE) }
-        var fecha by remember { mutableStateOf(hoy) }
-        var visita by remember { mutableStateOf<String?>(null) }
-        AlertDialog(
-            onDismissRequest = { origen = null },
-            containerColor = Pc.Crema,
-            title = { Text("Nuevo documento", style = MaterialTheme.typography.headlineSmall) },
-            text = {
-                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                    CampoTexto(nombre, { nombre = it }, "Nombre (p. ej. Carné de vacunas)")
-                    Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                        TipoDocumento.entries.forEach { t -> ChipOpcion(t.etiqueta, tipo == t, onClick = { tipo = t }) }
-                    }
-                    SelectorFecha("Fecha del documento", fecha, { it?.let { f -> fecha = f } }, hasta = hoy)
-                    if (visitas.isNotEmpty()) {
-                        Text("Asociar a una visita (opcional)", style = MaterialTheme.typography.labelLarge, color = Pc.TintaSuave)
-                        Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                            visitas.take(6).forEach { v -> ChipOpcion("${v.motivo} · ${v.fecha.format(FECHA)}", visita == v.id, onClick = { visita = if (visita == v.id) null else v.id }) }
+    if (agregando) {
+        androidx.compose.material3.ModalBottomSheet(onDismissRequest = ::cerrar, containerColor = Pc.Crema) {
+            Column(
+                Modifier.padding(horizontal = 20.dp).padding(bottom = 20.dp).navigationBarsPadding().verticalScroll(rememberScrollState()),
+                verticalArrangement = Arrangement.spacedBy(12.dp),
+            ) {
+                val t = tipo
+                val o = origen
+                when {
+                    t == null -> {
+                        Text("¿Qué documento es?", style = MaterialTheme.typography.headlineSmall)
+                        TipoDocumento.entries.chunked(3).forEach { fila ->
+                            Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                                fila.forEach { d ->
+                                    com.udenar.petcare.ui.componentes.TarjetaOpcionGrande(d.etiqueta, false, onClick = { tipo = d }, icono = d.icono, color = Pc.CieloClaro, modifier = Modifier.weight(1f).testTag("tipo_doc_${d.name}"))
+                                }
+                                repeat(3 - fila.size) { Box(Modifier.weight(1f)) }
+                            }
                         }
                     }
+                    o == null -> {
+                        Text("¿De dónde lo tomas?", style = MaterialTheme.typography.headlineSmall)
+                        Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                            com.udenar.petcare.ui.componentes.TarjetaOpcionGrande("Cámara", false, onClick = {
+                                val carpeta = File(contexto.cacheDir, "camara").apply { mkdirs() }
+                                val archivo = File(carpeta, "doc_${System.currentTimeMillis()}.jpg")
+                                val uri = FileProvider.getUriForFile(contexto, "${contexto.packageName}.archivos", archivo)
+                                fotoCamara = uri
+                                camara.launch(uri)
+                            }, icono = Icono.CAMARA, subtitulo = "Toma la foto", modifier = Modifier.weight(1f).testTag("doc_camara"))
+                            com.udenar.petcare.ui.componentes.TarjetaOpcionGrande("Galería", false, onClick = {
+                                imagen.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
+                            }, icono = Icono.GALERIA, subtitulo = "Una imagen", modifier = Modifier.weight(1f).testTag("doc_galeria"))
+                            com.udenar.petcare.ui.componentes.TarjetaOpcionGrande("PDF", false, onClick = {
+                                pdf.launch(arrayOf("application/pdf"))
+                            }, icono = Icono.DOCUMENTO, subtitulo = "Un archivo", modifier = Modifier.weight(1f).testTag("agregar_pdf"))
+                        }
+                        androidx.compose.material3.TextButton(onClick = { tipo = null }) { Text("Cambiar tipo", color = Pc.TintaSuave) }
+                    }
+                    else -> {
+                        var nombre by remember(t) { mutableStateOf(t.etiqueta) }
+                        var fecha by remember { mutableStateOf(hoy) }
+                        var visita by remember { mutableStateOf<String?>(null) }
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Box(Modifier.size(72.dp).clip(RoundedCornerShape(18.dp)).background(Pc.Blanco), contentAlignment = Alignment.Center) {
+                                if (esPdf) Icono3D(Icono.DOCUMENTO, tam = 44.dp)
+                                else coil3.compose.AsyncImage(o, contentDescription = "Vista previa", contentScale = androidx.compose.ui.layout.ContentScale.Crop, modifier = Modifier.size(72.dp))
+                            }
+                            Text("Casi listo", style = MaterialTheme.typography.headlineSmall, modifier = Modifier.padding(start = 14.dp))
+                        }
+                        CampoTexto(nombre, { nombre = it.take(80) }, "Nombre", modifier = Modifier.testTag("nombre_documento"))
+                        Text("¿De cuándo es?", style = MaterialTheme.typography.titleSmall)
+                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            ChipOpcion("Hoy", fecha == hoy, onClick = { fecha = hoy })
+                            ChipOpcion("Ayer", fecha == hoy.minusDays(1), onClick = { fecha = hoy.minusDays(1) })
+                        }
+                        SelectorFecha("Otra fecha", fecha, { it?.let { f -> fecha = f } }, hasta = hoy)
+                        if (visitas.isNotEmpty()) {
+                            Text("¿Es de una visita? (opcional)", style = MaterialTheme.typography.titleSmall)
+                            Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                                visitas.take(6).forEach { v -> ChipOpcion("${v.motivo} · ${v.fecha.format(FECHA)}", visita == v.id, onClick = { visita = if (visita == v.id) null else v.id }, icono = Icono.HOSPITAL) }
+                            }
+                        }
+                        com.udenar.petcare.ui.componentes.BotonPrincipal("Guardar documento", habilitado = nombre.isNotBlank(), onClick = {
+                            onAgregar(o, nombre, t, fecha, visita)
+                            cerrar()
+                        }, modifier = Modifier.testTag("guardar_documento"))
+                    }
                 }
-            },
-            confirmButton = {
-                TextButton(onClick = {
-                    onAgregar(o, nombre, tipo, fecha, visita)
-                    origen = null
-                }, modifier = Modifier.testTag("guardar_documento")) { Text("Guardar") }
-            },
-            dismissButton = { TextButton(onClick = { origen = null }) { Text("Cancelar") } },
-        )
+            }
+        }
     }
 
     eliminar?.let { d ->
