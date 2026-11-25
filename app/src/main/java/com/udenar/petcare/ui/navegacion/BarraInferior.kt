@@ -28,7 +28,10 @@ import androidx.compose.ui.unit.dp
 import com.udenar.petcare.ui.componentes.suave
 import com.udenar.petcare.ui.theme.Pc
 
-/** Barra inferior flotante y redondeada; la pestaña activa se abre en píldora con su nombre. */
+/**
+ * Barra inferior flotante: píldora oscura (contrasta con las tarjetas claras) y la pestaña
+ * activa se abre en una píldora naranja con su nombre.
+ */
 @Composable
 fun <T : Pestana> BarraInferior(pestanas: List<T>, actual: T?, onElegir: (T) -> Unit, modifier: Modifier = Modifier) {
     val forma = RoundedCornerShape(32.dp)
@@ -37,17 +40,17 @@ fun <T : Pestana> BarraInferior(pestanas: List<T>, actual: T?, onElegir: (T) -> 
             .navigationBarsPadding()
             .padding(horizontal = 20.dp, vertical = 12.dp)
             .fillMaxWidth()
-            .shadow(18.dp, forma, ambientColor = Pc.Naranja.suave(0.3f), spotColor = Pc.Naranja.suave(0.3f))
+            .shadow(18.dp, forma, ambientColor = Pc.Tinta.suave(0.4f), spotColor = Pc.Tinta.suave(0.4f))
             .clip(forma)
-            .background(Pc.Blanco)
+            .background(Pc.Tinta)
             .padding(8.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically,
     ) {
         pestanas.forEach { pestana ->
             val activa = pestana == actual
-            val fondo by animateColorAsState(if (activa) Pc.Durazno else Pc.Blanco, label = "fondo")
-            val tinte by animateColorAsState(if (activa) Pc.Naranja else Pc.TintaSuave, label = "tinte")
+            val fondo by animateColorAsState(if (activa) Pc.Naranja else Pc.Tinta, label = "fondo")
+            val tinte by animateColorAsState(if (activa) Pc.SobreAcento else Pc.Crema.suave(0.6f), label = "tinte")
             Row(
                 Modifier
                     .clip(RoundedCornerShape(50))
@@ -62,7 +65,7 @@ fun <T : Pestana> BarraInferior(pestanas: List<T>, actual: T?, onElegir: (T) -> 
                     Text(
                         pestana.etiqueta,
                         style = MaterialTheme.typography.labelLarge,
-                        color = Pc.Tinta,
+                        color = Pc.SobreAcento,
                         modifier = Modifier.padding(start = 8.dp),
                     )
                 }

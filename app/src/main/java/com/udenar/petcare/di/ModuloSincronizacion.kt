@@ -58,6 +58,10 @@ abstract class ModuloSincronizacion {
     @Binds
     abstract fun paseos(r: com.udenar.petcare.data.paseos.RepositorioPaseosLocal): com.udenar.petcare.domain.paseos.RepositorioPaseos
 
+    /** "¿Cómo está hoy?": solo en este teléfono. */
+    @Binds
+    abstract fun animo(r: com.udenar.petcare.data.animo.RepositorioAnimoLocal): com.udenar.petcare.domain.animo.RepositorioAnimo
+
     @Binds @IntoSet
     abstract fun tablaDocumentos(t: com.udenar.petcare.data.documentos.TablaDocumentos): TablaSincronizable
 

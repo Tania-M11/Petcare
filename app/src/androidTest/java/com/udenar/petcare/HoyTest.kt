@@ -91,4 +91,15 @@ class HoyTest {
         compose.onNodeWithText("Volver a hoy").performClick()
         compose.waitUntil(5_000) { compose.onAllNodesWithTagExists("hecho_Gotas") }
     }
+
+    @Test
+    fun anotarComoEstaHoyEnLaTarjetaDeLaMascota() {
+        // Tocar su píldora lleva el carrusel a su tarjeta
+        compose.onNodeWithTag("filtro_Luna").performScrollTo().performClick()
+        compose.waitUntil(5_000) { compose.onAllNodesWithTagExists("hero_Luna") }
+        compose.waitForIdle()
+        compose.onNode(androidx.compose.ui.test.hasTestTag("animo_FELIZ") and androidx.compose.ui.test.hasAnyAncestor(androidx.compose.ui.test.hasTestTag("hero_Luna")))
+            .performScrollTo().performClick()
+        compose.waitUntil(5_000) { compose.onAllNodesWithTextExists("Hoy: feliz") }
+    }
 }

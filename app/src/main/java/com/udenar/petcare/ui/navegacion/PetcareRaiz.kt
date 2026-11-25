@@ -112,6 +112,8 @@ fun PetcareRaiz() {
                     onPerfilPrestador = { nav.navigate(RutaFormPrestador) },
                     onVeterinarios = { nav.navigate(RutaDirectorioVet) },
                     onEditarMascota = { nav.navigate(RutaFormMascota(it)) },
+                    onCarne = { nav.navigate(RutaCarne(it)) },
+                    onPrestadores = { nav.navigate(RutaDirectorioPres) },
                     avisar = avisar,
                 )
             }

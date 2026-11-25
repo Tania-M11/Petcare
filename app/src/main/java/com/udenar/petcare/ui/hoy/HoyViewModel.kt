@@ -68,6 +68,7 @@ class HoyViewModel @Inject constructor(
     paseosRepo: com.udenar.petcare.domain.paseos.RepositorioPaseos,
     private val descartes: com.udenar.petcare.data.local.Descartes,
     private val servicioClima: com.udenar.petcare.data.clima.ServicioClima,
+    private val animos: com.udenar.petcare.domain.animo.RepositorioAnimo,
 ) : ViewModel() {
 
     /** Clima para la sugerencia de paseo (null = sin permiso de ubicación o sin internet). */
@@ -224,6 +225,41 @@ class HoyViewModel @Inject constructor(
 
     fun cambiarMes(delta: Long) = _mes.update { it.plusMonths(delta) }
 
+    /** Desde el carrusel de mascotas: muestra solo lo de [mascotaId] (null = todas). */
+    fun verMascota(mascotaId: String?) {
+        _filtro.value = mascotaId
+    }
+
+    /** Resumen de hoy por mascota para su tarjeta: cuidados, próximo, paseos de la semana y ánimo. */
+    val resumenMascotas: StateFlow<List<ResumenMascotaHoy>> = combine(
+        mascotas,
+        cuidados.agenda(LocalDate.now(reloj)),
+        paseosRepo.observarDesde(LocalDate.now(reloj).with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY)).atStartOfDay(reloj.zone).toInstant()),
+        animos.observarDesde(LocalDate.now(reloj).minusDays(6)),
+    ) { lista, tomas, paseos, notas ->
+        val dia = LocalDate.now(reloj)
+        lista.map { m ->
+            val suyas = tomas.filter { it.evento.mascotaId == m.id }
+            val suyosAnimos = notas.filter { it.mascotaId == m.id }
+            val suyosPaseos = paseos.filter { it.mascotaId == m.id }
+            ResumenMascotaHoy(
+                mascota = m,
+                hechos = suyas.count { !it.pendiente },
+                total = suyas.size,
+                proxima = suyas.filter { it.pendiente }.minByOrNull { it.fechaHora },
+                paseos = suyosPaseos.size,
+                metros = suyosPaseos.sumOf { it.distanciaM ?: 0 },
+                animo = suyosAnimos.firstOrNull { it.fecha == dia }?.animo,
+                semana = suyosAnimos,
+                nota = com.udenar.petcare.domain.animo.LecturaAnimo.nota(m.nombre, suyosAnimos, dia),
+            )
+        }
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
+
+    fun anotarAnimo(mascotaId: String, animo: com.udenar.petcare.domain.animo.Animo) = viewModelScope.launch {
+        animos.guardar(com.udenar.petcare.domain.animo.RegistroAnimo(mascotaId, LocalDate.now(reloj), animo))
+    }
+
     fun filtrar(mascotaId: String?) {
         _filtro.value = if (_filtro.value == mascotaId) null else mascotaId
     }
@@ -255,3 +291,16 @@ class HoyViewModel @Inject constructor(
 }
 
 data class ResumenDia(val total: Int, val pendientes: Int)
+
+/** Lo que muestra la tarjeta grande de cada mascota en Hoy. */
+data class ResumenMascotaHoy(
+    val mascota: Mascota,
+    val hechos: Int,
+    val total: Int,
+    val proxima: Toma?,
+    val paseos: Int,
+    val metros: Int,
+    val animo: com.udenar.petcare.domain.animo.Animo?,
+    val semana: List<com.udenar.petcare.domain.animo.RegistroAnimo>,
+    val nota: String?,
+)

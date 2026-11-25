@@ -86,6 +86,8 @@ fun HoyScreen(
     onPerfilPrestador: () -> Unit,
     onVeterinarios: () -> Unit,
     onEditarMascota: (String) -> Unit,
+    onCarne: (String) -> Unit,
+    onPrestadores: () -> Unit,
     avisar: (String) -> Unit,
     modifier: Modifier = Modifier,
     viewModel: HoyViewModel = hiltViewModel(),
@@ -101,6 +103,7 @@ fun HoyScreen(
     val resumenMes by viewModel.resumenMes.collectAsStateWithLifecycle()
     val solicitudes by viewModel.solicitudes.collectAsStateWithLifecycle()
     val recomendaciones by viewModel.recomendaciones.collectAsStateWithLifecycle()
+    val resumenes by viewModel.resumenMascotas.collectAsStateWithLifecycle()
     var verMes by remember { mutableStateOf(false) }
     var nuevo by remember { mutableStateOf(false) }
     // Mascota elegida desde una recomendación ("Crear recordatorio")
@@ -149,23 +152,72 @@ fun HoyScreen(
                 .padding(horizontal = 20.dp, vertical = 12.dp),
             verticalArrangement = Arrangement.spacedBy(20.dp),
         ) {
+            // Saludo arriba, como una app de mensajes: momento del día y nombre grande
+            val cabecera = com.udenar.petcare.domain.recomendaciones.Michi.cabecera(viewModel.horaActual(), if (esHoy) totalHoy else 0, pendientesHoy, mascotas.isNotEmpty())
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Image(painterResource(R.drawable.logo_petcare), contentDescription = "PetCare", modifier = Modifier.height(26.dp).weight(1f, fill = false))
-                Spacer(Modifier.weight(1f))
+                Column(Modifier.weight(1f)) {
+                    Text(cabecera.momento + ",", style = MaterialTheme.typography.bodyLarge, color = Pc.TintaSuave)
+                    Text(
+                        nombre.ifBlank { "Hola" },
+                        fontFamily = com.udenar.petcare.ui.theme.Kalnia, fontSize = 30.sp, lineHeight = 34.sp, color = Pc.Tinta,
+                        maxLines = 1, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
+                    )
+                }
                 BotonCircular(Icons.Rounded.CalendarMonth, "Ver mes", onClick = { verMes = true }, modifier = Modifier.testTag("ver_mes"))
             }
 
-            // Saludo corto con el estado del día, Michi y trucos que rotan
-            TarjetaSaludo(
-                nombre = nombre,
-                cabecera = com.udenar.petcare.domain.recomendaciones.Michi.cabecera(viewModel.horaActual(), if (esHoy) totalHoy else 0, pendientesHoy, mascotas.isNotEmpty()),
-                hechos = totalHoy - pendientesHoy,
-                total = totalHoy,
-                consejos = remember(estado.hoy) { com.udenar.petcare.domain.recomendaciones.Michi.consejos(estado.hoy) },
-            )
-
             // Paseo en curso: mapa en vivo, tiempo y distancia; al tocarlo vuelve al paseo
             com.udenar.petcare.ui.paseos.TarjetaPaseoEnVivo(onAbrir = { onPasear(null) })
+
+            val portada: @Composable () -> Unit = {
+                TarjetaSaludo(
+                    etiqueta = estado.hoy.format(FORMATO_DIA).replaceFirstChar { it.uppercase() },
+                    titulo = if (mascotas.isEmpty()) "Bienvenida" else "Toda la casa",
+                    cabecera = cabecera,
+                    hechos = totalHoy - pendientesHoy,
+                    total = totalHoy,
+                    consejos = remember(estado.hoy) { com.udenar.petcare.domain.recomendaciones.Michi.consejos(estado.hoy) },
+                )
+            }
+            if (mascotas.isEmpty()) {
+                portada()
+            } else {
+                // Categorías con foto y carrusel: deslizar o tocar una mascota filtra lo de abajo
+                val pagina = androidx.compose.foundation.pager.rememberPagerState { 1 + resumenes.size }
+                ChipsMascotas(mascotas, filtro, onElegir = { id -> if (id == null) viewModel.verMascota(null) else viewModel.filtrar(id) })
+                LaunchedEffect(filtro, resumenes.size) {
+                    val destino = filtro?.let { f -> resumenes.indexOfFirst { it.mascota.id == f } + 1 } ?: 0
+                    if (destino >= 0 && destino != pagina.currentPage && destino < pagina.pageCount) pagina.animateScrollToPage(destino)
+                }
+                LaunchedEffect(pagina.settledPage) {
+                    val id = if (pagina.settledPage == 0) null else resumenes.getOrNull(pagina.settledPage - 1)?.mascota?.id
+                    if (id != filtro) viewModel.verMascota(id)
+                }
+                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    CarruselHoy(
+                        estado = pagina,
+                        resumenes = resumenes,
+                        onAnimo = { id, animo ->
+                            vibrar.performHapticFeedback(androidx.compose.ui.hapticfeedback.HapticFeedbackType.TextHandleMove)
+                            viewModel.anotarAnimo(id, animo)
+                        },
+                        onAbrir = onAbrirMascota,
+                        portada = portada,
+                    )
+                    IndicadorPaginas(pagina, Modifier.align(Alignment.CenterHorizontally))
+                }
+            }
+
+            // Accesos rápidos en círculos
+            val carneDe = (filtro ?: mascotas.firstOrNull { it.esPropietario }?.id)
+            AccesosRapidos(
+                listOfNotNull(
+                    AccesoRapido(Icono.PASEO, "Pasear", "acceso_pasear") { onPasear(filtro) },
+                    carneDe?.let { id -> AccesoRapido(Icono.CARNE, "Carné", "acceso_carne") { onCarne(id) } },
+                    AccesoRapido(Icono.VETERINARIO, "Veterinarios", "acceso_veterinarios", onVeterinarios),
+                    AccesoRapido(Icono.TIJERAS, "Paseo y baño", "acceso_prestadores", onPrestadores),
+                ),
+            )
 
             Column {
                 TiraSemana(semana = estado.semana, hoy = estado.hoy, seleccionado = estado.seleccionado, onElegir = viewModel::elegirDia)
@@ -175,8 +227,6 @@ fun HoyScreen(
                     }
                 }
             }
-
-            if (mascotas.isNotEmpty()) FiltroMascotas(mascotas, filtro, onFiltro = viewModel::filtrar)
 
             val progreso = guia
             when {
@@ -401,35 +451,6 @@ fun HoyScreen(
                         }
                     }
                 }
-            }
-        }
-    }
-}
-
-/** Fila de avatares: toca uno para ver solo sus cuidados; otra vez para ver todos. */
-@Composable
-private fun FiltroMascotas(mascotas: List<Mascota>, filtro: String?, onFiltro: (String?) -> Unit) {
-    Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-        mascotas.forEach { m ->
-            val activa = filtro == m.id
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally,
-                modifier = Modifier
-                    .clip(MaterialTheme.shapes.medium)
-                    .clickable { onFiltro(m.id) }
-                    .padding(4.dp)
-                    .testTag("filtro_${m.nombre}"),
-            ) {
-                AvatarMascota(
-                    m.especie, m.fotoLocal, tam = 58.dp,
-                    modifier = if (activa) Modifier.border(3.dp, Pc.Naranja, CircleShape) else if (filtro != null) Modifier.size(58.dp) else Modifier,
-                )
-                Text(
-                    m.nombre,
-                    style = MaterialTheme.typography.labelMedium,
-                    color = if (filtro == null || activa) Pc.Tinta else Pc.TintaSuave,
-                    modifier = Modifier.padding(top = 4.dp),
-                )
             }
         }
     }

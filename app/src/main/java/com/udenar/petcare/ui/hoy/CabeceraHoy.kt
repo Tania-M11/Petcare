@@ -57,12 +57,13 @@ import com.udenar.petcare.ui.theme.Pc
 import kotlinx.coroutines.delay
 
 /**
- * Cabecera viva de Hoy: saludo corto, nombre grande, el estado del día en una línea con su
+ * Portada del carrusel de Hoy (toda la casa): la fecha, un título grande, el estado del día en una línea con su
  * barra de progreso, Michi que respira y trucos que rotan solos (uno por línea).
  */
 @Composable
 fun TarjetaSaludo(
-    nombre: String,
+    etiqueta: String,
+    titulo: String,
     cabecera: CabeceraHoy,
     hechos: Int,
     total: Int,
@@ -83,9 +84,9 @@ fun TarjetaSaludo(
     ) {
         Row(Modifier.fillMaxWidth().padding(start = 20.dp, top = 18.dp, end = 8.dp), verticalAlignment = Alignment.Bottom) {
             Column(Modifier.weight(1f).padding(bottom = 14.dp), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                Text(cabecera.momento, style = MaterialTheme.typography.labelLarge, color = Pc.TintaSuave)
+                Text(etiqueta, style = MaterialTheme.typography.labelLarge, color = Pc.TintaSuave)
                 Text(
-                    nombre.substringBefore(' ').ifBlank { "Hola" },
+                    titulo,
                     fontFamily = Kalnia, fontSize = 32.sp, lineHeight = 36.sp, color = Pc.Tinta, maxLines = 1, overflow = TextOverflow.Ellipsis,
                 )
                 Row(Modifier.padding(top = 10.dp), verticalAlignment = Alignment.CenterVertically) {

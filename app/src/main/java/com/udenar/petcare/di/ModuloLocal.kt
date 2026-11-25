@@ -57,4 +57,7 @@ object ModuloLocal {
 
     @Provides
     fun paseos(db: PetcareDb): com.udenar.petcare.data.paseos.PaseoDao = db.paseos()
+
+    @Provides
+    fun animos(db: PetcareDb): com.udenar.petcare.data.animo.AnimoDao = db.animos()
 }
