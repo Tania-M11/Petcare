@@ -230,7 +230,8 @@ fun CarneScreen(onVolver: () -> Unit, avisar: (String) -> Unit, viewModel: Carne
                 Row(horizontalArrangement = Arrangement.spacedBy(12.dp), modifier = Modifier.align(Alignment.CenterHorizontally)) {
                     BotonCircular(Icons.Rounded.Fullscreen, "Pantalla completa", onClick = { completo = true }, fondo = Pc.Durazno, tinte = Pc.Naranja)
                     BotonCircular(Icons.Rounded.Share, "Compartir QR", onClick = {
-                        val uri = ImagenQr.paraCompartir(contexto, imagen, m.nombre)
+                        val contacto = datos.config.contacto.takeIf { com.udenar.petcare.domain.mascotas.CampoQr.CONTACTO in datos.config.campos }
+                        val uri = ImagenQr.paraCompartir(contexto, ImagenQr.placa(imagen, m.nombre, m.fotoLocal, contacto), m.nombre)
                         contexto.startActivity(
                             Intent.createChooser(
                                 Intent(Intent.ACTION_SEND).setType("image/png").putExtra(Intent.EXTRA_STREAM, uri).addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION),
@@ -240,7 +241,7 @@ fun CarneScreen(onVolver: () -> Unit, avisar: (String) -> Unit, viewModel: Carne
                     }, fondo = Pc.Durazno, tinte = Pc.Naranja)
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
                         BotonCircular(Icons.Rounded.Download, "Guardar en la galería", onClick = {
-                            avisar(if (ImagenQr.guardarEnGaleria(contexto, imagen, m.nombre)) "QR guardado en Imágenes/PetCare" else "No se pudo guardar")
+                            avisar(if (ImagenQr.guardarEnGaleria(contexto, ImagenQr.placa(imagen, m.nombre, m.fotoLocal, datos.config.contacto.takeIf { com.udenar.petcare.domain.mascotas.CampoQr.CONTACTO in datos.config.campos }), m.nombre)) "QR guardado en Imágenes/PetCare" else "No se pudo guardar")
                         }, fondo = Pc.Durazno, tinte = Pc.Naranja)
                     }
                 }

@@ -28,6 +28,45 @@ object ImagenQr {
         return Bitmap.createBitmap(pixeles, lado, lado, Bitmap.Config.ARGB_8888)
     }
 
+    /**
+     * Placa para compartir o imprimir: la foto de la mascota en círculo, su nombre, el contacto
+     * (si se eligió mostrarlo) y el QR debajo. El QR en sí solo lleva texto; la foto va en la placa.
+     */
+    fun placa(qr: Bitmap, nombre: String, fotoLocal: String?, contacto: String?): Bitmap {
+        val ancho = 900
+        val alto = 1260
+        val b = Bitmap.createBitmap(ancho, alto, Bitmap.Config.ARGB_8888)
+        val c = android.graphics.Canvas(b)
+        c.drawColor(0xFFFBF6F1.toInt())
+        val franja = android.graphics.Paint().apply { shader = android.graphics.LinearGradient(0f, 0f, ancho.toFloat(), 360f, 0xFFECE6FB.toInt(), 0xFFFCDCC6.toInt(), android.graphics.Shader.TileMode.CLAMP) }
+        c.drawRoundRect(android.graphics.RectF(30f, 30f, ancho - 30f, 400f), 50f, 50f, franja)
+        // Foto en círculo
+        val foto = fotoLocal?.let { runCatching { android.graphics.BitmapFactory.decodeFile(it) }.getOrNull() }
+        val cx = ancho / 2f
+        val radio = 120f
+        val blanco = android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG).apply { color = Color.WHITE }
+        c.drawCircle(cx, 190f, radio + 8f, blanco)
+        if (foto != null) {
+            c.save()
+            val ruta = android.graphics.Path().apply { addCircle(cx, 190f, radio, android.graphics.Path.Direction.CW) }
+            c.clipPath(ruta)
+            val esc = maxOf(radio * 2 / foto.width, radio * 2 / foto.height)
+            val w = foto.width * esc
+            val h = foto.height * esc
+            c.drawBitmap(foto, null, android.graphics.RectF(cx - w / 2, 190f - h / 2, cx + w / 2, 190f + h / 2), android.graphics.Paint(android.graphics.Paint.FILTER_BITMAP_FLAG))
+            c.restore()
+        }
+        val titulo = android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG).apply {
+            color = 0xFF2D2433.toInt(); textSize = 64f; typeface = android.graphics.Typeface.DEFAULT_BOLD; textAlign = android.graphics.Paint.Align.CENTER
+        }
+        val texto = android.graphics.Paint(titulo).apply { textSize = 34f; typeface = android.graphics.Typeface.DEFAULT; color = 0xFF8C8394.toInt() }
+        c.drawText(nombre, cx, 480f, titulo)
+        contacto?.takeIf { it.isNotBlank() }?.let { c.drawText(it, cx, 530f, texto) }
+        c.drawBitmap(qr, null, android.graphics.RectF(cx - 300f, 570f, cx + 300f, 1170f), null)
+        c.drawText("Escanéame con la cámara · PetCare", cx, 1220f, texto)
+        return b
+    }
+
     /** Archivo temporal para compartir con otras apps (sin exponer rutas internas). */
     fun paraCompartir(contexto: Context, bitmap: Bitmap, nombre: String): Uri {
         val carpeta = File(contexto.cacheDir, "compartidos").apply { mkdirs() }

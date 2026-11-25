@@ -72,6 +72,24 @@ class DetalleMascotaViewModel @Inject constructor(
 
     fun eliminarSintoma(sintomaId: String) = viewModelScope.launch { sintomasRepo.eliminar(sintomaId) }
 
+    /** Arma el PDF para el veterinario con lo que ya se ve en la ficha. */
+    fun generarReporte(contexto: android.content.Context, onListo: (java.io.File) -> Unit, avisar: (String) -> Unit) = viewModelScope.launch {
+        val m = mascota.value ?: return@launch
+        try {
+            val archivo = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+                com.udenar.petcare.data.reporte.ReportePdf.generar(
+                    contexto,
+                    com.udenar.petcare.data.reporte.DatosReporte(
+                        m, cuidados.value, pesos.value, visitas.value, paseos.value, sintomas.value, LocalDate.now(reloj), reloj.zone,
+                    ),
+                )
+            }
+            onListo(archivo)
+        } catch (e: Exception) {
+            avisar("No se pudo crear el reporte")
+        }
+    }
+
     val paseos: StateFlow<List<com.udenar.petcare.domain.paseos.Paseo>> by lazy {
         paseosRepo.observar(id).stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
     }

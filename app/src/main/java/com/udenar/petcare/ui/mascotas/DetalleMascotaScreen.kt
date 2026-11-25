@@ -227,6 +227,25 @@ fun DetalleMascotaScreen(
                         ?: com.udenar.petcare.ui.componentes.VacioMichi(com.udenar.petcare.domain.recomendaciones.PoseMichi.CELEBRA, "Cuando marques sus cuidados y paseos, aquí verás su racha y sus gráficas de la semana.", fondo = Pc.Blanco)
                     TarjetaEstadoCuidado(estadoCuidado)
                     com.udenar.petcare.ui.componentes.BotonSecundario("Carné y QR", onClick = { onCarne(mascota.id) }, modifier = Modifier.testTag("ver_carne"))
+                    // Reporte PDF para llevar o enviar al veterinario (solo el dueño ve visitas y documentos)
+                    if (mascota.esPropietario) {
+                        com.udenar.petcare.ui.componentes.BotonSecundario(
+                            "Reporte PDF para el veterinario", icono = com.udenar.petcare.domain.modelo.Icono.DOCUMENTO,
+                            onClick = {
+                                viewModel.generarReporte(contexto, onListo = { archivo ->
+                                    val uri = androidx.core.content.FileProvider.getUriForFile(contexto, "${contexto.packageName}.archivos", archivo)
+                                    val enviar = android.content.Intent(android.content.Intent.ACTION_SEND).apply {
+                                        type = "application/pdf"
+                                        putExtra(android.content.Intent.EXTRA_STREAM, uri)
+                                        putExtra(android.content.Intent.EXTRA_SUBJECT, "Reporte de ${mascota.nombre}")
+                                        addFlags(android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                                    }
+                                    runCatching { contexto.startActivity(android.content.Intent.createChooser(enviar, "Compartir reporte")) }
+                                }, avisar = avisar)
+                            },
+                            modifier = Modifier.testTag("reporte_pdf"),
+                        )
+                    }
                     mascota.veterinario?.takeIf { !it.vacio }?.let { v -> TarjetaVeterinario(v, contexto) }
                     Row(
                         Modifier
