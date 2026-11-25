@@ -87,7 +87,24 @@ interface RepositorioVeterinarios {
     suspend fun buscar(filtro: FiltroVeterinarios, lat: Double? = null, lon: Double? = null): List<PerfilVeterinario>
 
     suspend fun obtener(id: String): PerfilVeterinario?
+
+    /** Veterinarias de la ciudad que aún no usan PetCare (solo llamar o ver cómo llegar). */
+    suspend fun lugares(ciudad: String?): List<LugarVeterinario> = emptyList()
 }
+
+/**
+ * Veterinaria real sin cuenta en PetCare, tomada de directorios públicos. No recibe citas por
+ * la app: se muestra para llamar o llegar, con la fuente para que el dueño confirme.
+ */
+data class LugarVeterinario(
+    val id: String,
+    val nombre: String,
+    val direccion: String,
+    val ciudad: String,
+    val telefono: String?,
+    val horario: String?,
+    val fuente: String,
+)
 
 /** Modo activo (RF-30): se recuerda en el teléfono; nunca cambia la identidad. */
 interface RepositorioModo {

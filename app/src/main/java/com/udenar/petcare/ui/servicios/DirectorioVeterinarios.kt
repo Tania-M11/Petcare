@@ -92,6 +92,8 @@ data class EstadoDirectorio(
     val filtro: FiltroVeterinarios = FiltroVeterinarios(),
     val ubicacion: Coordenada? = null,
     val resultados: List<PerfilVeterinario> = emptyList(),
+    /** Veterinarias de la ciudad que aún no usan PetCare (para llamar o llegar). */
+    val lugares: List<com.udenar.petcare.domain.profesionales.LugarVeterinario> = emptyList(),
     val cargando: Boolean = true,
     val error: String? = null,
 )
@@ -121,7 +123,9 @@ class DirectorioVetViewModel @Inject constructor(private val veterinarios: Repos
             val s = _estado.value
             try {
                 val r = veterinarios.buscar(s.filtro, s.ubicacion?.lat, s.ubicacion?.lon)
-                _estado.update { it.copy(resultados = r, cargando = false) }
+                // Los lugares sin cuenta solo se filtran por ciudad (no tienen especies ni servicios cargados)
+                val l = runCatching { veterinarios.lugares(s.filtro.ciudad) }.getOrDefault(emptyList())
+                _estado.update { it.copy(resultados = r, lugares = l, cargando = false) }
             } catch (e: ProfesionalException) {
                 _estado.update { it.copy(cargando = false, error = e.message) }
             }
@@ -186,9 +190,9 @@ fun DirectorioVeterinariosScreen(onVolver: () -> Unit, onAbrir: (String) -> Unit
                 BotonSecundario("Reintentar", onClick = viewModel::buscar)
             }
             estado.cargando && estado.resultados.isEmpty() -> Text("Buscando…", color = Pc.TintaSuave)
-            estado.resultados.isEmpty() -> EstadoVacio(
-                R.drawable.gato_doctor, "Nadie con esos filtros",
-                "Prueba con otra ciudad o quita algún filtro.", fondoBlob = listOf(Pc.CieloClaro, Pc.LavandaClara),
+            estado.resultados.isEmpty() && estado.lugares.isEmpty() -> EstadoVacio(
+                R.drawable.gato_doctor, "Aún no hay nadie aquí",
+                "No hay veterinarios con esos filtros. Prueba otra ciudad (por ejemplo, Ipiales) o quita algún filtro.", fondoBlob = listOf(Pc.CieloClaro, Pc.LavandaClara),
             )
             verMapa -> Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(6.dp)) {
                 MapaMarcadores(
@@ -203,8 +207,59 @@ fun DirectorioVeterinariosScreen(onVolver: () -> Unit, onAbrir: (String) -> Unit
                 Text("Azul: verificado · Lavanda: no verificado. $ATRIBUCION_MAPA", style = MaterialTheme.typography.labelSmall, color = Pc.TintaSuave)
             }
             else -> LazyColumn(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                if (estado.resultados.isEmpty()) {
+                    item {
+                        com.udenar.petcare.ui.componentes.VacioMichi(
+                            com.udenar.petcare.domain.recomendaciones.PoseMichi.DOCTOR,
+                            "Aún no hay veterinarios con perfil en PetCare aquí. Mientras tanto, puedes llamar a estas veterinarias.",
+                            fondo = Pc.Blanco,
+                        )
+                    }
+                }
                 items(estado.resultados, key = { it.id }) { v -> TarjetaVeterinario(v, onClick = { onAbrir(v.id) }) }
+                if (estado.lugares.isNotEmpty()) {
+                    item {
+                        Column(Modifier.padding(top = 8.dp)) {
+                            Text("Otras veterinarias cerca", style = MaterialTheme.typography.titleMedium)
+                            Text(
+                                "Aún no usan PetCare: no reciben citas por la app. Datos de directorios públicos; confirma por teléfono.",
+                                style = MaterialTheme.typography.bodySmall, color = Pc.TintaSuave,
+                            )
+                        }
+                    }
+                    items(estado.lugares, key = { "lugar_" + it.id }) { l -> TarjetaLugar(l) }
+                }
             }
+        }
+    }
+}
+
+/** Veterinaria sin cuenta en PetCare: nombre, dirección, horario y botones para llamar o llegar. */
+@Composable
+private fun TarjetaLugar(l: com.udenar.petcare.domain.profesionales.LugarVeterinario) {
+    val contexto = LocalContext.current
+    fun abrir(uri: String, accion: String = Intent.ACTION_VIEW) {
+        runCatching { contexto.startActivity(Intent(accion, android.net.Uri.parse(uri))) }
+    }
+    Column(
+        Modifier.fillMaxWidth().clip(MaterialTheme.shapes.large).background(Pc.Blanco).padding(14.dp).testTag("lugar_${l.nombre}"),
+        verticalArrangement = Arrangement.spacedBy(6.dp),
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            com.udenar.petcare.ui.componentes.BaldosaIcono(com.udenar.petcare.domain.modelo.Icono.HOSPITAL, tam = 42.dp)
+            Column(Modifier.weight(1f).padding(start = 12.dp)) {
+                Text(l.nombre, style = MaterialTheme.typography.titleSmall)
+                Text("${l.direccion}, ${l.ciudad}", style = MaterialTheme.typography.bodySmall, color = Pc.TintaSuave)
+                l.horario?.let { Text(it, style = MaterialTheme.typography.bodySmall, color = Pc.TintaSuave) }
+            }
+        }
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            l.telefono?.let { tel ->
+                ChipOpcion("Llamar", false, icono = com.udenar.petcare.domain.modelo.Icono.TELEFONO, onClick = { abrir(com.udenar.petcare.domain.profesionales.Contacto.enlaceLlamar(tel), Intent.ACTION_DIAL) })
+            }
+            ChipOpcion("Cómo llegar", false, icono = com.udenar.petcare.domain.modelo.Icono.MAPA, onClick = {
+                abrir("geo:0,0?q=" + android.net.Uri.encode("${l.nombre}, ${l.direccion}, ${l.ciudad}, Nariño, Colombia"))
+            })
         }
     }
 }

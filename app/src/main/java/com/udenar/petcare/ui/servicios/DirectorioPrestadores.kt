@@ -192,7 +192,7 @@ fun DirectorioPrestadoresScreen(onVolver: () -> Unit, onAbrir: (String) -> Unit,
                 BotonSecundario("Reintentar", onClick = viewModel::buscar)
             }
             estado.cargando && estado.resultados.isEmpty() -> Text("Buscando…", color = Pc.TintaSuave)
-            estado.resultados.isEmpty() -> EstadoVacio(R.drawable.gato_amigos, "Nadie con esos filtros", "Prueba con otra ciudad, zona o categoría.", fondoBlob = listOf(Pc.SolClaro, Pc.Durazno))
+            estado.resultados.isEmpty() -> EstadoVacio(R.drawable.gato_higiene, "Aún no hay nadie aquí", "Todavía no hay paseadores, cuidadores ni peluquerías con perfil en esta zona. Prueba otra ciudad o, si ofreces estos servicios, crea tu perfil en Perfil → Trabaja con mascotas.", fondoBlob = listOf(Pc.SolClaro, Pc.Durazno))
             verMapa -> Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 MapaMarcadores(
                     estado.resultados.map { p -> PuntoMapa(p.id, Coordenada(p.lat, p.lon), p.recibiendo, estado.categorias.firstOrNull { it.id == p.categoriaPrincipal }?.icono3d ?: com.udenar.petcare.domain.modelo.Icono.HUELLAS) },

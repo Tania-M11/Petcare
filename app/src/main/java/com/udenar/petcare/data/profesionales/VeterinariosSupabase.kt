@@ -173,6 +173,13 @@ class VeterinariosSupabase @Inject constructor(private val supabase: SupabaseCli
         supabase.from(TABLA).select { filter { eq("id", id) } }.decodeSingleOrNull<FilaVeterinario>()?.comoPerfil()
     }
 
+    override suspend fun lugares(ciudad: String?): List<com.udenar.petcare.domain.profesionales.LugarVeterinario> = red {
+        supabase.from("lugares_veterinarios").select {
+            ciudad?.trim()?.ifEmpty { null }?.let { c -> filter { ilike("ciudad", c) } }
+            order("nombre", io.github.jan.supabase.postgrest.query.Order.ASCENDING)
+        }.decodeList<FilaLugar>().map { com.udenar.petcare.domain.profesionales.LugarVeterinario(it.id, it.nombre, it.direccion, it.ciudad, it.telefono, it.horario, it.fuente) }
+    }
+
     private fun String?.limpio(): String? = this?.trim()?.ifEmpty { null }
 
     private suspend fun <T> red(bloque: suspend () -> T): T = try {
@@ -209,3 +216,14 @@ class ModoLocal @Inject constructor(@ApplicationContext contexto: Context) : Rep
         _modo.value = modo
     }
 }
+
+@Serializable
+private data class FilaLugar(
+    val id: String,
+    val nombre: String,
+    val direccion: String,
+    val ciudad: String,
+    val telefono: String? = null,
+    val horario: String? = null,
+    val fuente: String = "",
+)
