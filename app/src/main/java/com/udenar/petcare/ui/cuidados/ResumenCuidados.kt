@@ -1,7 +1,7 @@
 package com.udenar.petcare.ui.cuidados
 
 import com.udenar.petcare.domain.modelo.Icono
-import com.udenar.petcare.ui.componentes.Icono3D
+import com.udenar.petcare.ui.componentes.Simbolo
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -150,7 +150,7 @@ private fun FilaCuidado(r: ResumenCuidado, onClick: () -> Unit) {
                 .clip(RoundedCornerShape(14.dp))
                 .background(fondo),
             contentAlignment = Alignment.Center,
-        ) { Icono3D(r.evento.tipo.icono, tam = 28.dp) }
+        ) { Simbolo(r.evento.tipo.icono, tam = 28.dp) }
         Column(
             Modifier
                 .weight(1f)
@@ -173,7 +173,7 @@ private fun FilaCuidado(r: ResumenCuidado, onClick: () -> Unit) {
             r.vencimiento == Vencimiento.PROXIMO -> Chip("Próximo", fondo = Pc.SolClaro)
             r.vencimiento == Vencimiento.AL_DIA -> Chip("Al día", fondo = Pc.MentaClara)
             r.terminaPronto -> Chip("Termina pronto", fondo = Pc.LavandaClara)
-            r.evento.porSubir -> Icono3D(Icono.NUBE, tam = 18.dp)
+            r.evento.porSubir -> Simbolo(Icono.NUBE, tam = 18.dp)
         }
     }
 }

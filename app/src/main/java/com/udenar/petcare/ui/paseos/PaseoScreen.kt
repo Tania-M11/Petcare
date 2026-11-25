@@ -1,6 +1,6 @@
 package com.udenar.petcare.ui.paseos
 
-import com.udenar.petcare.ui.componentes.Icono3D
+import com.udenar.petcare.ui.componentes.Simbolo
 import android.Manifest
 import android.os.Build
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -284,7 +284,7 @@ fun DetallePaseoScreen(paseo: com.udenar.petcare.domain.paseos.Paseo?, onVolver:
         Row(verticalAlignment = Alignment.CenterVertically) {
             BotonCircular(Icons.AutoMirrored.Rounded.ArrowBack, "Volver", onClick = onVolver)
             Row(Modifier.padding(start = 16.dp), verticalAlignment = Alignment.CenterVertically) {
-                paseo?.let { Icono3D(it.tipo.icono, tam = 32.dp) }
+                paseo?.let { Simbolo(it.tipo.icono, tam = 32.dp) }
                 Text(paseo?.tipo?.etiqueta ?: "Paseo", style = MaterialTheme.typography.headlineMedium, modifier = Modifier.padding(start = 8.dp))
             }
         }

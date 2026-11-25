@@ -10,10 +10,10 @@ import com.udenar.petcare.domain.modelo.Especie
 import com.udenar.petcare.domain.modelo.Mascota
 import com.udenar.petcare.domain.modelo.VeterinarioManual
 import com.udenar.petcare.domain.recomendaciones.AccionSugerida
-import com.udenar.petcare.domain.recomendaciones.Chopper
+import com.udenar.petcare.domain.recomendaciones.Michi
 import com.udenar.petcare.domain.recomendaciones.ContextoRecomendaciones
 import com.udenar.petcare.domain.recomendaciones.MotorRecomendaciones
-import com.udenar.petcare.domain.recomendaciones.PoseChopper
+import com.udenar.petcare.domain.recomendaciones.PoseMichi
 import com.udenar.petcare.domain.recomendaciones.Tono
 import com.udenar.petcare.domain.salud.RegistroPeso
 import org.junit.Assert.assertEquals
@@ -24,7 +24,7 @@ import java.time.LocalDate
 import java.time.LocalTime
 import java.time.ZoneOffset
 
-/** Fase 6.5: reglas de recomendaciones (sin consejos médicos) y mensajes de Chopper. */
+/** Fase 6.5: reglas de recomendaciones (sin consejos médicos) y mensajes de Michi. */
 class RecomendacionesTest {
     private val hoy = LocalDate.of(2026, 11, 23)
     private val vet = VeterinarioManual("Dra. Ruiz", "3001234567")
@@ -95,16 +95,16 @@ class RecomendacionesTest {
 
     @Test
     fun chopperSaludaSegunElDia() {
-        assertEquals(PoseChopper.SALUDO, Chopper.cabecera(8, 0, 0, hayMascotas = false).pose)
-        val manana = Chopper.cabecera(8, 3, 3, hayMascotas = true)
+        assertEquals(PoseMichi.SALUDO, Michi.cabecera(8, 0, 0, hayMascotas = false).pose)
+        val manana = Michi.cabecera(8, 3, 3, hayMascotas = true)
         assertEquals("Buenos días", manana.momento)
         assertEquals("3 cuidados para hoy", manana.estado)
-        assertEquals(PoseChopper.AMIGOS, Chopper.cabecera(20, 3, 0, hayMascotas = true).pose)
-        assertEquals("Llevas 2 de 5", Chopper.cabecera(15, 5, 3, hayMascotas = true).estado)
+        assertEquals(PoseMichi.CELEBRA, Michi.cabecera(20, 3, 0, hayMascotas = true).pose)
+        assertEquals("Llevas 2 de 5", Michi.cabecera(15, 5, 3, hayMascotas = true).estado)
         // Los trucos son cortos (caben en una línea) y rotan desde uno distinto cada día
-        assertTrue(Chopper.consejos(hoy).all { it.texto.length <= 45 })
-        assertTrue(Chopper.consejos(hoy).first() != Chopper.consejos(hoy.plusDays(1)).first())
-        assertEquals("¡Bien! Cena de Max hecho. Quedan 2.", Chopper.alMarcar("Cena", "Max", 2))
+        assertTrue(Michi.consejos(hoy).all { it.texto.length <= 45 })
+        assertTrue(Michi.consejos(hoy).first() != Michi.consejos(hoy.plusDays(1)).first())
+        assertEquals("¡Bien! Cena de Max hecho. Quedan 2.", Michi.alMarcar("Cena", "Max", 2))
     }
 }
 

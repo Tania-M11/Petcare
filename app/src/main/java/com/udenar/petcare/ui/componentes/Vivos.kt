@@ -67,7 +67,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.udenar.petcare.R
 import com.udenar.petcare.domain.modelo.Especie
-import com.udenar.petcare.domain.recomendaciones.PoseChopper
+import com.udenar.petcare.domain.recomendaciones.PoseMichi
 import com.udenar.petcare.domain.recomendaciones.Recomendacion
 import com.udenar.petcare.domain.recomendaciones.Tono
 import com.udenar.petcare.ui.theme.Kalnia
@@ -75,20 +75,26 @@ import com.udenar.petcare.ui.theme.Pc
 import kotlin.random.Random
 
 @DrawableRes
-fun PoseChopper.dibujo(): Int = when (this) {
-    PoseChopper.SALUDO -> R.drawable.chopper_saludo
-    PoseChopper.COMIDA -> R.drawable.chopper_comida
-    PoseChopper.AMIGOS -> R.drawable.chopper_amigos
-    PoseChopper.ORGANIZADOR -> R.drawable.chopper_organizador
-    PoseChopper.DOCTOR -> R.drawable.chopper_veterinario
+fun PoseMichi.dibujo(): Int = when (this) {
+    PoseMichi.SALUDO -> R.drawable.gato_saludo
+    PoseMichi.CELEBRA -> R.drawable.gato_celebra
+    PoseMichi.DORMIDO -> R.drawable.gato_dormido
+    PoseMichi.AGENDA -> R.drawable.gato_agenda
+    PoseMichi.ALARMA -> R.drawable.gato_alarma
+    PoseMichi.HIGIENE -> R.drawable.gato_higiene
+    PoseMichi.DOCTOR -> R.drawable.gato_doctor
+    PoseMichi.SALUD -> R.drawable.gato_salud
+    PoseMichi.DOCUMENTOS -> R.drawable.gato_documentos
+    PoseMichi.LEYENDO -> R.drawable.gato_leyendo
+    PoseMichi.AMIGOS -> R.drawable.gato_amigos
 }
 
 /** Color propio de cada mascota (borde, franja de sus tarjetas, anillo del filtro). */
 fun Especie.acento(): Color = colores().last()
 
-/** Chopper habla: ilustración que respira y globo de diálogo que cambia con animación. */
+/** Michi habla: ilustración que respira y globo de diálogo que cambia con animación. */
 @Composable
-fun BurbujaChopper(texto: String, pose: PoseChopper, modifier: Modifier = Modifier, tamChopper: Dp = 84.dp) {
+fun BurbujaMichi(texto: String, pose: PoseMichi, modifier: Modifier = Modifier, tamMichi: Dp = 84.dp) {
     // Respiración suave para que se sienta vivo
     val pulso = rememberInfiniteTransition(label = "chopper")
     val escala by pulso.animateFloat(1f, 1.04f, infiniteRepeatable(tween(1600, easing = FastOutSlowInEasing), RepeatMode.Reverse), label = "respira")
@@ -96,7 +102,7 @@ fun BurbujaChopper(texto: String, pose: PoseChopper, modifier: Modifier = Modifi
     LaunchedEffect(Unit) { visible = true }
     Row(modifier.fillMaxWidth(), verticalAlignment = Alignment.Bottom) {
         AnimatedContent(pose, transitionSpec = { fadeIn(tween(300)) togetherWith fadeOut(tween(200)) }, label = "pose") { p ->
-            Image(painterResource(p.dibujo()), contentDescription = "Chopper", modifier = Modifier.size(tamChopper).scale(escala))
+            Image(painterResource(p.dibujo()), contentDescription = "Michi", modifier = Modifier.size(tamMichi).scale(escala))
         }
         AnimatedVisibility(visible, enter = fadeIn() + slideInVertically { it / 2 }) {
             Box(
@@ -136,7 +142,7 @@ fun AnilloProgreso(hechos: Int, total: Int, modifier: Modifier = Modifier, tam: 
         }
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
             if (total == 0) {
-                Icono3D(Icono.HOJA, tam = tam * 0.34f)
+                Simbolo(Icono.HOJA, tam = tam * 0.34f)
             } else {
                 Text("$hechos/$total", fontFamily = Kalnia, fontSize = (tam.value * 0.22f).sp, color = Pc.Tinta)
                 Text(if (completo) "¡listo!" else "hoy", style = MaterialTheme.typography.labelSmall, color = Pc.TintaSuave)
@@ -204,7 +210,7 @@ fun TarjetaRecomendacion(r: Recomendacion, onAccion: () -> Unit, onDescartar: ()
         Text(r.mensaje, style = MaterialTheme.typography.bodySmall, color = Pc.Tinta)
         AnimatedVisibility(porQue, enter = expandVertically() + fadeIn(), exit = shrinkVertically() + fadeOut()) {
             Row(verticalAlignment = Alignment.Top) {
-                Icono3D(Icono.IDEA, tam = 16.dp)
+                Simbolo(Icono.IDEA, tam = 16.dp)
                 Text(r.porque, style = MaterialTheme.typography.bodySmall, color = Pc.TintaSuave, modifier = Modifier.padding(start = 6.dp))
             }
         }
@@ -230,15 +236,15 @@ fun TarjetaRecomendacion(r: Recomendacion, onAccion: () -> Unit, onDescartar: ()
     }
 }
 
-/** Avisos de toda la app con Chopper (reemplaza el snackbar gris): éxito, error o información. */
+/** Avisos de toda la app con Michi (reemplaza el snackbar gris): éxito, error o información. */
 @Composable
-fun AvisoChopper(texto: String, modifier: Modifier = Modifier) {
+fun AvisoMichi(texto: String, modifier: Modifier = Modifier) {
     val error = listOf("No se pudo", "No pudimos", "Sin conexión", "Sin permiso", "No tienes", "no está", "Escribe", "Elige").any { texto.contains(it, ignoreCase = true) }
     val exito = !error && listOf("¡", "✓", "guard", "Listo", "enviad", "Gracias", "registrad", "actualizad").any { texto.contains(it, ignoreCase = true) }
     val pose = when {
-        error -> PoseChopper.ORGANIZADOR
-        exito -> PoseChopper.AMIGOS
-        else -> PoseChopper.SALUDO
+        error -> PoseMichi.ALARMA
+        exito -> PoseMichi.AMIGOS
+        else -> PoseMichi.SALUDO
     }
     val entrada = remember { Animatable(0.6f) }
     LaunchedEffect(texto) { entrada.animateTo(1f, spring(dampingRatio = Spring.DampingRatioMediumBouncy)) }

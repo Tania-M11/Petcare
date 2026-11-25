@@ -127,7 +127,7 @@ fun SolicitudesPresScreen(onAbrir: (String) -> Unit, viewModel: BandejaPresViewM
             BotonSecundario("Reintentar", onClick = { viewModel.cargar() })
         }
         if (!cargando && error == null && todas.isEmpty()) {
-            EstadoVacio(R.drawable.chopper_amigos, "Aún no tienes solicitudes", "Cuando un dueño te pida una cotización, aparecerá aquí para que respondas con tu precio.", fondoBlob = listOf(Pc.SolClaro, Pc.Durazno))
+            EstadoVacio(R.drawable.gato_amigos, "Aún no tienes solicitudes", "Cuando un dueño te pida una cotización, aparecerá aquí para que respondas con tu precio.", fondoBlob = listOf(Pc.SolClaro, Pc.Durazno))
         }
         listOf(
             "Nuevas" to todas.filter { it.estado == EstadoSolicitudPres.PENDIENTE },
@@ -150,7 +150,7 @@ fun AgendaPresScreen(onAbrir: (String) -> Unit, viewModel: BandejaPresViewModel 
     LaunchedEffect(Unit) { viewModel.cargar() }
     val aceptadas = todas.filter { it.estado == EstadoSolicitudPres.ACEPTADA }.sortedBy { it.inicio }
     ListaPres("Agenda") {
-        if (aceptadas.isEmpty()) EstadoVacio(R.drawable.chopper_amigos, "Tu agenda está libre", "Los servicios que acuerdes se ordenarán aquí por día y hora.", fondoBlob = listOf(Pc.SolClaro, Pc.Durazno))
+        if (aceptadas.isEmpty()) EstadoVacio(R.drawable.gato_amigos, "Tu agenda está libre", "Los servicios que acuerdes se ordenarán aquí por día y hora.", fondoBlob = listOf(Pc.SolClaro, Pc.Durazno))
         val (pasadas, proximas) = aceptadas.partition { it.inicio.toLocalDate().isBefore(viewModel.hoy) }
         if (pasadas.isNotEmpty()) {
             TituloSeccion("Por cerrar")
@@ -170,7 +170,7 @@ fun ClientesPresScreen(onAbrir: (String) -> Unit, viewModel: BandejaPresViewMode
     LaunchedEffect(Unit) { viewModel.cargar() }
     val completadas = todas.filter { it.estado == EstadoSolicitudPres.COMPLETADA }
     ListaPres("Clientes") {
-        if (completadas.isEmpty()) EstadoVacio(R.drawable.chopper_amigos, "Aún no tienes clientes", "Aquí verás el historial de servicios que hayas completado.", fondoBlob = listOf(Pc.SolClaro, Pc.Durazno))
+        if (completadas.isEmpty()) EstadoVacio(R.drawable.gato_amigos, "Aún no tienes clientes", "Aquí verás el historial de servicios que hayas completado.", fondoBlob = listOf(Pc.SolClaro, Pc.Durazno))
         completadas.groupBy { it.propietarioNombre ?: "Cliente" }.forEach { (cliente, lista) ->
             TituloSeccion("$cliente · ${lista.size} ${if (lista.size == 1) "servicio" else "servicios"}")
             lista.forEach { s -> FilaSolicitudPres(s, "${s.resumen.nombre} · ${s.servicioNombre}", onClick = { onAbrir(s.id) }) }

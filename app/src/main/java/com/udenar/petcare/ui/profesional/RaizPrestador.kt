@@ -155,7 +155,7 @@ fun RaizPrestador(viewModel: ModoPrestadorViewModel = hiltViewModel()) {
     }
     Scaffold(
         containerColor = Pc.Crema,
-        snackbarHost = { SnackbarHost(avisos) { datos -> com.udenar.petcare.ui.componentes.AvisoChopper(datos.visuals.message) } },
+        snackbarHost = { SnackbarHost(avisos) { datos -> com.udenar.petcare.ui.componentes.AvisoMichi(datos.visuals.message) } },
         topBar = {
             if (actual != null) {
                 Row(Modifier.statusBarsPadding().fillMaxWidth().padding(horizontal = 20.dp, vertical = 8.dp)) {
@@ -207,7 +207,7 @@ private fun PerfilPrestadorScreen(viewModel: ModoPrestadorViewModel, onEditar: (
                 titulo = p.nombre,
                 texto = listOfNotNull(principal?.nombre, p.ciudad).joinToString(" · "),
                 chip = if (p.recibiendo) "Recibiendo solicitudes" else "En pausa",
-                ilustracion = R.drawable.chopper_amigos,
+                ilustracion = R.drawable.gato_amigos,
                 degradado = listOf(Pc.SolClaro, Pc.Sol),
                 colorTexto = Pc.Tinta,
             )

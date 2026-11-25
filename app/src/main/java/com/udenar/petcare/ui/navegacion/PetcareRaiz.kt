@@ -63,7 +63,7 @@ fun PetcareRaiz() {
 
     Scaffold(
         containerColor = Pc.Crema,
-        snackbarHost = { SnackbarHost(avisos) { datos -> com.udenar.petcare.ui.componentes.AvisoChopper(datos.visuals.message) } },
+        snackbarHost = { SnackbarHost(avisos) { datos -> com.udenar.petcare.ui.componentes.AvisoMichi(datos.visuals.message) } },
         // La barra solo se ve en las 4 pestañas (no en pantallas completas como Intenciones)
         bottomBar = { if (actual != null) BarraInferior(PestanaPersonal.entries, actual = actual, onElegir = { nav.irAPestana(it) }) },
     ) { relleno ->

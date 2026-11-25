@@ -71,7 +71,7 @@ fun FotosSolicitud(rutas: List<String>, viewModel: FotosSolicitudViewModel = hil
                     contentAlignment = Alignment.Center,
                 ) {
                     imagen?.let { Image(it, contentDescription = "Foto adjunta", contentScale = ContentScale.Crop, modifier = Modifier.size(84.dp)) }
-                        ?: Icono3D(com.udenar.petcare.domain.modelo.Icono.CAMARA, tam = 28.dp)
+                        ?: Simbolo(com.udenar.petcare.domain.modelo.Icono.CAMARA, tam = 28.dp)
                 }
             }
         }

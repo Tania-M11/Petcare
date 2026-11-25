@@ -120,7 +120,7 @@ fun SolicitudesVetScreen(avisar: (String) -> Unit, onFicha: (String) -> Unit, vi
             BotonSecundario("Reintentar", onClick = { viewModel.cargar() })
         }
         if (!cargando && error == null && todas.isEmpty()) {
-            EstadoVacio(R.drawable.chopper_doctor, "Aún no tienes solicitudes", "Cuando un dueño te pida una cita, aparecerá aquí para que la aceptes o la rechaces.", fondoBlob = listOf(Pc.CieloClaro, Pc.LavandaClara))
+            EstadoVacio(R.drawable.gato_doctor, "Aún no tienes solicitudes", "Cuando un dueño te pida una cita, aparecerá aquí para que la aceptes o la rechaces.", fondoBlob = listOf(Pc.CieloClaro, Pc.LavandaClara))
         }
         listOf(
             "Nuevas" to todas.filter { it.estado == EstadoSolicitudVet.PENDIENTE },
@@ -152,7 +152,7 @@ fun AgendaVetScreen(avisar: (String) -> Unit, onFicha: (String) -> Unit, viewMod
     ) {
         Text("Agenda", style = MaterialTheme.typography.headlineLarge)
         if (citas.isEmpty() && atrasadas.isEmpty()) {
-            EstadoVacio(R.drawable.chopper_doctor, "Tu agenda está libre", "Las citas que aceptes se ordenarán aquí por día y hora.", fondoBlob = listOf(Pc.CieloClaro, Pc.LavandaClara))
+            EstadoVacio(R.drawable.gato_doctor, "Tu agenda está libre", "Las citas que aceptes se ordenarán aquí por día y hora.", fondoBlob = listOf(Pc.CieloClaro, Pc.LavandaClara))
         }
         if (atrasadas.isNotEmpty()) {
             TituloSeccion("Por cerrar")

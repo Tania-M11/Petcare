@@ -1,6 +1,6 @@
 package com.udenar.petcare.ui.servicios
 
-import com.udenar.petcare.ui.componentes.Icono3D
+import com.udenar.petcare.ui.componentes.Simbolo
 import com.udenar.petcare.domain.modelo.Icono
 import android.Manifest
 import android.content.ActivityNotFoundException
@@ -187,7 +187,7 @@ fun DirectorioVeterinariosScreen(onVolver: () -> Unit, onAbrir: (String) -> Unit
             }
             estado.cargando && estado.resultados.isEmpty() -> Text("Buscando…", color = Pc.TintaSuave)
             estado.resultados.isEmpty() -> EstadoVacio(
-                R.drawable.chopper_veterinario, "Nadie con esos filtros",
+                R.drawable.gato_doctor, "Nadie con esos filtros",
                 "Prueba con otra ciudad o quita algún filtro.", fondoBlob = listOf(Pc.CieloClaro, Pc.LavandaClara),
             )
             verMapa -> Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(6.dp)) {
@@ -296,7 +296,7 @@ fun DetalleVeterinarioScreen(onVolver: () -> Unit, onSolicitar: () -> Unit, avis
             titulo = v.nombre,
             texto = listOfNotNull(v.clinica, v.ciudad).joinToString(" · "),
             chip = v.verificacion.insignia,
-            ilustracion = R.drawable.chopper_veterinario,
+            ilustracion = R.drawable.gato_doctor,
             degradado = listOf(Pc.Cielo, Pc.CieloOscuro),
             modifier = Modifier.testTag("cabecera_vet"),
         )
@@ -312,7 +312,7 @@ fun DetalleVeterinarioScreen(onVolver: () -> Unit, onSolicitar: () -> Unit, avis
             if (v.servicios.isNotEmpty()) Text(v.servicios.joinToString(" · ") { it.etiqueta }, style = MaterialTheme.typography.bodyMedium, color = Pc.TintaSuave)
             if (v.especialidades.isNotEmpty()) Text("Especialidades: " + v.especialidades.joinToString(", "), style = MaterialTheme.typography.bodyMedium, color = Pc.TintaSuave)
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Icono3D(if (v.domicilio) Icono.CASA else Icono.HOSPITAL, tam = 20.dp)
+                Simbolo(if (v.domicilio) Icono.CASA else Icono.HOSPITAL, tam = 20.dp)
                 Text(if (v.domicilio) "  Atiende a domicilio" else "  Atiende en el consultorio", style = MaterialTheme.typography.bodyMedium)
             }
             v.tarifa?.let { Text("Consulta: $it (referencial; el pago se acuerda directamente)", style = MaterialTheme.typography.bodySmall, color = Pc.TintaSuave) }

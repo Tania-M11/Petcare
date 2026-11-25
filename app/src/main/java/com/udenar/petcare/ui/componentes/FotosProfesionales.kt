@@ -101,7 +101,7 @@ fun SelectorFotos(fotos: List<Uri>, onCambio: (List<Uri>) -> Unit, maximo: Int =
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.Center,
             ) {
-                Icono3D(Icono.CAMARA, tam = 34.dp)
+                Simbolo(Icono.CAMARA, tam = 34.dp)
                 Text("${fotos.size}/$maximo", style = MaterialTheme.typography.labelMedium, color = Pc.TintaSuave)
             }
         }

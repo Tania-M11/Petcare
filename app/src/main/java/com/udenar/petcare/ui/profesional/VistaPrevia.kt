@@ -21,7 +21,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
 import com.udenar.petcare.domain.modelo.Icono
-import com.udenar.petcare.ui.componentes.Icono3D
+import com.udenar.petcare.ui.componentes.Simbolo
 import com.udenar.petcare.ui.theme.Pc
 
 /** "Así te verán": la tarjeta del directorio con lo que se va escribiendo (Fase 6.7). */
@@ -40,7 +40,7 @@ fun VistaPreviaPerfil(contenido: @Composable () -> Unit) {
             Modifier.fillMaxWidth().clickable { abierta = !abierta }.padding(horizontal = 14.dp, vertical = 10.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Icono3D(Icono.OJO, tam = 20.dp)
+            Simbolo(Icono.OJO, tam = 20.dp)
             Text("Así te verán los dueños", style = MaterialTheme.typography.labelLarge, color = Pc.LavandaOscura, modifier = Modifier.weight(1f).padding(start = 8.dp))
             Text(if (abierta) "Ocultar" else "Ver", style = MaterialTheme.typography.labelMedium, color = Pc.TintaSuave)
         }

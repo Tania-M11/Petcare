@@ -41,7 +41,7 @@ import com.udenar.petcare.ui.componentes.Chip
 import com.udenar.petcare.ui.componentes.grano
 import com.udenar.petcare.ui.theme.Pc
 
-/** Tarjeta "Primeros pasos con Chopper" (plan, sección 4). */
+/** Tarjeta "Primeros pasos con Michi" (plan, sección 4). */
 @Composable
 fun TarjetaPrimerosPasos(
     progreso: ProgresoGuia,
@@ -61,7 +61,7 @@ fun TarjetaPrimerosPasos(
         Row(verticalAlignment = Alignment.CenterVertically) {
             Box(Modifier.size(72.dp), contentAlignment = Alignment.Center) {
                 BlobDecorativo(listOf(Pc.Durazno, Pc.LavandaClara), semilla = 5, modifier = Modifier.fillMaxSize())
-                Image(painterResource(R.drawable.chopper_organizador), contentDescription = null, modifier = Modifier.height(66.dp))
+                Image(painterResource(R.drawable.gato_agenda), contentDescription = null, modifier = Modifier.height(66.dp))
             }
             Column(
                 Modifier

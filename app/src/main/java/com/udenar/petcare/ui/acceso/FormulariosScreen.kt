@@ -56,7 +56,7 @@ import com.udenar.petcare.ui.componentes.BotonPrincipal
 import com.udenar.petcare.ui.componentes.CampoTexto
 import com.udenar.petcare.ui.theme.Pc
 
-/** Marco común: volver, título con Chopper y contenido desplazable sobre el teclado. */
+/** Marco común: volver, título con Michi y contenido desplazable sobre el teclado. */
 @Composable
 private fun MarcoFormulario(
     titulo: String,
@@ -121,7 +121,7 @@ fun RegistroScreen(
     val f by viewModel.form.collectAsStateWithLifecycle()
     var verPolitica by remember { mutableStateOf(false) }
 
-    MarcoFormulario("Crea tu cuenta", "Una sola cuenta para todo", R.drawable.chopper_organizador, onVolver) {
+    MarcoFormulario("Crea tu cuenta", "Una sola cuenta para todo", R.drawable.gato_agenda, onVolver) {
         CampoTexto(f.nombre, viewModel::nombre, "Nombre", icono = Icons.Rounded.Person, error = f.errores[Campo.NOMBRE], habilitado = !f.cargando)
         CampoTexto(
             f.correo, viewModel::correo, "Correo", icono = Icons.Rounded.Mail, error = f.errores[Campo.CORREO],
@@ -181,7 +181,7 @@ fun InicioSesionScreen(
 ) {
     val f by viewModel.form.collectAsStateWithLifecycle()
 
-    MarcoFormulario("Hola de nuevo", "Tus mascotas te esperan", R.drawable.chopper_saludo, onVolver) {
+    MarcoFormulario("Hola de nuevo", "Tus mascotas te esperan", R.drawable.gato_saludo, onVolver) {
         CampoTexto(
             f.correo, viewModel::correo, "Correo", icono = Icons.Rounded.Mail, error = f.errores[Campo.CORREO],
             teclado = KeyboardType.Email, habilitado = !f.cargando,
@@ -238,7 +238,7 @@ private fun Aviso(texto: String?) {
 @Composable
 fun RecuperarClaveScreen(onVolver: () -> Unit, viewModel: RecuperarClaveViewModel = hiltViewModel()) {
     val f by viewModel.form.collectAsStateWithLifecycle()
-    MarcoFormulario("¿Olvidaste tu contraseña?", "Te enviamos un enlace", R.drawable.chopper_organizador, onVolver) {
+    MarcoFormulario("¿Olvidaste tu contraseña?", "Te enviamos un enlace", R.drawable.gato_leyendo, onVolver) {
         Text("Escribe el correo de tu cuenta. El enlace abre PetCare para que crees una contraseña nueva.", style = MaterialTheme.typography.bodyMedium, color = Pc.TintaSuave)
         CampoTexto(
             f.correo, viewModel::correo, "Correo", icono = Icons.Rounded.Mail, error = f.errores[Campo.CORREO],
@@ -255,7 +255,7 @@ fun RecuperarClaveScreen(onVolver: () -> Unit, viewModel: RecuperarClaveViewMode
 @Composable
 fun NuevaClaveScreen(viewModel: NuevaClaveViewModel = hiltViewModel()) {
     val f by viewModel.form.collectAsStateWithLifecycle()
-    MarcoFormulario("Nueva contraseña", "Elige una que recuerdes", R.drawable.chopper_saludo, viewModel::cancelar) {
+    MarcoFormulario("Nueva contraseña", "Elige una que recuerdes", R.drawable.gato_saludo, viewModel::cancelar) {
         CampoTexto(
             f.clave, viewModel::clave, "Contraseña nueva (mínimo 8)", icono = Icons.Rounded.Lock, error = f.errores[Campo.CLAVE],
             teclado = KeyboardType.Password, esClave = true, habilitado = !f.cargando,

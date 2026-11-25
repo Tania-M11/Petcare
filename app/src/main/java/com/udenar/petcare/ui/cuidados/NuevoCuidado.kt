@@ -32,13 +32,13 @@ import com.udenar.petcare.domain.cuidados.DescripcionCuidados
 import com.udenar.petcare.domain.cuidados.ModoFrecuencia
 import com.udenar.petcare.domain.cuidados.TIPOS_HIGIENE
 import com.udenar.petcare.domain.cuidados.TipoCuidado
-import com.udenar.petcare.domain.recomendaciones.PoseChopper
+import com.udenar.petcare.domain.recomendaciones.PoseMichi
 import com.udenar.petcare.ui.componentes.AsistentePasos
 import com.udenar.petcare.ui.componentes.BotonPrincipal
 import com.udenar.petcare.ui.componentes.CampoTexto
 import com.udenar.petcare.ui.componentes.ChipOpcion
 import com.udenar.petcare.ui.componentes.EditorHoras
-import com.udenar.petcare.ui.componentes.PreguntaChopper
+import com.udenar.petcare.ui.componentes.PreguntaMichi
 import com.udenar.petcare.ui.componentes.SelectorDias
 import com.udenar.petcare.ui.componentes.SelectorFecha
 import com.udenar.petcare.ui.componentes.Stepper
@@ -67,7 +67,7 @@ fun NuevoCuidadoScreen(onListo: () -> Unit, onGuardado: () -> Unit = onListo, vi
     val pasos: List<Paso> = when (f.clase) {
         ClaseCuidado.COMIDA -> listOf(
             Paso("cual", { f.titulo.isNotBlank() }) {
-                PreguntaChopper("¿Qué comida es?", "Solo te recuerdo la hora; las porciones las decides tú", PoseChopper.COMIDA)
+                PreguntaMichi("¿Qué comida es?", "Solo te recuerdo la hora; las porciones las decides tú", PoseMichi.CELEBRA)
                 OpcionesGrandes(
                     listOf("Desayuno" to Icono.AMANECER, "Almuerzo" to Icono.SOL, "Merienda" to Icono.GALLETA, "Cena" to Icono.LUNA), f.titulo,
                 ) { nombre ->
@@ -79,33 +79,33 @@ fun NuevoCuidadoScreen(onListo: () -> Unit, onGuardado: () -> Unit = onListo, vi
                 CampoTexto(f.titulo, { v -> viewModel.editar(CampoCuidado.TITULO) { it.copy(titulo = v.take(80)) } }, "U otro nombre", modifier = Modifier.testTag("titulo_cuidado"))
             },
             Paso("hora", { f.horas.isNotEmpty() }) {
-                PreguntaChopper("¿A qué hora?", "Puedes agregar varias", PoseChopper.COMIDA)
+                PreguntaMichi("¿A qué hora?", "Puedes agregar varias", PoseMichi.ALARMA)
                 HorasRapidas(f.horas) { h -> viewModel.editar(CampoCuidado.HORAS) { it.copy(horas = h) } }
             },
             Paso("dias", { f.dias.isNotEmpty() }) {
-                PreguntaChopper("¿Qué días?", null, PoseChopper.ORGANIZADOR)
+                PreguntaMichi("¿Qué días?", null, PoseMichi.AGENDA)
                 DiasRapidos(f.dias) { d -> viewModel.editar(CampoCuidado.DIAS) { it.copy(dias = d, modo = ModoFrecuencia.DIAS_SEMANA) } }
             },
             resumen(f, viewModel, nota = "texto"),
         )
         ClaseCuidado.MEDICAMENTO -> listOf(
             Paso("nombre", { f.titulo.isNotBlank() }) {
-                PreguntaChopper("¿Qué medicamento es?", "Escríbelo tal como te lo indicó su veterinario", PoseChopper.DOCTOR)
+                PreguntaMichi("¿Qué medicamento es?", "Escríbelo tal como te lo indicó su veterinario", PoseMichi.DOCTOR)
                 CampoTexto(f.titulo, { v -> viewModel.editar(CampoCuidado.TITULO) { it.copy(titulo = v.take(80)) } }, "Nombre del medicamento", modifier = Modifier.testTag("titulo_cuidado"))
                 Escanear(viewModel, f)
                 CampoTexto(f.detalle["dosis"].orEmpty(), { viewModel.detalle("dosis", it) }, "Dosis indicada (opcional)")
                 Text("PetCare no valida ni sugiere dosis: solo te recuerda darla.", style = MaterialTheme.typography.bodySmall, color = Pc.TintaSuave)
             },
             Paso("hora", { f.horas.isNotEmpty() }) {
-                PreguntaChopper("¿A qué horas se la das?", "Agrega cada toma del día", PoseChopper.DOCTOR)
+                PreguntaMichi("¿A qué horas se la das?", "Agrega cada toma del día", PoseMichi.DOCTOR)
                 HorasRapidas(f.horas) { h -> viewModel.editar(CampoCuidado.HORAS) { it.copy(horas = h) } }
             },
             Paso("frecuencia", { !f.modo.usaN || (f.n.toIntOrNull() ?: 0) > 0 }) {
-                PreguntaChopper("¿Qué días?", "Según lo que indicó su veterinario", PoseChopper.ORGANIZADOR)
+                PreguntaMichi("¿Qué días?", "Según lo que indicó su veterinario", PoseMichi.AGENDA)
                 Frecuencias(f, viewModel, listOf(ModoFrecuencia.DIARIO, ModoFrecuencia.DIAS_SEMANA, ModoFrecuencia.CADA_N_DIAS, ModoFrecuencia.CADA_N_SEMANAS))
             },
             Paso("duracion", { f.fecha != null }) {
-                PreguntaChopper("¿Desde cuándo y hasta cuándo?", null, PoseChopper.ORGANIZADOR)
+                PreguntaMichi("¿Desde cuándo y hasta cuándo?", null, PoseMichi.AGENDA)
                 FechaRapida("Empieza", f.fecha, hoy) { d -> viewModel.editar(CampoCuidado.FECHA) { it.copy(fecha = d) } }
                 Text("¿Cuántos días dura el tratamiento?", style = MaterialTheme.typography.titleSmall)
                 var conFin by remember { mutableStateOf(f.fechaFin != null) }
@@ -124,16 +124,16 @@ fun NuevoCuidadoScreen(onListo: () -> Unit, onGuardado: () -> Unit = onListo, vi
         )
         ClaseCuidado.VACUNA -> listOf(
             Paso("nombre", { f.titulo.isNotBlank() }) {
-                PreguntaChopper("¿Qué vacuna es?", "Como aparece en su carné", PoseChopper.DOCTOR)
+                PreguntaMichi("¿Qué vacuna es?", "Como aparece en su carné", PoseMichi.SALUD)
                 CampoTexto(f.titulo, { v -> viewModel.editar(CampoCuidado.TITULO) { it.copy(titulo = v.take(80)) } }, "Nombre de la vacuna", modifier = Modifier.testTag("titulo_cuidado"))
                 Escanear(viewModel, f)
             },
             Paso("aplicada", saltable = true) {
-                PreguntaChopper("¿Cuándo se la aplicaron?", "Si aún no, puedes saltar este paso", PoseChopper.DOCTOR)
+                PreguntaMichi("¿Cuándo se la aplicaron?", "Si aún no, puedes saltar este paso", PoseMichi.SALUD)
                 FechaRapida("Se aplicó", f.fechaAnterior, hoy, permitirNinguna = true, pasado = true) { d -> viewModel.editar { it.copy(fechaAnterior = d) } }
             },
             Paso("proxima", { f.fecha != null }) {
-                PreguntaChopper("¿Cuándo es la próxima dosis?", "Te aviso antes para que apartes la cita", PoseChopper.ORGANIZADOR)
+                PreguntaMichi("¿Cuándo es la próxima dosis?", "Te aviso antes para que apartes la cita", PoseMichi.AGENDA)
                 SelectorFecha("Próxima dosis", f.fecha, { d -> viewModel.editar(CampoCuidado.FECHA) { it.copy(fecha = d) } }, textoVacio = "Elige la fecha", desde = hoy)
                 Text("¿Cuántos días antes te aviso?", style = MaterialTheme.typography.titleSmall)
                 val aviso = f.avisoDias.toIntOrNull() ?: 7
@@ -143,7 +143,7 @@ fun NuevoCuidadoScreen(onListo: () -> Unit, onGuardado: () -> Unit = onListo, vi
         )
         ClaseCuidado.DESPARASITACION -> listOf(
             Paso("tipo") {
-                PreguntaChopper("¿Interna o externa?", null, PoseChopper.DOCTOR)
+                PreguntaMichi("¿Interna o externa?", null, PoseMichi.SALUD)
                 Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                     listOf(Triple(TipoCuidado.DESPARASITACION_INTERNA, "Interna", Icono.MEDICAMENTO), Triple(TipoCuidado.DESPARASITACION_EXTERNA, "Externa", Icono.INSECTO)).forEach { (t, txt, e) ->
                         TarjetaOpcionGrande(txt, f.tipo == t, onClick = { viewModel.editar { it.copy(tipo = t) }; paso++ }, icono = e, modifier = Modifier.weight(1f))
@@ -151,23 +151,23 @@ fun NuevoCuidadoScreen(onListo: () -> Unit, onGuardado: () -> Unit = onListo, vi
                 }
             },
             Paso("producto", { f.titulo.isNotBlank() }) {
-                PreguntaChopper("¿Qué producto usas?", null, PoseChopper.DOCTOR)
+                PreguntaMichi("¿Qué producto usas?", null, PoseMichi.SALUD)
                 CampoTexto(f.titulo, { v -> viewModel.editar(CampoCuidado.TITULO) { it.copy(titulo = v.take(80)) } }, "Producto", modifier = Modifier.testTag("titulo_cuidado"))
                 Escanear(viewModel, f)
             },
             Paso("ultima", saltable = true) {
-                PreguntaChopper("¿Cuándo fue la última vez?", "Desde ese día cuento la próxima", PoseChopper.ORGANIZADOR)
+                PreguntaMichi("¿Cuándo fue la última vez?", "Desde ese día cuento la próxima", PoseMichi.AGENDA)
                 FechaRapida("Última aplicación", f.fechaAnterior, hoy, permitirNinguna = true, pasado = true) { d -> viewModel.editar { it.copy(fechaAnterior = d) } }
             },
             Paso("frecuencia", { (f.n.toIntOrNull() ?: 0) > 0 }) {
-                PreguntaChopper("¿Cada cuánto?", "Lo que te indicó su veterinario", PoseChopper.ORGANIZADOR)
+                PreguntaMichi("¿Cada cuánto?", "Lo que te indicó su veterinario", PoseMichi.AGENDA)
                 Frecuencias(f, viewModel, ModoFrecuencia.INTERVALOS)
             },
             resumen(f, viewModel, nota = "notas"),
         )
         ClaseCuidado.HIGIENE -> listOf(
             Paso("tipo") {
-                PreguntaChopper("¿Qué cuidado de higiene?", null, PoseChopper.ORGANIZADOR)
+                PreguntaMichi("¿Qué cuidado de higiene?", null, PoseMichi.HIGIENE)
                 FlowRow(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                     TIPOS_HIGIENE.forEach { t ->
                         TarjetaOpcionGrande(
@@ -179,18 +179,18 @@ fun NuevoCuidadoScreen(onListo: () -> Unit, onGuardado: () -> Unit = onListo, vi
                 }
             },
             Paso("frecuencia", { (f.n.toIntOrNull() ?: 0) > 0 }) {
-                PreguntaChopper("¿Cada cuánto lo hacen?", "Al marcarlo como hecho, cuento desde ese día", PoseChopper.ORGANIZADOR)
+                PreguntaMichi("¿Cada cuánto lo hacen?", "Al marcarlo como hecho, cuento desde ese día", PoseMichi.HIGIENE)
                 Frecuencias(f, viewModel, ModoFrecuencia.INTERVALOS)
             },
             Paso("proxima", { f.fecha != null }) {
-                PreguntaChopper("¿Cuándo toca la próxima vez?", null, PoseChopper.ORGANIZADOR)
+                PreguntaMichi("¿Cuándo toca la próxima vez?", null, PoseMichi.AGENDA)
                 FechaRapida("Próxima vez", f.fecha, hoy) { d -> viewModel.editar(CampoCuidado.FECHA) { it.copy(fecha = d) } }
             },
             resumen(f, viewModel, nota = "notas"),
         )
         ClaseCuidado.PERSONALIZADO -> listOf(
             Paso("nombre", { f.titulo.isNotBlank() }) {
-                PreguntaChopper("¿Qué actividad quieres recordar?", null, PoseChopper.ORGANIZADOR)
+                PreguntaMichi("¿Qué actividad quieres recordar?", null, PoseMichi.AGENDA)
                 OpcionesGrandes(listOf("Juego" to Icono.JUEGO, "Entrenamiento" to Icono.HUESO, "Cepillar dientes" to Icono.CEPILLO_DIENTES, "Socializar" to Icono.HUELLAS), f.titulo) { nombre ->
                     viewModel.editar(CampoCuidado.TITULO) { it.copy(titulo = nombre) }
                     paso++
@@ -198,15 +198,15 @@ fun NuevoCuidadoScreen(onListo: () -> Unit, onGuardado: () -> Unit = onListo, vi
                 CampoTexto(f.titulo, { v -> viewModel.editar(CampoCuidado.TITULO) { it.copy(titulo = v.take(80)) } }, "U otro nombre", modifier = Modifier.testTag("titulo_cuidado"))
             },
             Paso("frecuencia", { !f.modo.usaN || (f.n.toIntOrNull() ?: 0) > 0 }) {
-                PreguntaChopper("¿Cada cuánto?", null, PoseChopper.ORGANIZADOR)
+                PreguntaMichi("¿Cada cuánto?", null, PoseMichi.AGENDA)
                 Frecuencias(f, viewModel, ModoFrecuencia.entries)
             },
             Paso("hora", saltable = true) {
-                PreguntaChopper("¿A qué hora?", "Si no importa la hora, salta este paso", PoseChopper.ORGANIZADOR)
+                PreguntaMichi("¿A qué hora?", "Si no importa la hora, salta este paso", PoseMichi.AGENDA)
                 HorasRapidas(f.horas) { h -> viewModel.editar(CampoCuidado.HORAS) { it.copy(horas = h) } }
             },
             Paso("desde", { f.fecha != null }) {
-                PreguntaChopper(if (f.modo == ModoFrecuencia.UNA_VEZ) "¿Qué día?" else "¿Desde cuándo?", null, PoseChopper.ORGANIZADOR)
+                PreguntaMichi(if (f.modo == ModoFrecuencia.UNA_VEZ) "¿Qué día?" else "¿Desde cuándo?", null, PoseMichi.AGENDA)
                 FechaRapida("Fecha", f.fecha, hoy) { d -> viewModel.editar(CampoCuidado.FECHA) { it.copy(fecha = d) } }
             },
             resumen(f, viewModel, nota = "observaciones"),
@@ -244,7 +244,7 @@ private val ICONO_HIGIENE = mapOf(
 /** Último paso: el cuidado contado en una frase, con una nota opcional. */
 private fun resumen(f: FormCuidado, viewModel: FormCuidadoViewModel, nota: String) = Paso("resumen", { viewModel.erroresActuales().isEmpty() }) {
     val e = runCatching { viewModel.vistaPrevia() }.getOrNull()
-    PreguntaChopper("¡Así quedará!", "Revisa y guarda. Puedes volver atrás para cambiar algo", PoseChopper.AMIGOS)
+    PreguntaMichi("¡Así quedará!", "Revisa y guarda. Puedes volver atrás para cambiar algo", PoseMichi.AMIGOS)
     Column(
         Modifier.fillMaxWidth().clip(MaterialTheme.shapes.large).background(Pc.Blanco).padding(18.dp).testTag("resumen_cuidado"),
         verticalArrangement = Arrangement.spacedBy(6.dp),

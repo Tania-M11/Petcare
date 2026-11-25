@@ -1,6 +1,6 @@
 package com.udenar.petcare.ui.servicios
 
-import com.udenar.petcare.ui.componentes.Icono3D
+import com.udenar.petcare.ui.componentes.Simbolo
 import com.udenar.petcare.domain.modelo.Icono
 import android.Manifest
 import android.content.ActivityNotFoundException
@@ -192,7 +192,7 @@ fun DirectorioPrestadoresScreen(onVolver: () -> Unit, onAbrir: (String) -> Unit,
                 BotonSecundario("Reintentar", onClick = viewModel::buscar)
             }
             estado.cargando && estado.resultados.isEmpty() -> Text("Buscando…", color = Pc.TintaSuave)
-            estado.resultados.isEmpty() -> EstadoVacio(R.drawable.chopper_amigos, "Nadie con esos filtros", "Prueba con otra ciudad, zona o categoría.", fondoBlob = listOf(Pc.SolClaro, Pc.Durazno))
+            estado.resultados.isEmpty() -> EstadoVacio(R.drawable.gato_amigos, "Nadie con esos filtros", "Prueba con otra ciudad, zona o categoría.", fondoBlob = listOf(Pc.SolClaro, Pc.Durazno))
             verMapa -> Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 MapaMarcadores(
                     estado.resultados.map { p -> PuntoMapa(p.id, Coordenada(p.lat, p.lon), p.recibiendo, estado.categorias.firstOrNull { it.id == p.categoriaPrincipal }?.icono3d ?: com.udenar.petcare.domain.modelo.Icono.HUELLAS) },
@@ -224,7 +224,7 @@ internal fun TarjetaPrestador(p: PerfilPrestador, categorias: List<Categoria>, o
             if (foto != null) {
                 AsyncImage(foto, null, contentScale = ContentScale.Crop, modifier = Modifier.size(52.dp).clip(CircleShape))
             } else {
-                Box(Modifier.size(52.dp).clip(CircleShape).background(Pc.SolClaro), contentAlignment = Alignment.Center) { Icono3D(principal?.icono3d ?: Icono.HUELLAS, tam = 32.dp) }
+                Box(Modifier.size(52.dp).clip(CircleShape).background(Pc.SolClaro), contentAlignment = Alignment.Center) { Simbolo(principal?.icono3d ?: Icono.HUELLAS, tam = 32.dp) }
             }
             Column(Modifier.weight(1f).padding(start = 12.dp), verticalArrangement = Arrangement.spacedBy(2.dp)) {
                 Text(p.nombre, style = MaterialTheme.typography.titleMedium)
@@ -301,7 +301,7 @@ fun DetallePrestadorScreen(onVolver: () -> Unit, onSolicitar: () -> Unit, avisar
             titulo = p.nombre,
             texto = listOfNotNull(principal?.nombre, p.ciudad).joinToString(" · "),
             chip = if (p.recibiendo) p.tipo.etiqueta else "En pausa",
-            ilustracion = R.drawable.chopper_amigos,
+            ilustracion = R.drawable.gato_amigos,
             degradado = listOf(Pc.SolClaro, Pc.Sol),
             colorTexto = Pc.Tinta,
             modifier = Modifier.testTag("cabecera_pres"),

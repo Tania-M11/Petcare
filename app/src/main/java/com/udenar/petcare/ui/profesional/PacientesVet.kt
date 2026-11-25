@@ -1,6 +1,6 @@
 package com.udenar.petcare.ui.profesional
 
-import com.udenar.petcare.ui.componentes.Icono3D
+import com.udenar.petcare.ui.componentes.Simbolo
 import com.udenar.petcare.domain.modelo.Icono
 import android.content.ActivityNotFoundException
 import android.content.Intent
@@ -131,7 +131,7 @@ fun PacientesVetScreen(onFicha: (String) -> Unit, viewModel: PacientesViewModel 
             BotonSecundario("Reintentar", onClick = { viewModel.cargar() })
         }
         if (!cargando && error == null && pacientes.isEmpty()) {
-            EstadoVacio(R.drawable.chopper_doctor, "Sin pacientes vinculados", "Al aceptar una cita, la mascota queda vinculada y podrás ver y completar su ficha clínica.", fondoBlob = listOf(Pc.CieloClaro, Pc.LavandaClara))
+            EstadoVacio(R.drawable.gato_salud, "Sin pacientes vinculados", "Al aceptar una cita, la mascota queda vinculada y podrás ver y completar su ficha clínica.", fondoBlob = listOf(Pc.CieloClaro, Pc.LavandaClara))
         }
         pacientes.forEach { p ->
             val m = p.mascota
@@ -330,7 +330,7 @@ fun FichaPacienteScreen(miId: String?, onVolver: () -> Unit, avisar: (String) ->
                         }
                         .padding(vertical = 6.dp),
                 ) {
-                    Icono3D(d.tipo.icono, tam = 26.dp, modifier = Modifier.padding(end = 10.dp))
+                    Simbolo(d.tipo.icono, tam = 26.dp, modifier = Modifier.padding(end = 10.dp))
                     Column {
                         Text(d.nombre, style = MaterialTheme.typography.titleSmall)
                         Text(listOfNotNull(d.fecha.format(FECHA), d.subidoPor).joinToString(" · "), style = MaterialTheme.typography.bodySmall, color = Pc.TintaSuave)
@@ -418,7 +418,7 @@ private fun FilaClinica(titulo: String, detalle: String, autor: String?, porVete
         if (detalle.isNotBlank()) Text(detalle, style = MaterialTheme.typography.bodySmall)
         autor?.let {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                if (porVeterinario) Icono3D(Icono.VETERINARIO, tam = 14.dp, modifier = Modifier.padding(end = 4.dp))
+                if (porVeterinario) Simbolo(Icono.VETERINARIO, tam = 14.dp, modifier = Modifier.padding(end = 4.dp))
                 Text(it, style = MaterialTheme.typography.labelSmall, color = Pc.TintaSuave)
             }
         }

@@ -1,7 +1,7 @@
 package com.udenar.petcare.ui.mascotas
 
 import com.udenar.petcare.ui.componentes.BaldosaIcono
-import com.udenar.petcare.ui.componentes.Icono3D
+import com.udenar.petcare.ui.componentes.Simbolo
 import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
@@ -555,7 +555,7 @@ private fun TarjetaPaseos(paseos: List<com.udenar.petcare.domain.paseos.Paseo>, 
                     .testTag("paseo_registrado"),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                Icono3D(p.tipo.icono, tam = 30.dp)
+                Simbolo(p.tipo.icono, tam = 30.dp)
                 Column(Modifier.weight(1f).padding(start = 12.dp)) {
                     Text(
                         listOfNotNull(p.distanciaM?.let { com.udenar.petcare.domain.paseos.textoDistancia(it) }, com.udenar.petcare.domain.paseos.textoDuracion(p.duracionS)).joinToString(" · "),

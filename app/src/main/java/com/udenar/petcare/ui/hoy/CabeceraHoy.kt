@@ -49,7 +49,7 @@ import androidx.compose.ui.unit.sp
 import com.udenar.petcare.domain.recomendaciones.CabeceraHoy
 import com.udenar.petcare.domain.recomendaciones.Consejo
 import com.udenar.petcare.ui.componentes.BaldosaIcono
-import com.udenar.petcare.ui.componentes.Icono3D
+import com.udenar.petcare.ui.componentes.Simbolo
 import com.udenar.petcare.ui.componentes.dibujo
 import com.udenar.petcare.ui.componentes.grano
 import com.udenar.petcare.ui.theme.Kalnia
@@ -58,7 +58,7 @@ import kotlinx.coroutines.delay
 
 /**
  * Cabecera viva de Hoy: saludo corto, nombre grande, el estado del día en una línea con su
- * barra de progreso, Chopper que respira y trucos que rotan solos (uno por línea).
+ * barra de progreso, Michi que respira y trucos que rotan solos (uno por línea).
  */
 @Composable
 fun TarjetaSaludo(
@@ -112,7 +112,7 @@ fun TarjetaSaludo(
                 }
             }
             AnimatedContent(cabecera.pose, transitionSpec = { fadeIn(tween(300)) togetherWith fadeOut(tween(200)) }, label = "pose") { p ->
-                Image(painterResource(p.dibujo()), contentDescription = "Chopper", modifier = Modifier.size(118.dp).offset(y = 6.dp).scale(escala))
+                Image(painterResource(p.dibujo()), contentDescription = "Michi", modifier = Modifier.size(118.dp).offset(y = 6.dp).scale(escala))
             }
         }
         if (consejos.isNotEmpty()) FranjaConsejos(consejos)
@@ -144,7 +144,7 @@ private fun FranjaConsejos(consejos: List<Consejo>) {
             label = "consejo",
         ) { c ->
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Icono3D(c.icono, tam = 22.dp)
+                Simbolo(c.icono, tam = 22.dp)
                 Text(c.texto, style = MaterialTheme.typography.bodySmall, color = Pc.Tinta, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.padding(start = 10.dp))
             }
         }

@@ -43,6 +43,11 @@ object Pc {
 
     val Menta = Color(0xFF9FD3B6)
     val MentaClara: Color get() = par(0xFFE3F3EA, 0xFF1D3A2D)
+    val MentaOscura: Color get() = par(0xFF3F8F6A, 0xFF9FD3B6)
+
+    /** Tono fuerte del sol para íconos y texto sobre fondos claros. */
+    val SolOscuro: Color get() = par(0xFFC28A12, 0xFFF5D565)
+    val NaranjaOscuro: Color get() = par(0xFFD96A28, 0xFFFCB484)
 
     val Tinta: Color get() = par(0xFF2D2433, 0xFFF4EEF7)         // texto principal
     val TintaSuave: Color get() = par(0xFF8C8394, 0xFFB2A8BA)    // texto secundario

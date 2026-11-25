@@ -1,7 +1,7 @@
 package com.udenar.petcare.domain.modelo
 
 /**
- * Íconos 3D de la app (Microsoft Fluent Emoji 3D, licencia MIT). El dominio solo nombra el
+ * Íconos de la app (Material Symbols de un solo color). El dominio solo nombra el
  * ícono; la interfaz lo dibuja (ui/componentes/Iconos3D.kt). Reemplazan a los emojis de texto.
  */
 enum class Icono {

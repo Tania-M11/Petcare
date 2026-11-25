@@ -29,7 +29,7 @@ import com.udenar.petcare.ui.componentes.BotonSecundario
 import com.udenar.petcare.ui.componentes.grano
 import com.udenar.petcare.ui.theme.Pc
 
-/** Primera pantalla sin sesión: Chopper saluda y ofrece crear cuenta o entrar. */
+/** Primera pantalla sin sesión: Michi saluda y ofrece crear cuenta o entrar. */
 @Composable
 fun BienvenidaScreen(onCrearCuenta: () -> Unit, onEntrar: () -> Unit) {
     Column(
@@ -61,8 +61,8 @@ fun BienvenidaScreen(onCrearCuenta: () -> Unit, onEntrar: () -> Unit) {
                 modifier = Modifier.size(300.dp),
             )
             Image(
-                painterResource(R.drawable.chopper_saludo),
-                contentDescription = "Chopper saludando",
+                painterResource(R.drawable.gato_saludo),
+                contentDescription = "Michi saludando",
                 modifier = Modifier.height(280.dp),
             )
         }

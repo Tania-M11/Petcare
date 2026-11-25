@@ -72,12 +72,12 @@ fun Chip(texto: String, modifier: Modifier = Modifier, fondo: Color = Pc.Blanco,
         verticalAlignment = androidx.compose.ui.Alignment.CenterVertically,
         horizontalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(6.dp),
     ) {
-        icono?.let { Icono3D(it, tam = 16.dp) }
+        icono?.let { Simbolo(it, tam = 16.dp, color = if (color == Pc.Tinta) it.tono else color) }
         Text(texto, style = MaterialTheme.typography.labelMedium, color = color, maxLines = 1, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis)
     }
 }
 
-/** Fondo orgánico con degradado y grano, detrás de las ilustraciones de Chopper. */
+/** Fondo orgánico con degradado y grano, detrás de las ilustraciones de Michi. */
 @Composable
 fun BlobDecorativo(colores: List<Color>, semilla: Int, modifier: Modifier = Modifier) {
     Canvas(modifier) {
@@ -91,7 +91,7 @@ fun BlobDecorativo(colores: List<Color>, semilla: Int, modifier: Modifier = Modi
 }
 
 /**
- * Tarjeta protagonista con degradado, grano, blob e ilustración de Chopper
+ * Tarjeta protagonista con degradado, grano, blob e ilustración de Michi
  * (inspirada en las tarjetas "Self care" de la referencia).
  */
 @Composable
@@ -176,7 +176,7 @@ fun TarjetaIlustrada(
     }
 }
 
-/** Estado vacío con Chopper: ilustración, título y explicación breve (RNF-10). */
+/** Estado vacío con Michi: ilustración, título y explicación breve (RNF-10). */
 @Composable
 fun EstadoVacio(
     @DrawableRes ilustracion: Int,

@@ -1,7 +1,7 @@
 package com.udenar.petcare.ui.hoy
 
 import com.udenar.petcare.ui.componentes.BaldosaIcono
-import com.udenar.petcare.ui.componentes.Icono3D
+import com.udenar.petcare.ui.componentes.Simbolo
 import com.udenar.petcare.domain.modelo.Icono
 import android.Manifest
 import android.content.pm.PackageManager
@@ -122,7 +122,7 @@ fun HoyScreen(
     fun marcarHecho(item: ItemAgenda) {
         vibrar.performHapticFeedback(androidx.compose.ui.hapticfeedback.HapticFeedbackType.TextHandleMove)
         viewModel.marcar(item.toma, item.toma.evento.tipo.estadoHecho)
-        if (esHoy) avisar(com.udenar.petcare.domain.recomendaciones.Chopper.alMarcar(item.toma.evento.titulo, item.mascota.nombre, (pendientesHoy - 1).coerceAtLeast(0)))
+        if (esHoy) avisar(com.udenar.petcare.domain.recomendaciones.Michi.alMarcar(item.toma.evento.titulo, item.mascota.nombre, (pendientesHoy - 1).coerceAtLeast(0)))
     }
 
     // Permiso de notificaciones (Android 13+): se revisa al volver a la app
@@ -155,13 +155,13 @@ fun HoyScreen(
                 BotonCircular(Icons.Rounded.CalendarMonth, "Ver mes", onClick = { verMes = true }, modifier = Modifier.testTag("ver_mes"))
             }
 
-            // Saludo corto con el estado del día, Chopper y trucos que rotan
+            // Saludo corto con el estado del día, Michi y trucos que rotan
             TarjetaSaludo(
                 nombre = nombre,
-                cabecera = com.udenar.petcare.domain.recomendaciones.Chopper.cabecera(viewModel.horaActual(), if (esHoy) totalHoy else 0, pendientesHoy, mascotas.isNotEmpty()),
+                cabecera = com.udenar.petcare.domain.recomendaciones.Michi.cabecera(viewModel.horaActual(), if (esHoy) totalHoy else 0, pendientesHoy, mascotas.isNotEmpty()),
                 hechos = totalHoy - pendientesHoy,
                 total = totalHoy,
-                consejos = remember(estado.hoy) { com.udenar.petcare.domain.recomendaciones.Chopper.consejos(estado.hoy) },
+                consejos = remember(estado.hoy) { com.udenar.petcare.domain.recomendaciones.Michi.consejos(estado.hoy) },
             )
 
             Column {
@@ -181,7 +181,7 @@ fun HoyScreen(
                     titulo = "¡Todo listo!",
                     texto = "Ya conoces lo básico. Toca para cerrar esta guía.",
                     chip = "Primeros pasos",
-                    ilustracion = R.drawable.chopper_amigos,
+                    ilustracion = R.drawable.gato_amigos,
                     degradado = listOf(Pc.Menta, Pc.Cielo),
                     onClick = { viewModel.omitir(Guia.CERRADA, avisar) },
                 )
@@ -206,9 +206,9 @@ fun HoyScreen(
                 )
                 mascotas.isEmpty() -> TarjetaIlustrada(
                     titulo = "Agrega a tu primera mascota",
-                    texto = "Chopper te ayuda a no olvidar ningún cuidado.",
+                    texto = "Michi te ayuda a no olvidar ningún cuidado.",
                     chip = "Empieza aquí",
-                    ilustracion = R.drawable.chopper_saludo,
+                    ilustracion = R.drawable.gato_saludo,
                     degradado = listOf(Pc.NaranjaClaro, Pc.Naranja),
                     onClick = irAMascotas,
                 )
@@ -270,7 +270,7 @@ fun HoyScreen(
                 when {
                     lista == null -> CircularProgressIndicator(color = Pc.Naranja, modifier = Modifier.align(Alignment.CenterHorizontally))
                     lista.isEmpty() -> EstadoVacio(
-                        ilustracion = R.drawable.chopper_comida,
+                        ilustracion = R.drawable.gato_dormido,
                         titulo = if (mascotas.isEmpty()) "Nada pendiente" else "Sin cuidados este día",
                         texto = if (mascotas.isEmpty()) "Cuando agregues a tu mascota y sus cuidados, aparecerán aquí."
                         else "Agrega comidas, medicinas o baños desde el botón + o desde la ficha de tu mascota.",
@@ -458,7 +458,7 @@ private fun DeslizarParaHecho(habilitado: Boolean, onHecho: () -> Unit, contenid
                     .padding(horizontal = 24.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                Icono3D(Icono.CHECK, tam = 26.dp)
+                Simbolo(Icono.CHECK, tam = 26.dp)
                 Text("  Hecho", style = MaterialTheme.typography.titleMedium, color = Pc.Tinta)
             }
         },

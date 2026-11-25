@@ -98,7 +98,7 @@ fun MascotasScreen(
                 TarjetaIlustrada(
                     titulo = "Aún no hay mascotas",
                     texto = "Agrega la tuya o pide el código para cuidar la de alguien.",
-                    ilustracion = R.drawable.chopper_amigos,
+                    ilustracion = R.drawable.gato_amigos,
                     degradado = listOf(Pc.Lavanda, Pc.LavandaOscura),
                     alto = 210.dp,
                     onClick = { menuAbierto = true },

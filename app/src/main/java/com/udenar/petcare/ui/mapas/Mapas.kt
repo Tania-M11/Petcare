@@ -28,7 +28,8 @@ import com.google.android.gms.location.LocationServices
 import com.google.android.gms.location.Priority
 import com.udenar.petcare.domain.paseos.Coordenada
 import com.udenar.petcare.ui.theme.Pc
-import com.udenar.petcare.ui.componentes.dibujo
+import com.udenar.petcare.ui.componentes.vector
+import androidx.compose.ui.graphics.asAndroidPath
 import org.maplibre.android.MapLibre
 import org.maplibre.android.camera.CameraPosition
 import org.maplibre.android.camera.CameraUpdateFactory
@@ -113,30 +114,44 @@ fun MapaLibre(
 
 /**
  * Un punto del directorio: [destacado] = verificado o recibiendo (borde de color); [icono] = la
- * categoría, dibujada en 3D dentro de la burbuja del marcador (Fase 6.8).
+ * categoría, dibujada en blanco dentro de la burbuja del marcador (Fase 6.8).
  */
 data class PuntoMapa(val id: String, val posicion: Coordenada, val destacado: Boolean, val icono: com.udenar.petcare.domain.modelo.Icono = com.udenar.petcare.domain.modelo.Icono.HUELLAS)
 
-/** Burbuja blanca con borde de color, el ícono 3D adentro y una punta hacia el lugar. */
+/** Burbuja del color del lugar con borde blanco, el ícono en blanco y una punta hacia el lugar. */
 internal fun imagenMarcador(contexto: android.content.Context, icono: com.udenar.petcare.domain.modelo.Icono, borde: Int): android.graphics.Bitmap {
     val d = contexto.resources.displayMetrics.density
-    val lado = (44 * d).toInt()
+    val lado = (40 * d).toInt()
     val punta = (8 * d).toInt()
     val bmp = android.graphics.Bitmap.createBitmap(lado, lado + punta, android.graphics.Bitmap.Config.ARGB_8888)
     val c = android.graphics.Canvas(bmp)
     val r = lado / 2f
+    val blanco = android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG).apply { color = android.graphics.Color.WHITE }
     val relleno = android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG).apply { color = borde }
-    // Punta
+    // Punta y círculo blancos (borde), luego el color adentro
     c.drawPath(android.graphics.Path().apply {
         moveTo(r - punta, lado - punta * 1.2f); lineTo(r + punta, lado - punta * 1.2f); lineTo(r, (lado + punta).toFloat()); close()
-    }, relleno)
-    c.drawCircle(r, r, r, relleno)
-    c.drawCircle(r, r, r - 3 * d, android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG).apply { color = android.graphics.Color.WHITE })
-    val img = android.graphics.BitmapFactory.decodeResource(contexto.resources, icono.dibujo())
-    if (img != null) {
-        val m = (lado * 0.2f).toInt()
-        c.drawBitmap(img, null, android.graphics.Rect(m, m, lado - m, lado - m), android.graphics.Paint(android.graphics.Paint.FILTER_BITMAP_FLAG))
+    }, blanco)
+    c.drawCircle(r, r, r, blanco)
+    c.drawCircle(r, r, r - 3 * d, relleno)
+    // El ícono vectorial (24×24) en blanco, escalado al centro
+    val v = icono.vector()
+    val trazo = android.graphics.Path()
+    fun recorrer(g: androidx.compose.ui.graphics.vector.VectorGroup) {
+        g.forEach { n ->
+            when (n) {
+                is androidx.compose.ui.graphics.vector.VectorPath -> trazo.addPath(
+                    androidx.compose.ui.graphics.vector.PathParser().addPathNodes(n.pathData).toPath().asAndroidPath(),
+                )
+                is androidx.compose.ui.graphics.vector.VectorGroup -> recorrer(n)
+            }
+        }
     }
+    recorrer(v.root)
+    val tamIcono = lado * 0.5f
+    val escala = tamIcono / v.viewportWidth
+    trazo.transform(android.graphics.Matrix().apply { setScale(escala, escala); postTranslate(r - tamIcono / 2, r - tamIcono / 2) })
+    c.drawPath(trazo, blanco)
     return bmp
 }
 

@@ -164,7 +164,7 @@ fun RaizProfesional(viewModel: ModoVetViewModel = hiltViewModel()) {
     }
     Scaffold(
         containerColor = Pc.Crema,
-        snackbarHost = { SnackbarHost(avisos) { datos -> com.udenar.petcare.ui.componentes.AvisoChopper(datos.visuals.message) } },
+        snackbarHost = { SnackbarHost(avisos) { datos -> com.udenar.petcare.ui.componentes.AvisoMichi(datos.visuals.message) } },
         topBar = {
             if (actual != null) {
                 Row(
@@ -249,7 +249,7 @@ private fun PerfilVetScreen(viewModel: ModoVetViewModel, onEditar: () -> Unit, a
                 titulo = p.nombre,
                 texto = listOfNotNull(p.clinica, p.ciudad).joinToString(" · "),
                 chip = p.verificacion.insignia,
-                ilustracion = R.drawable.chopper_veterinario,
+                ilustracion = R.drawable.gato_doctor,
                 degradado = listOf(Pc.Cielo, Pc.CieloOscuro),
             )
             Seccion("Verificación") {

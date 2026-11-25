@@ -50,7 +50,7 @@ import com.udenar.petcare.domain.mascotas.UnidadPeso
 import com.udenar.petcare.domain.modelo.Especie
 import com.udenar.petcare.domain.modelo.Sexo
 import com.udenar.petcare.domain.modelo.Tamano
-import com.udenar.petcare.domain.recomendaciones.PoseChopper
+import com.udenar.petcare.domain.recomendaciones.PoseMichi
 import com.udenar.petcare.ui.componentes.AsistentePasos
 import com.udenar.petcare.ui.componentes.AvatarMascota
 import com.udenar.petcare.ui.componentes.BotonPrincipal
@@ -58,7 +58,7 @@ import com.udenar.petcare.ui.componentes.BotonSecundario
 import com.udenar.petcare.ui.componentes.CampoTexto
 import com.udenar.petcare.ui.componentes.ChipOpcion
 import com.udenar.petcare.ui.componentes.FilaResumen
-import com.udenar.petcare.ui.componentes.PreguntaChopper
+import com.udenar.petcare.ui.componentes.PreguntaMichi
 import com.udenar.petcare.ui.componentes.SelectorFecha
 import com.udenar.petcare.ui.componentes.Stepper
 import com.udenar.petcare.ui.componentes.TarjetaOpcionGrande
@@ -112,7 +112,7 @@ fun NuevaMascotaScreen(onVolver: () -> Unit, onGuardada: (String) -> Unit, viewM
     ) { p ->
         when (pasos[p]) {
             PasoMascota.ESPECIE -> {
-                PreguntaChopper("¿Quién llega a la familia?", "Elige su especie", PoseChopper.SALUDO)
+                PreguntaMichi("¿Quién llega a la familia?", "Elige su especie", PoseMichi.SALUDO)
                 Especie.entries.chunked(3).forEach { fila ->
                     Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                         fila.forEach { e ->
@@ -131,7 +131,7 @@ fun NuevaMascotaScreen(onVolver: () -> Unit, onGuardada: (String) -> Unit, viewM
                 }
             }
             PasoMascota.NOMBRE -> {
-                PreguntaChopper("¿Cómo se llama?", "Así lo verás en tus recordatorios", PoseChopper.SALUDO)
+                PreguntaMichi("¿Cómo se llama?", "Así lo verás en tus recordatorios", PoseMichi.SALUDO)
                 Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) { AvatarMascota(f.especie ?: Especie.OTRO, f.foto, tam = 120.dp) }
                 CampoTexto(
                     f.nombre, { v -> viewModel.editar(CampoMascota.NOMBRE) { it.copy(nombre = v.take(40)) } }, "Nombre",
@@ -155,7 +155,7 @@ fun NuevaMascotaScreen(onVolver: () -> Unit, onGuardada: (String) -> Unit, viewM
             )
             PasoMascota.EDAD -> PasoEdad(nombre, f, viewModel)
             PasoMascota.DETALLES -> {
-                PreguntaChopper("Cuéntame de $nombre", "Sexo, tamaño y peso; todo se puede cambiar después", PoseChopper.ORGANIZADOR)
+                PreguntaMichi("Cuéntame de $nombre", "Sexo, tamaño y peso; todo se puede cambiar después", PoseMichi.AGENDA)
                 Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                     listOf(Sexo.MACHO to Icono.MACHO, Sexo.HEMBRA to Icono.HEMBRA, Sexo.DESCONOCIDO to Icono.PREGUNTA).forEach { (s, e) ->
                         TarjetaOpcionGrande(s.etiqueta, f.sexo == s, onClick = { viewModel.editar { it.copy(sexo = s) } }, icono = e, modifier = Modifier.weight(1f))
@@ -181,7 +181,7 @@ fun NuevaMascotaScreen(onVolver: () -> Unit, onGuardada: (String) -> Unit, viewM
             PasoMascota.SALUD -> PasoSalud(nombre, f, viewModel)
             PasoMascota.RESUMEN -> {
                 val rebote by animateFloatAsState(1f, spring(dampingRatio = Spring.DampingRatioHighBouncy), label = "foto")
-                PreguntaChopper("¡Todo listo!", "Revisa y toca lo que quieras cambiar", PoseChopper.AMIGOS)
+                PreguntaMichi("¡Todo listo!", "Revisa y toca lo que quieras cambiar", PoseMichi.AMIGOS)
                 Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
                     AvatarMascota(f.especie ?: Especie.OTRO, f.foto, tam = 140.dp, modifier = Modifier.scale(rebote))
                 }
@@ -207,7 +207,7 @@ private fun androidx.compose.foundation.layout.ColumnScope.PasoFoto(
     nombre: String, foto: String?, especie: Especie, procesando: Boolean, completa: String?, pegatina: String?, sinRecorte: Boolean,
     onCamara: () -> Unit, onGaleria: () -> Unit, onUsar: (String) -> Unit,
 ) {
-    PreguntaChopper(
+    PreguntaMichi(
         if (foto == null) "¡Muéstrame a $nombre!" else if (procesando) "Un momento…" else "¡Qué buena foto!",
         when {
             foto == null -> "Una foto de frente y con buena luz queda mejor"
@@ -216,7 +216,7 @@ private fun androidx.compose.foundation.layout.ColumnScope.PasoFoto(
             sinRecorte -> "No pude recortarla del fondo, pero la foto completa también se ve muy bien"
             else -> null
         },
-        if (foto == null) PoseChopper.SALUDO else PoseChopper.AMIGOS,
+        if (foto == null) PoseMichi.SALUDO else PoseMichi.AMIGOS,
     )
     Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
         Box(
@@ -243,7 +243,7 @@ private fun androidx.compose.foundation.layout.ColumnScope.PasoFoto(
 private fun androidx.compose.foundation.layout.ColumnScope.PasoEdad(nombre: String, f: FormMascota, viewModel: FormMascotaViewModel) {
     var modo by remember { mutableStateOf(if (f.nacimiento != null && !f.aproximada) "fecha" else "aprox") }
     var anos by remember { mutableStateOf(2f) }
-    PreguntaChopper("¿Cuántos años tiene $nombre?", "Si no sabes la fecha exacta, una edad aproximada sirve", PoseChopper.ORGANIZADOR)
+    PreguntaMichi("¿Cuántos años tiene $nombre?", "Si no sabes la fecha exacta, una edad aproximada sirve", PoseMichi.AGENDA)
     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
         ChipOpcion("Edad aproximada", modo == "aprox", onClick = { modo = "aprox" })
         ChipOpcion("Sé su fecha", modo == "fecha", onClick = { modo = "fecha" }, modifier = Modifier.testTag("se_su_fecha"))
@@ -278,7 +278,7 @@ private fun androidx.compose.foundation.layout.ColumnScope.PasoEdad(nombre: Stri
 private fun androidx.compose.foundation.layout.ColumnScope.PasoSalud(nombre: String, f: FormMascota, viewModel: FormMascotaViewModel) {
     var alergia by remember { mutableStateOf<Boolean?>(if (f.alergias.isNotBlank()) true else null) }
     var medicina by remember { mutableStateOf<Boolean?>(if (f.medicamentos.isNotBlank()) true else null) }
-    PreguntaChopper("Lo importante de su salud", "Así quienes cuiden a $nombre lo sabrán. PetCare solo lo guarda.", PoseChopper.DOCTOR)
+    PreguntaMichi("Lo importante de su salud", "Así quienes cuiden a $nombre lo sabrán. PetCare solo lo guarda.", PoseMichi.SALUD)
     Text("¿Tiene alguna alergia?", style = MaterialTheme.typography.titleMedium)
     Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
         TarjetaOpcionGrande("Sí", alergia == true, onClick = { alergia = true }, icono = Icono.FLOR, modifier = Modifier.weight(1f).testTag("alergia_si"))

@@ -170,7 +170,7 @@ class HoyViewModel @Inject constructor(
 
     fun descartar(id: String) = descartes.descartar(id)
 
-    /** Hora local para el saludo de Chopper. */
+    /** Hora local para el saludo de Michi. */
     fun horaActual(): Int = java.time.LocalTime.now(reloj).hour
 
     /** Mes visible en el calendario. */

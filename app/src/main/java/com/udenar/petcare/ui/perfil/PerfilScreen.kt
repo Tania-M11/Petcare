@@ -138,7 +138,7 @@ fun PerfilScreen(
                 titulo = "Modo prestador",
                 texto = "Tus solicitudes, agenda, clientes y servicios.",
                 chip = "Cambiar de modo",
-                ilustracion = R.drawable.chopper_amigos,
+                ilustracion = R.drawable.gato_higiene,
                 degradado = listOf(Pc.SolClaro, Pc.Sol),
                 colorTexto = Pc.Tinta,
                 onClick = viewModel::modoPrestador,
@@ -151,7 +151,7 @@ fun PerfilScreen(
                 titulo = "Modo veterinario",
                 texto = "Tus solicitudes, agenda, pacientes y verificación.",
                 chip = "Cambiar de modo",
-                ilustracion = R.drawable.chopper_veterinario,
+                ilustracion = R.drawable.gato_doctor,
                 degradado = listOf(Pc.Cielo, Pc.CieloOscuro),
                 onClick = viewModel::modoVeterinario,
                 modifier = Modifier.testTag("tarjeta_modo_vet"),
@@ -161,7 +161,7 @@ fun PerfilScreen(
             TarjetaIlustrada(
                 titulo = "Trabaja con PetCare",
                 texto = "¿Eres veterinario o cuidas mascotas? Activa tu perfil profesional.",
-                ilustracion = R.drawable.chopper_organizador,
+                ilustracion = R.drawable.gato_leyendo,
                 degradado = listOf(Pc.Durazno, Pc.NaranjaClaro),
                 colorTexto = Pc.Tinta,
                 onClick = { trabajar = true },
@@ -389,15 +389,9 @@ fun PerfilScreen(
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                     Text("Proyecto académico — Universidad de Nariño.", style = MaterialTheme.typography.bodyMedium)
-                    Text(
-                        "Tony Tony Chopper y One Piece © Eiichiro Oda / Shueisha / Toei Animation. " +
-                            "Se usa como ilustración con fines académicos y sin ánimo de lucro; " +
-                            "PetCare no está afiliado a sus titulares.",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = Pc.TintaSuave,
-                    )
+                    Text("Michi, la mascota de PetCare, es una ilustración creada para el proyecto.", style = MaterialTheme.typography.bodySmall, color = Pc.TintaSuave)
                     Text("Tipografías Kalnia y Quicksand (SIL Open Font License).", style = MaterialTheme.typography.bodySmall, color = Pc.TintaSuave)
-                    Text("Íconos 3D: Fluent Emoji de Microsoft (licencia MIT).", style = MaterialTheme.typography.bodySmall, color = Pc.TintaSuave)
+                    Text("Íconos: Material Symbols de Google (licencia Apache 2.0).", style = MaterialTheme.typography.bodySmall, color = Pc.TintaSuave)
                     Chip(
                         when (conexion) {
                             Conexion.COMPROBANDO -> "Servidor: comprobando…"

@@ -148,7 +148,7 @@ fun BotonSecundario(texto: String, onClick: () -> Unit, modifier: Modifier = Mod
             .fillMaxWidth()
             .height(56.dp),
     ) {
-        icono?.let { Icono3D(it, tam = 22.dp, modifier = Modifier.padding(end = 8.dp)) }
+        icono?.let { Simbolo(it, tam = 22.dp, modifier = Modifier.padding(end = 8.dp)) }
         Text(texto, style = MaterialTheme.typography.titleMedium)
     }
 }
@@ -172,7 +172,7 @@ fun ChipOpcion(
         verticalAlignment = androidx.compose.ui.Alignment.CenterVertically,
         horizontalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(6.dp),
     ) {
-        icono?.let { Icono3D(it, tam = 18.dp) }
+        icono?.let { Simbolo(it, tam = 18.dp, color = if (seleccionado) Pc.NaranjaOscuro else Pc.TintaSuave) }
         Text(texto, style = MaterialTheme.typography.labelLarge, color = if (seleccionado) Pc.Tinta else Pc.TintaSuave)
     }
 }

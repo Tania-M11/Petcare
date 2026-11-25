@@ -1,6 +1,6 @@
 package com.udenar.petcare.ui.mascotas
 
-import com.udenar.petcare.ui.componentes.Icono3D
+import com.udenar.petcare.ui.componentes.Simbolo
 import com.udenar.petcare.domain.modelo.Icono
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
@@ -114,7 +114,7 @@ fun TarjetaEstadoCuidado(estado: Map<AreaCuidado, NivelCuidado>) {
                             .testTag("estado_${area.name}"),
                         horizontalAlignment = Alignment.CenterHorizontally,
                     ) {
-                        Icono3D(area.icono, tam = 30.dp)
+                        Simbolo(area.icono, tam = 30.dp)
                         Text(area.titulo, style = MaterialTheme.typography.labelMedium)
                         Text(nivel.etiqueta, style = MaterialTheme.typography.labelLarge, color = color)
                     }
@@ -297,7 +297,7 @@ fun TarjetaHistorial(items: List<ItemHistorial>) {
                 diaAnterior = dia
             }
             Row(verticalAlignment = Alignment.Top) {
-                Box(Modifier.size(32.dp).clip(RoundedCornerShape(10.dp)).background(Pc.Crema), contentAlignment = Alignment.Center) { Icono3D(i.icono, tam = 22.dp) }
+                Box(Modifier.size(32.dp).clip(RoundedCornerShape(10.dp)).background(Pc.Crema), contentAlignment = Alignment.Center) { Simbolo(i.icono, tam = 22.dp) }
                 Column(Modifier.padding(start = 10.dp)) {
                     Text(i.titulo, style = MaterialTheme.typography.titleSmall)
                     Text(i.detalle, style = MaterialTheme.typography.bodySmall, color = Pc.TintaSuave)

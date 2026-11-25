@@ -56,7 +56,7 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.udenar.petcare.domain.recomendaciones.PoseChopper
+import com.udenar.petcare.domain.recomendaciones.PoseMichi
 import com.udenar.petcare.ui.theme.Kalnia
 import com.udenar.petcare.ui.theme.Pc
 
@@ -124,9 +124,9 @@ fun AsistentePasos(
     }
 }
 
-/** Encabezado de cada paso: Chopper pregunta en grande; la ayuda va debajo. */
+/** Encabezado de cada paso: Michi pregunta en grande; la ayuda va debajo. */
 @Composable
-fun PreguntaChopper(pregunta: String, ayuda: String? = null, pose: PoseChopper = PoseChopper.ORGANIZADOR) {
+fun PreguntaMichi(pregunta: String, ayuda: String? = null, pose: PoseMichi = PoseMichi.AGENDA) {
     Row(verticalAlignment = Alignment.CenterVertically) {
         Image(painterResource(pose.dibujo()), contentDescription = null, modifier = Modifier.size(72.dp))
         Column(Modifier.padding(start = 10.dp)) {

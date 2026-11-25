@@ -288,19 +288,19 @@ object MotorRecomendaciones {
     }
 }
 
-/** Mensaje de Chopper para el inicio: cambia con la hora, el avance del día y el nombre. */
-data class MensajeChopper(val texto: String, val pose: PoseChopper)
+/** Mensaje de Michi para el inicio: cambia con la hora, el avance del día y el nombre. */
+data class MensajeMichi(val texto: String, val pose: PoseMichi)
 
-enum class PoseChopper { SALUDO, COMIDA, AMIGOS, ORGANIZADOR, DOCTOR }
+enum class PoseMichi { SALUDO, CELEBRA, DORMIDO, AGENDA, ALARMA, HIGIENE, DOCTOR, SALUD, DOCUMENTOS, LEYENDO, AMIGOS }
 
-data class CabeceraHoy(val momento: String, val estado: String, val pose: PoseChopper, val icono: Icono)
+data class CabeceraHoy(val momento: String, val estado: String, val pose: PoseMichi, val icono: Icono)
 
 data class Consejo(val icono: Icono, val texto: String)
 
-object Chopper {
+object Michi {
     /**
      * Cabecera de Hoy en tres piezas cortas (Fase 6): el momento del día, una línea con el
-     * estado y la pose de Chopper. Nada de párrafos: lo demás lo cuentan el progreso y los trucos.
+     * estado y la pose de Michi. Nada de párrafos: lo demás lo cuentan el progreso y los trucos.
      */
     fun cabecera(hora: Int, total: Int, pendientes: Int, hayMascotas: Boolean): CabeceraHoy {
         val momento = when (hora) {
@@ -310,12 +310,12 @@ object Chopper {
         }
         val hechos = total - pendientes
         return when {
-            !hayMascotas -> CabeceraHoy(momento, "¡Empecemos! Soy Chopper", PoseChopper.SALUDO, Icono.HUELLAS)
-            total == 0 -> CabeceraHoy(momento, "Hoy no hay cuidados programados", PoseChopper.ORGANIZADOR, Icono.HOJA)
-            pendientes == 0 -> CabeceraHoy(momento, "¡Todo listo por hoy!", PoseChopper.AMIGOS, Icono.FIESTA)
-            pendientes == total -> CabeceraHoy(momento, "$total ${if (total == 1) "cuidado" else "cuidados"} para hoy", PoseChopper.COMIDA, Icono.CALENDARIO)
-            pendientes == 1 -> CabeceraHoy(momento, "¡Ya casi! Falta 1", PoseChopper.COMIDA, Icono.FUEGO)
-            else -> CabeceraHoy(momento, "Llevas $hechos de $total", PoseChopper.COMIDA, Icono.ESTRELLA)
+            !hayMascotas -> CabeceraHoy(momento, "¡Empecemos! Soy Michi", PoseMichi.SALUDO, Icono.HUELLAS)
+            total == 0 -> CabeceraHoy(momento, "Hoy no hay cuidados programados", PoseMichi.DORMIDO, Icono.HOJA)
+            pendientes == 0 -> CabeceraHoy(momento, "¡Todo listo por hoy!", PoseMichi.CELEBRA, Icono.FIESTA)
+            pendientes == total -> CabeceraHoy(momento, "$total ${if (total == 1) "cuidado" else "cuidados"} para hoy", PoseMichi.ALARMA, Icono.CALENDARIO)
+            pendientes == 1 -> CabeceraHoy(momento, "¡Ya casi! Falta 1", PoseMichi.CELEBRA, Icono.FUEGO)
+            else -> CabeceraHoy(momento, "Llevas $hechos de $total", PoseMichi.AGENDA, Icono.ESTRELLA)
         }
     }
 

@@ -2,7 +2,7 @@ package com.udenar.petcare.ui.mascotas
 
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.verticalScroll
-import com.udenar.petcare.ui.componentes.Icono3D
+import com.udenar.petcare.ui.componentes.Simbolo
 import com.udenar.petcare.domain.modelo.Icono
 import android.content.Context
 import android.content.Intent
@@ -113,7 +113,7 @@ fun TarjetaDocumentos(
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Box(Modifier.size(40.dp).clip(RoundedCornerShape(12.dp)).background(Pc.CieloClaro), contentAlignment = Alignment.Center) {
-                    Icono3D(if (d.esPdf) Icono.DOCUMENTO else d.tipo.icono, tam = 28.dp)
+                    Simbolo(if (d.esPdf) Icono.DOCUMENTO else d.tipo.icono, tam = 28.dp)
                 }
                 Column(Modifier.weight(1f).padding(start = 12.dp)) {
                     Text(d.nombre, style = MaterialTheme.typography.titleSmall)
@@ -172,7 +172,7 @@ fun TarjetaDocumentos(
                         var visita by remember { mutableStateOf<String?>(null) }
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Box(Modifier.size(72.dp).clip(RoundedCornerShape(18.dp)).background(Pc.Blanco), contentAlignment = Alignment.Center) {
-                                if (esPdf) Icono3D(Icono.DOCUMENTO, tam = 44.dp)
+                                if (esPdf) Simbolo(Icono.DOCUMENTO, tam = 44.dp)
                                 else coil3.compose.AsyncImage(o, contentDescription = "Vista previa", contentScale = androidx.compose.ui.layout.ContentScale.Crop, modifier = Modifier.size(72.dp))
                             }
                             Text("Casi listo", style = MaterialTheme.typography.headlineSmall, modifier = Modifier.padding(start = 14.dp))

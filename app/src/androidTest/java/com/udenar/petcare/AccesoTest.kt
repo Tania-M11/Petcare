@@ -56,7 +56,7 @@ class AccesoTest {
         compose.waitUntil(5_000) { compose.onAllNodesWithTextExists("¿Qué te trae a PetCare?") }
         compose.onNodeWithText("Ahora no").performClick()
         compose.waitUntil(5_000) { compose.onAllNodesWithTagExists("pestana_hoy") }
-        compose.onNodeWithText("Tania", substring = true).assertExists() // Chopper saluda en Hoy
+        compose.onNodeWithText("Tania", substring = true).assertExists() // Michi saluda en Hoy
     }
 
     @Test

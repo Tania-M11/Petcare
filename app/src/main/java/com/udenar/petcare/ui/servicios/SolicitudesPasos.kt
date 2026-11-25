@@ -33,14 +33,14 @@ import com.udenar.petcare.domain.profesionales.ModalidadPrestador
 import com.udenar.petcare.domain.profesionales.Precios
 import com.udenar.petcare.domain.profesionales.SaludCompartida
 import com.udenar.petcare.domain.profesionales.ServicioVet
-import com.udenar.petcare.domain.recomendaciones.PoseChopper
+import com.udenar.petcare.domain.recomendaciones.PoseMichi
 import com.udenar.petcare.ui.componentes.AsistentePasos
 import com.udenar.petcare.ui.componentes.BotonPrincipal
 import com.udenar.petcare.ui.componentes.CampoTexto
 import com.udenar.petcare.ui.componentes.ChipOpcion
 import com.udenar.petcare.ui.componentes.EditorHoras
 import com.udenar.petcare.ui.componentes.FilaResumen
-import com.udenar.petcare.ui.componentes.PreguntaChopper
+import com.udenar.petcare.ui.componentes.PreguntaMichi
 import com.udenar.petcare.ui.componentes.SelectorFecha
 import com.udenar.petcare.ui.componentes.SelectorFotos
 import com.udenar.petcare.ui.componentes.TarjetaOpcionGrande
@@ -70,7 +70,7 @@ private fun fechaCorta(d: LocalDate, hoy: LocalDate) = when (d) {
 /** Para quién: tarjetas grandes con la ilustración de cada mascota; avanza al tocar. */
 @Composable
 private fun ColumnScope.PasoMascota(mascotas: List<Mascota>, elegida: String?, prefijo: String, especiesQueAtiende: Set<com.udenar.petcare.domain.modelo.Especie>, nombreProfesional: String, onElegir: (String) -> Unit) {
-    PreguntaChopper("¿Para quién es?", null, PoseChopper.SALUDO)
+    PreguntaMichi("¿Para quién es?", null, PoseMichi.SALUDO)
     mascotas.chunked(2).forEach { fila ->
         Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
             fila.forEach { m ->
@@ -98,7 +98,7 @@ private fun ColumnScope.PasoCuando(
     pregunta: String, fecha: LocalDate, onFecha: (LocalDate) -> Unit, horaElegida: LocalTime, onHora: (LocalTime) -> Unit, hoy: LocalDate,
     extra: @Composable ColumnScope.() -> Unit = {},
 ) {
-    PreguntaChopper(pregunta, "El profesional confirma o te propone otra hora", PoseChopper.ORGANIZADOR)
+    PreguntaMichi(pregunta, "El profesional confirma o te propone otra hora", PoseMichi.AGENDA)
     Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
         listOf(hoy.plusDays(1) to "Mañana", hoy.plusDays(2) to "Pasado mañana").forEach { (d, t) ->
             TarjetaOpcionGrande(t, fecha == d, onClick = { onFecha(d) }, icono = Icono.CALENDARIO, subtitulo = DescripcionCuidados.fecha(d), modifier = Modifier.weight(1f).testTag("fecha_${t}"))
@@ -118,7 +118,7 @@ private fun ColumnScope.PasoCuando(
 /** Detalles opcionales: mensaje y hasta 3 fotos (RF-34). */
 @Composable
 private fun ColumnScope.PasoDetalles(pregunta: String, ayuda: String, texto: String, onTexto: (String) -> Unit, etiquetaTexto: String, fotos: List<Uri>, onFotos: (List<Uri>) -> Unit, tagTexto: String? = null) {
-    PreguntaChopper(pregunta, ayuda, PoseChopper.DOCTOR)
+    PreguntaMichi(pregunta, ayuda, PoseMichi.DOCTOR)
     CampoTexto(texto, onTexto, etiquetaTexto, lineas = 3, modifier = tagTexto?.let { Modifier.testTag(it) } ?: Modifier)
     Text("Fotos (opcional, hasta 3)", style = MaterialTheme.typography.titleSmall)
     Text("Por ejemplo, la herida, la piel o el lugar del servicio. Solo las ve a quien le envías la solicitud.", style = MaterialTheme.typography.bodySmall, color = Pc.TintaSuave)
@@ -158,7 +158,7 @@ fun SolicitarVetScreen(onVolver: () -> Unit, onEnviada: () -> Unit, avisar: (Str
     val v = vet
     if (v == null || mascotas.isEmpty()) {
         AsistentePasos(paso = 0, total = 1, onAtras = onVolver, onCerrar = onVolver) {
-            PreguntaChopper("Pedir una cita", if (v != null) "Primero agrega una mascota propia: solo el dueño puede pedir servicios." else "Cargando…", PoseChopper.DOCTOR)
+            PreguntaMichi("Pedir una cita", if (v != null) "Primero agrega una mascota propia: solo el dueño puede pedir servicios." else "Cargando…", PoseMichi.DOCTOR)
         }
         return
     }
@@ -190,7 +190,7 @@ fun SolicitarVetScreen(onVolver: () -> Unit, onEnviada: () -> Unit, avisar: (Str
         when (pasos[p]) {
             PasoCita.MASCOTA -> PasoMascota(mascotas, mascotaId, "pedir", v.especies, v.nombre) { id -> mascotaId = id; paso++ }
             PasoCita.SERVICIO -> {
-                PreguntaChopper("¿Qué necesita ${elegida?.nombre ?: "tu mascota"}?", "Con ${v.nombre}", PoseChopper.DOCTOR)
+                PreguntaMichi("¿Qué necesita ${elegida?.nombre ?: "tu mascota"}?", "Con ${v.nombre}", PoseMichi.DOCTOR)
                 (v.servicios.takeIf { it.isNotEmpty() } ?: ServicioVet.entries.toSet()).sortedBy { it.ordinal }.chunked(2).forEach { fila ->
                     Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                         fila.forEach { s ->
@@ -213,7 +213,7 @@ fun SolicitarVetScreen(onVolver: () -> Unit, onEnviada: () -> Unit, avisar: (Str
                 "¿Algo que deba saber?", "Cuéntale qué notas; es opcional", texto, { texto = it.take(500) }, "Mensaje para el veterinario", fotos, { fotos = it },
             )
             PasoCita.RESUMEN -> {
-                PreguntaChopper("¿Todo bien?", "Toca un dato para cambiarlo", PoseChopper.ORGANIZADOR)
+                PreguntaMichi("¿Todo bien?", "Toca un dato para cambiarlo", PoseMichi.LEYENDO)
                 FilaResumen("Para", elegida?.nombre.orEmpty(), onEditar = { paso = PasoCita.MASCOTA.ordinal })
                 FilaResumen("Servicio", listOfNotNull(servicio?.etiqueta, modalidad.etiqueta.takeIf { v.domicilio }).joinToString(" · "), onEditar = { paso = PasoCita.SERVICIO.ordinal })
                 FilaResumen("Cuándo", "${fechaCorta(fecha, viewModel.hoy)} · ${hora(horaCita)}", onEditar = { paso = PasoCita.CUANDO.ordinal })
@@ -281,7 +281,7 @@ fun SolicitarPrestadorScreen(onVolver: () -> Unit, onEnviada: () -> Unit, avisar
     val pr = p
     if (pr == null || mascotas.isEmpty()) {
         AsistentePasos(paso = 0, total = 1, onAtras = onVolver, onCerrar = onVolver) {
-            PreguntaChopper("Pedir cotización", if (pr != null) "Primero agrega una mascota propia: solo el dueño puede pedir servicios." else "Cargando…", PoseChopper.AMIGOS)
+            PreguntaMichi("Pedir cotización", if (pr != null) "Primero agrega una mascota propia: solo el dueño puede pedir servicios." else "Cargando…", PoseMichi.AMIGOS)
         }
         return
     }
@@ -322,7 +322,7 @@ fun SolicitarPrestadorScreen(onVolver: () -> Unit, onEnviada: () -> Unit, avisar
         when (pasos[n]) {
             PasoCotizacion.MASCOTA -> PasoMascota(mascotas, mascotaId, "cotizar", pr.especies, pr.nombre) { id -> mascotaId = id; paso++ }
             PasoCotizacion.QUE -> {
-                PreguntaChopper("¿Qué necesita ${elegida?.nombre ?: "tu mascota"}?", "A ${pr.nombre}", PoseChopper.AMIGOS)
+                PreguntaMichi("¿Qué necesita ${elegida?.nombre ?: "tu mascota"}?", "A ${pr.nombre}", PoseMichi.AMIGOS)
                 Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                     pr.categorias.forEach { cid ->
                         val c = categorias.firstOrNull { it.id == cid }
@@ -359,7 +359,7 @@ fun SolicitarPrestadorScreen(onVolver: () -> Unit, onEnviada: () -> Unit, avisar
                 if (fecha in pr.noDisponible) Text("${pr.nombre} marcó ese día como no disponible; quizá te proponga otra fecha.", style = MaterialTheme.typography.bodySmall, color = Pc.Naranja)
             }
             PasoCotizacion.COMPARTIR -> {
-                PreguntaChopper("¿Qué compartes?", "Siempre ve nombre, especie, raza, sexo, edad, tamaño y peso aproximados. Nunca la ficha completa.", PoseChopper.ORGANIZADOR)
+                PreguntaMichi("¿Qué compartes?", "Siempre ve nombre, especie, raza, sexo, edad, tamaño y peso aproximados. Nunca la ficha completa.", PoseMichi.DOCUMENTOS)
                 FilaCasilla("Datos de salud y comportamiento", "Los ve mientras la solicitud esté abierta", compartirSalud, { compartirSalud = it }, "compartir_salud")
                 if (compartirSalud) {
                     CampoTexto(alergias, { alergias = it.take(500) }, "Alergias")
@@ -378,7 +378,7 @@ fun SolicitarPrestadorScreen(onVolver: () -> Unit, onEnviada: () -> Unit, avisar
                 CampoTexto(texto, { texto = it.take(500) }, "Mensaje adicional (opcional)", lineas = 2)
             }
             PasoCotizacion.RESUMEN -> {
-                PreguntaChopper("¿Todo bien?", "Toca un dato para cambiarlo", PoseChopper.ORGANIZADOR)
+                PreguntaMichi("¿Todo bien?", "Toca un dato para cambiarlo", PoseMichi.LEYENDO)
                 FilaResumen("Para", elegida?.nombre.orEmpty(), onEditar = { paso = PasoCotizacion.MASCOTA.ordinal })
                 val nombreCategoria = categorias.firstOrNull { it.id == categoria }?.nombre ?: categoria.orEmpty()
                 val nombreServicio = pr.servicios.firstOrNull { it.id == servicio }?.nombre

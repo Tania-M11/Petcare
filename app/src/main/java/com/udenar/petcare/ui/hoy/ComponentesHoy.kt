@@ -1,6 +1,6 @@
 package com.udenar.petcare.ui.hoy
 
-import com.udenar.petcare.ui.componentes.Icono3D
+import com.udenar.petcare.ui.componentes.Simbolo
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -84,7 +84,7 @@ fun TarjetaToma(
                     .clip(RoundedCornerShape(16.dp))
                     .background(fondoIcono),
                 contentAlignment = Alignment.Center,
-            ) { Icono3D(e.tipo.icono, tam = 32.dp) }
+            ) { Simbolo(e.tipo.icono, tam = 32.dp) }
             AvatarMascota(
                 item.mascota.especie, item.mascota.fotoLocal, tam = 22.dp,
                 modifier = Modifier

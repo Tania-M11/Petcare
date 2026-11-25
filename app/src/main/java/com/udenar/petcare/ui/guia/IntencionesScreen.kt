@@ -51,10 +51,10 @@ import com.udenar.petcare.ui.theme.Pc
 private data class AspectoIntencion(val ilustracion: Int, val claro: Color, val fuerte: Color)
 
 private fun Intencion.aspecto() = when (this) {
-    Intencion.MASCOTAS -> AspectoIntencion(R.drawable.chopper_amigos, Pc.Durazno, Pc.NaranjaClaro)
-    Intencion.CUIDAR -> AspectoIntencion(R.drawable.chopper_comida, Pc.SolClaro, Pc.Sol)
-    Intencion.VETERINARIO -> AspectoIntencion(R.drawable.chopper_veterinario, Pc.CieloClaro, Pc.Cielo)
-    Intencion.SERVICIOS -> AspectoIntencion(R.drawable.chopper_organizador, Pc.LavandaClara, Pc.Lavanda)
+    Intencion.MASCOTAS -> AspectoIntencion(R.drawable.gato_amigos, Pc.Durazno, Pc.NaranjaClaro)
+    Intencion.CUIDAR -> AspectoIntencion(R.drawable.gato_alarma, Pc.SolClaro, Pc.Sol)
+    Intencion.VETERINARIO -> AspectoIntencion(R.drawable.gato_doctor, Pc.CieloClaro, Pc.Cielo)
+    Intencion.SERVICIOS -> AspectoIntencion(R.drawable.gato_higiene, Pc.LavandaClara, Pc.Lavanda)
 }
 
 /**
@@ -82,10 +82,10 @@ fun IntencionesScreen(
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Column(Modifier.weight(1f)) {
-                Text("Chopper quiere saber", style = MaterialTheme.typography.bodyLarge, color = Pc.TintaSuave)
+                Text("Michi quiere saber", style = MaterialTheme.typography.bodyLarge, color = Pc.TintaSuave)
                 Text("¿Qué te trae a PetCare?", style = MaterialTheme.typography.headlineLarge)
             }
-            Image(painterResource(R.drawable.chopper_saludo), contentDescription = null, modifier = Modifier.height(92.dp))
+            Image(painterResource(R.drawable.gato_saludo), contentDescription = null, modifier = Modifier.height(92.dp))
         }
         Text(
             "Elige todas las que quieras. Así te mostramos por dónde empezar; puedes cambiarlo después en tu Perfil.",
