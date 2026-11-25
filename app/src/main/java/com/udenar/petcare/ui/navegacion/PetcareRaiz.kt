@@ -114,11 +114,12 @@ fun PetcareRaiz() {
                     onEditarMascota = { nav.navigate(RutaFormMascota(it)) },
                     onCarne = { nav.navigate(RutaCarne(it)) },
                     onPrestadores = { nav.navigate(RutaDirectorioPres) },
+                    onCalendario = { nav.navigate(RutaCalendario) },
                     avisar = avisar,
                 )
             }
-            composable<RutaCalendario> { com.udenar.petcare.ui.calendario.CalendarioScreen() }
-            composable<RutaHistorial> { com.udenar.petcare.ui.historial.HistorialScreen() }
+            composable<RutaCalendario> { com.udenar.petcare.ui.calendario.CalendarioScreen(onVolver = { nav.popBackStack() }) }
+            composable<RutaHistorial> { com.udenar.petcare.ui.historial.HistorialScreen(onVolver = { nav.popBackStack() }) }
             composable<RutaMascotas> {
                 MascotasScreen(
                     avisar = avisar,
@@ -249,7 +250,7 @@ fun PetcareRaiz() {
                 )
             }
             composable<RutaPerfil> {
-                PerfilScreen(avisar = avisar, irAIntenciones = { nav.navigate(RutaIntenciones) }, onPerfilVeterinario = { nav.navigate(RutaFormVeterinario) }, onPerfilPrestador = { nav.navigate(RutaFormPrestador(it)) })
+                PerfilScreen(avisar = avisar, irAIntenciones = { nav.navigate(RutaIntenciones) }, onPerfilVeterinario = { nav.navigate(RutaFormVeterinario) }, onPerfilPrestador = { nav.navigate(RutaFormPrestador(it)) }, onHistorial = { nav.navigate(RutaHistorial) })
             }
             composable<RutaFormVeterinario> {
                 com.udenar.petcare.ui.profesional.FormVeterinarioScreen(

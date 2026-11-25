@@ -75,6 +75,7 @@ fun PerfilScreen(
     irAIntenciones: () -> Unit,
     onPerfilVeterinario: () -> Unit,
     onPerfilPrestador: (categoria: String?) -> Unit,
+    onHistorial: () -> Unit = {},
     modifier: Modifier = Modifier,
     viewModel: PerfilViewModel = hiltViewModel(),
 ) {
@@ -183,6 +184,15 @@ fun PerfilScreen(
                 fondoIcono = Pc.SolClaro,
                 colorIcono = Pc.Naranja,
                 onClick = irAIntenciones,
+            )
+            FilaOpcion(
+                icono = Icons.Rounded.Explore, icono3d = com.udenar.petcare.domain.modelo.Icono.RELOJ,
+                titulo = "Historial de tus mascotas",
+                subtitulo = "Todo lo registrado, de todas o de una",
+                fondoIcono = Pc.LavandaClara,
+                colorIcono = Pc.LavandaOscura,
+                onClick = onHistorial,
+                modifier = Modifier.testTag("fila_historial"),
             )
             FilaOpcion(
                 icono = Icons.Rounded.NotificationsActive, icono3d = com.udenar.petcare.domain.modelo.Icono.CAMPANA,

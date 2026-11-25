@@ -89,6 +89,7 @@ fun HoyScreen(
     onEditarMascota: (String) -> Unit,
     onCarne: (String) -> Unit,
     onPrestadores: () -> Unit,
+    onCalendario: () -> Unit,
     avisar: (String) -> Unit,
     modifier: Modifier = Modifier,
     viewModel: HoyViewModel = hiltViewModel(),
@@ -100,12 +101,9 @@ fun HoyScreen(
     val agenda by viewModel.agenda.collectAsStateWithLifecycle()
     val alertas by viewModel.alertas.collectAsStateWithLifecycle()
     val filtro by viewModel.filtro.collectAsStateWithLifecycle()
-    val mes by viewModel.mes.collectAsStateWithLifecycle()
-    val resumenMes by viewModel.resumenMes.collectAsStateWithLifecycle()
     val solicitudes by viewModel.solicitudes.collectAsStateWithLifecycle()
     val recomendaciones by viewModel.recomendaciones.collectAsStateWithLifecycle()
     val resumenes by viewModel.resumenMascotas.collectAsStateWithLifecycle()
-    var verMes by remember { mutableStateOf(false) }
     var nuevo by remember { mutableStateOf(false) }
     // Mascota elegida desde una recomendación ("Crear recordatorio")
     var preMascota by remember { mutableStateOf<String?>(null) }
@@ -164,7 +162,7 @@ fun HoyScreen(
                         maxLines = 1, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
                     )
                 }
-                BotonCircular(Icons.Rounded.CalendarMonth, "Ver mes", onClick = { verMes = true }, modifier = Modifier.testTag("ver_mes"))
+                BotonCircular(Icons.Rounded.CalendarMonth, "Calendario", onClick = onCalendario, modifier = Modifier.testTag("ver_mes"))
             }
 
             // Paseo en curso: mapa en vivo, tiempo y distancia; al tocarlo vuelve al paseo
@@ -374,19 +372,6 @@ fun HoyScreen(
                 // Solo el +: así no tapa la tira de la semana ni las tarjetas
                 Icon(Icons.Rounded.Add, contentDescription = "Registrar", tint = Pc.SobreAcento, modifier = Modifier.size(28.dp))
             }
-        }
-    }
-
-    if (verMes) {
-        ModalBottomSheet(onDismissRequest = { verMes = false }, containerColor = Pc.Crema) {
-            CalendarioMes(
-                mes = mes, hoy = estado.hoy, seleccionado = estado.seleccionado, resumen = resumenMes,
-                onMes = viewModel::cambiarMes,
-                onDia = { d ->
-                    viewModel.elegirDia(d)
-                    verMes = false
-                },
-            )
         }
     }
 

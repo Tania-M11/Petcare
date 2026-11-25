@@ -10,6 +10,9 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
@@ -61,7 +64,7 @@ private val FORMATO_DIA = DateTimeFormatter.ofPattern("EEEE d 'de' MMMM", Locale
  * (vacunas, medicamentos, cuidados, citas) y, para el día elegido, lo pendiente y lo realizado.
  */
 @Composable
-fun CalendarioScreen(modifier: Modifier = Modifier, viewModel: HoyViewModel = hiltViewModel()) {
+fun CalendarioScreen(onVolver: () -> Unit, modifier: Modifier = Modifier, viewModel: HoyViewModel = hiltViewModel()) {
     val estado by viewModel.estado.collectAsStateWithLifecycle()
     val mes by viewModel.mes.collectAsStateWithLifecycle()
     val resumenMes by viewModel.resumenMes.collectAsStateWithLifecycle()
@@ -71,10 +74,13 @@ fun CalendarioScreen(modifier: Modifier = Modifier, viewModel: HoyViewModel = hi
     var filtro by rememberSaveable { mutableStateOf(FiltroCalendario.TODO) }
 
     Column(
-        modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = 20.dp, vertical = 12.dp),
+        modifier.fillMaxSize().background(Pc.Crema).statusBarsPadding().navigationBarsPadding().verticalScroll(rememberScrollState()).padding(horizontal = 20.dp, vertical = 12.dp),
         verticalArrangement = Arrangement.spacedBy(14.dp),
     ) {
-        Text("Calendario", style = MaterialTheme.typography.headlineLarge)
+        Row(verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
+            com.udenar.petcare.ui.componentes.BotonCircular(androidx.compose.material.icons.Icons.AutoMirrored.Rounded.ArrowBack, "Volver", onClick = onVolver)
+            Text("Calendario", style = MaterialTheme.typography.headlineMedium, modifier = Modifier.padding(start = 16.dp))
+        }
         if (mascotas.isNotEmpty()) ChipsMascotas(mascotas, filtroMascota, onElegir = { id -> if (id == null) viewModel.verMascota(null) else viewModel.verMascota(id) })
         Column(Modifier.fillMaxWidth().clip(MaterialTheme.shapes.large).background(Pc.Blanco).padding(top = 12.dp)) {
             CalendarioMes(mes = mes, hoy = estado.hoy, seleccionado = estado.seleccionado, resumen = resumenMes, onMes = viewModel::cambiarMes, onDia = viewModel::elegirDia)
@@ -114,6 +120,6 @@ fun CalendarioScreen(modifier: Modifier = Modifier, viewModel: HoyViewModel = hi
                 )
             }
         }
-        Spacer(Modifier.height(90.dp))
+        Spacer(Modifier.height(24.dp))
     }
 }

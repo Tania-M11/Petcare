@@ -1,11 +1,15 @@
 package com.udenar.petcare.ui.historial
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
@@ -74,17 +78,20 @@ class HistorialViewModel @Inject constructor(
 
 /** Pestaña Historial: la línea de tiempo de todas las mascotas (o de una), con filtros por tipo. */
 @Composable
-fun HistorialScreen(modifier: Modifier = Modifier, viewModel: HistorialViewModel = hiltViewModel()) {
+fun HistorialScreen(onVolver: () -> Unit, modifier: Modifier = Modifier, viewModel: HistorialViewModel = hiltViewModel()) {
     val items by viewModel.items.collectAsStateWithLifecycle()
     val mascotas by viewModel.mascotas.collectAsStateWithLifecycle()
     val filtro by viewModel.filtro.collectAsStateWithLifecycle()
     Column(
-        modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = 20.dp, vertical = 12.dp),
+        modifier.fillMaxSize().background(com.udenar.petcare.ui.theme.Pc.Crema).statusBarsPadding().navigationBarsPadding().verticalScroll(rememberScrollState()).padding(horizontal = 20.dp, vertical = 12.dp),
         verticalArrangement = Arrangement.spacedBy(14.dp),
     ) {
-        Text("Historial", style = MaterialTheme.typography.headlineLarge)
+        androidx.compose.foundation.layout.Row(verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
+            com.udenar.petcare.ui.componentes.BotonCircular(androidx.compose.material.icons.Icons.AutoMirrored.Rounded.ArrowBack, "Volver", onClick = onVolver)
+            Text("Historial de tus mascotas", style = MaterialTheme.typography.headlineSmall, modifier = Modifier.padding(start = 16.dp))
+        }
         if (mascotas.isNotEmpty()) ChipsMascotas(mascotas, filtro, onElegir = viewModel::elegir)
         TarjetaHistorial(items)
-        Spacer(Modifier.height(90.dp))
+        Spacer(Modifier.height(24.dp))
     }
 }
