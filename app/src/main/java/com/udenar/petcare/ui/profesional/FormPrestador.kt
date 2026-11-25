@@ -143,6 +143,7 @@ data class EstadoFormPrestador(
 
 @HiltViewModel
 class FormPrestadorViewModel @Inject constructor(
+    ruta: androidx.lifecycle.SavedStateHandle,
     private val prestadores: RepositorioPrestadores,
     private val modo: RepositorioModo,
     private val cuenta: RepositorioCuenta,
@@ -153,6 +154,16 @@ class FormPrestadorViewModel @Inject constructor(
     val estado = _estado.asStateFlow()
     val hoy: LocalDate get() = LocalDate.now(reloj)
 
+    /** Categoría elegida desde Perfil ("Baño y peluquería", "Cuidador y paseador"). */
+    private val categoriaInicial: String? = runCatching { ruta.get<String>("categoria") }.getOrNull()
+
+    /** Revisa solo los datos de un paso; si falta algo lo marca y no deja avanzar. */
+    fun validarPaso(claves: Set<String>): Boolean {
+        val errores = ValidadorPrestador.errores(_estado.value.borrador.comoPerfil("")).filterKeys { it in claves }
+        _estado.update { it.copy(errores = errores, mensaje = errores.values.firstOrNull()) }
+        return errores.isEmpty()
+    }
+
     init {
         viewModelScope.launch {
             try {
@@ -161,7 +172,9 @@ class FormPrestadorViewModel @Inject constructor(
                 _estado.update {
                     it.copy(
                         categorias = categorias,
-                        borrador = perfil?.let(BorradorPrestador::desde) ?: BorradorPrestador(nombre = cuenta.usuario.value?.nombre.orEmpty()),
+                        borrador = (perfil?.let(BorradorPrestador::desde) ?: BorradorPrestador(nombre = cuenta.usuario.value?.nombre.orEmpty())).let { b ->
+                            if (categoriaInicial != null && categoriaInicial !in b.categorias && categorias.any { c -> c.id == categoriaInicial }) b.copy(categorias = b.categorias + categoriaInicial) else b
+                        },
                         cargando = false,
                         existente = perfil?.activo == true,
                     )
@@ -256,7 +269,25 @@ class FormPrestadorViewModel @Inject constructor(
 private val LOCALE = Locale.forLanguageTag("es-CO")
 private val FECHA_CORTA = DateTimeFormatter.ofPattern("d MMM", LOCALE)
 
-/** Perfil de prestador (RF-31, RF-32): activación y edición. */
+private enum class PasoPres(val claves: Set<String> = emptySet()) {
+    TU(setOf("nombre")), CATEGORIAS(setOf("categorias")), SERVICIOS(setOf("servicios")), A_QUIEN(setOf("especies", "modalidades")),
+    CONTACTO(setOf("telefono", "whatsapp", "correo")), DONDE(setOf("ciudad", "zona", "ubicacion")), HORARIO,
+    SOBRE_TI(setOf("descripcion", "galeria")), RESUMEN,
+}
+
+/** Michi en la situación de cada categoría (las nuevas usan su ícono). */
+private fun dibujoCategoria(id: String): Int? = when (id) {
+    "PASEADOR" -> com.udenar.petcare.R.drawable.gato_celebra
+    "BANO_PELUQUERIA" -> com.udenar.petcare.R.drawable.gato_higiene
+    "CUIDADO_TEMPORAL" -> com.udenar.petcare.R.drawable.gato_dormido
+    else -> null
+}
+
+/**
+ * Perfil de cuidador, paseador o peluquería (RF-31, RF-32) por pasos (Fase 6): una pregunta por
+ * pantalla con Michi, la tarjeta del directorio armándose y un resumen final. Al editar se abre
+ * en el resumen y cada dato se cambia en su paso.
+ */
 @Composable
 fun FormPrestadorScreen(onVolver: () -> Unit, onGuardado: (activado: Boolean) -> Unit, avisar: (String) -> Unit, viewModel: FormPrestadorViewModel = hiltViewModel()) {
     val estado by viewModel.estado.collectAsStateWithLifecycle()
@@ -274,178 +305,209 @@ fun FormPrestadorScreen(onVolver: () -> Unit, onGuardado: (activado: Boolean) ->
             viewModel.mensajeVisto()
         }
     }
-
-    Column(Modifier.fillMaxSize().background(Pc.Crema).statusBarsPadding().navigationBarsPadding().imePadding()) {
-    Column(Modifier.padding(horizontal = 20.dp, vertical = 12.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            BotonCircular(Icons.AutoMirrored.Rounded.ArrowBack, "Volver", onClick = onVolver)
-            Text(if (estado.existente) "Mi perfil de servicios" else "Ofrece tus servicios", style = MaterialTheme.typography.headlineMedium, modifier = Modifier.padding(start = 16.dp))
+    if (estado.cargando) {
+        Box(Modifier.fillMaxSize().background(Pc.Crema), contentAlignment = Alignment.Center) {
+            androidx.compose.material3.CircularProgressIndicator(color = Pc.Naranja)
         }
-        if (!estado.cargando) VistaPreviaPerfil { com.udenar.petcare.ui.servicios.TarjetaPrestador(b.comoPerfil(""), estado.categorias, onClick = {}) }
+        return
     }
-    Column(
-        Modifier
-            .weight(1f)
-            .verticalScroll(rememberScrollState())
-            .padding(horizontal = 20.dp)
-            .padding(bottom = 16.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp),
-    ) {
-        if (estado.cargando) {
-            Text("Cargando…", color = Pc.TintaSuave)
-            return@Column
-        }
-        if (!estado.existente) {
-            Text("Así te verán los dueños en el directorio. Los precios son orientativos y el pago se acuerda directamente contigo.", style = MaterialTheme.typography.bodyMedium, color = Pc.TintaSuave)
-        }
+    val pasos = PasoPres.entries
+    var paso by androidx.compose.runtime.saveable.rememberSaveable { androidx.compose.runtime.mutableIntStateOf(if (estado.existente) PasoPres.RESUMEN.ordinal else 0) }
+    var desdeResumen by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf(estado.existente) }
+    val actual = pasos[paso]
+    fun siguiente() {
+        if (!viewModel.validarPaso(actual.claves)) return
+        paso = if (desdeResumen) PasoPres.RESUMEN.ordinal else paso + 1
+    }
+    fun ir(p: PasoPres) {
+        desdeResumen = true
+        paso = p.ordinal
+    }
 
-        Seccion("Quién eres") {
-            com.udenar.petcare.ui.componentes.EditorFotoPerfil(
-                b.foto, b.nombre, estado.subiendoFoto, onElegir = viewModel::elegirFotoPerfil, onQuitar = { viewModel.cambiar { it.copy(foto = null) } },
-                fondo = Pc.SolClaro, color = Pc.Tinta,
-            )
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                TipoPrestador.entries.forEach { t -> ChipOpcion(t.etiqueta, b.tipo == t, onClick = { viewModel.cambiar { it.copy(tipo = t) } }) }
+    com.udenar.petcare.ui.componentes.AsistentePasos(
+        paso = paso, total = pasos.size,
+        onAtras = { if (desdeResumen && actual != PasoPres.RESUMEN) paso = PasoPres.RESUMEN.ordinal else if (paso == 0) onVolver() else paso-- },
+        onCerrar = onVolver,
+        onSaltar = if (actual == PasoPres.HORARIO || (actual == PasoPres.SERVICIOS && b.servicios.isEmpty())) ({ siguiente() }) else null,
+        abajo = {
+            if (actual == PasoPres.RESUMEN) {
+                BotonPrincipal(
+                    if (estado.existente) "Guardar cambios" else "Activar mi perfil",
+                    onClick = { viewModel.guardar(onGuardado) }, cargando = estado.guardando, habilitado = !estado.subiendoFotos,
+                    modifier = Modifier.testTag("pres_guardar"),
+                )
+            } else {
+                BotonPrincipal(if (desdeResumen) "Listo" else "Continuar", onClick = ::siguiente, habilitado = !estado.subiendoFotos, modifier = Modifier.testTag("continuar"))
             }
-            CampoTexto(b.nombre, { v -> viewModel.cambiar { it.copy(nombre = v.take(100)) } }, if (b.tipo == TipoPrestador.NEGOCIO) "Nombre del negocio *" else "Tu nombre *", error = e["nombre"], modifier = Modifier.testTag("pres_nombre"))
-            CampoTexto(b.descripcion, { v -> viewModel.cambiar { it.copy(descripcion = v.take(1000)) } }, "Descripción *", error = e["descripcion"], lineas = 3, modifier = Modifier.testTag("pres_descripcion"))
-        }
-
-        Seccion("Categorías *") {
-            Text("La primera que elijas es la principal.", style = MaterialTheme.typography.bodySmall, color = Pc.TintaSuave)
-            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                estado.categorias.forEach { c ->
-                    val i = b.categorias.indexOf(c.id)
-                    ChipOpcion(
-                        c.nombre + if (i == 0) " · principal" else "", i >= 0, icono = c.icono3d,
-                        onClick = { viewModel.cambiar { it.copy(categorias = if (c.id in it.categorias) it.categorias - c.id else it.categorias + c.id) } },
-                        modifier = Modifier.testTag("pres_categoria_${c.id}"),
-                    )
-                }
-            }
-            e["categorias"]?.let { Text(it, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall) }
-        }
-
-        Seccion("Servicios y precios") {
-            if (b.servicios.isEmpty()) Text("Agrega lo que ofreces: precio fijo, \"desde\" o a cotizar.", style = MaterialTheme.typography.bodySmall, color = Pc.TintaSuave)
-            b.servicios.forEach { s ->
-                val cat = estado.categorias.firstOrNull { it.id == s.categoriaId }
-                Row(
-                    Modifier
-                        .fillMaxWidth()
-                        .clip(MaterialTheme.shapes.medium)
-                        .clickable { servicioEditado = s }
-                        .padding(vertical = 6.dp)
-                        .testTag("pres_servicio_${s.nombre}"),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Text(cat?.icono ?: "•", modifier = Modifier.padding(end = 10.dp))
-                    Column(Modifier.weight(1f)) {
-                        Text(s.nombre, style = MaterialTheme.typography.titleSmall)
-                        Text(Precios.texto(s), style = MaterialTheme.typography.bodySmall, color = Pc.TintaSuave)
-                    }
-                }
-            }
-            e["servicios"]?.let { Text(it, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall) }
-            BotonSecundario("Agregar servicio", onClick = {
-                if (b.categorias.isEmpty()) avisar("Primero elige una categoría")
-                else servicioEditado = ServicioPrestador(UUID.randomUUID().toString(), b.categorias.first(), "")
-            }, modifier = Modifier.testTag("pres_agregar_servicio"))
-        }
-
-        Seccion("A quién y cómo atiendes *") {
-            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Especie.entries.forEach { esp ->
-                    ChipOpcion(esp.etiqueta, esp in b.especies, onClick = {
-                        viewModel.cambiar { it.copy(especies = if (esp in it.especies) it.especies - esp else it.especies + esp) }
-                    }, modifier = Modifier.testTag("pres_especie_${esp.name}"))
-                }
-            }
-            e["especies"]?.let { Text(it, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall) }
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                ModalidadPrestador.entries.forEach { m ->
-                    ChipOpcion(m.etiqueta, m in b.modalidades, onClick = {
-                        viewModel.cambiar { it.copy(modalidades = if (m in it.modalidades) it.modalidades - m else it.modalidades + m) }
-                    })
-                }
-            }
-            e["modalidades"]?.let { Text(it, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall) }
-        }
-
-        Seccion("Contacto") {
-            CampoTexto(b.telefono, { v -> viewModel.cambiar { it.copy(telefono = v) } }, "Teléfono *", teclado = KeyboardType.Phone, error = e["telefono"], modifier = Modifier.testTag("pres_telefono"))
-            CampoTexto(b.whatsapp, { v -> viewModel.cambiar { it.copy(whatsapp = v) } }, "WhatsApp", teclado = KeyboardType.Phone, error = e["whatsapp"])
-            CampoTexto(b.correo, { v -> viewModel.cambiar { it.copy(correo = v) } }, "Correo", teclado = KeyboardType.Email, error = e["correo"])
-        }
-
-        Seccion("Dónde trabajas") {
-            CampoTexto(b.ciudad, { v -> viewModel.cambiar { it.copy(ciudad = v) } }, "Ciudad *", error = e["ciudad"], modifier = Modifier.testTag("pres_ciudad"))
-            CampoTexto(b.zona, { v -> viewModel.cambiar { it.copy(zona = v.take(120)) } }, "Zona de cobertura (barrios, sector…)", error = e["zona"], modifier = Modifier.testTag("pres_zona"))
-            CampoTexto(b.radioKm, { v -> viewModel.cambiar { it.copy(radioKm = v.filter(Char::isDigit).take(3)) } }, "Radio en km (opcional)", teclado = KeyboardType.Number)
-            CampoTexto(b.direccion, { v -> viewModel.cambiar { it.copy(direccion = v.take(150)) } }, "Dirección del establecimiento (opcional)")
-            Text(
-                if (b.ubicacion != null) "Ubicado en el mapa ✓" else "Aún no te has ubicado en el mapa *",
-                style = MaterialTheme.typography.bodyMedium,
-                color = if (b.ubicacion == null && "ubicacion" in e) MaterialTheme.colorScheme.error else Pc.Tinta,
-            )
-            BotonSecundario(if (b.ubicacion != null) "Cambiar ubicación" else "Ubicar en el mapa", onClick = { mapa = true }, modifier = Modifier.testTag("pres_ubicar"))
-        }
-
-        Seccion("Disponibilidad") {
-            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                Column(Modifier.weight(1f)) {
-                    Text("Recibiendo solicitudes", style = MaterialTheme.typography.titleSmall)
-                    Text("Apágalo cuando no puedas atender", style = MaterialTheme.typography.bodySmall, color = Pc.TintaSuave)
-                }
-                Switch(b.recibiendo, { v -> viewModel.cambiar { it.copy(recibiendo = v) } }, colors = SwitchDefaults.colors(checkedTrackColor = Pc.Naranja))
-            }
-            Text("Horario por día, p. ej. 7:00-11:00, 15:00-18:00. Vacío = no atiendes.", style = MaterialTheme.typography.bodySmall, color = Pc.TintaSuave)
-            DayOfWeek.entries.forEach { dia ->
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(dia.getDisplayName(TextStyle.SHORT, LOCALE).replaceFirstChar { it.uppercase() }, style = MaterialTheme.typography.titleSmall, modifier = Modifier.width(52.dp))
-                    CampoTexto(b.horario[dia].orEmpty(), { v -> viewModel.cambiar { it.copy(horario = it.horario + (dia to v.take(60))) } }, "Horario", modifier = Modifier.weight(1f))
-                }
-            }
-            Text("Fechas en que no atiendes", style = MaterialTheme.typography.titleSmall)
-            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                b.noDisponible.sorted().forEach { f ->
-                    ChipOpcion("${f.format(FECHA_CORTA)} ✕", true, onClick = { viewModel.cambiar { it.copy(noDisponible = it.noDisponible - f) } })
-                }
-            }
-            SelectorFecha("Agregar fecha", fechaNoDisp, { f ->
-                if (f != null) viewModel.cambiar { it.copy(noDisponible = (it.noDisponible + f).distinct()) }
-                fechaNoDisp = null
-            }, desde = viewModel.hoy, textoVacio = "Elegir")
-        }
-
-        Seccion("Galería de trabajos") {
-            Text("Hasta ${ValidadorPrestador.MAX_GALERIA} fotos. Son públicas en tu perfil.", style = MaterialTheme.typography.bodySmall, color = Pc.TintaSuave)
-            Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                b.galeria.forEach { url ->
-                    Box {
-                        AsyncImage(url, contentDescription = "Foto de trabajo", contentScale = ContentScale.Crop, modifier = Modifier.size(96.dp).clip(MaterialTheme.shapes.medium))
-                        Icon(
-                            Icons.Rounded.Close, contentDescription = "Quitar foto", tint = Pc.SobreAcento,
-                            modifier = Modifier.align(Alignment.TopEnd).padding(4.dp).clip(MaterialTheme.shapes.small).background(Pc.Tinta.copy(alpha = 0.5f)).clickable { viewModel.quitarFoto(url) },
+        },
+    ) { n ->
+        when (pasos[n]) {
+            PasoPres.TU -> {
+                com.udenar.petcare.ui.componentes.PreguntaMichi(
+                    if (estado.existente) "Tu perfil" else "¡Qué bueno tenerte!",
+                    "Cuéntanos quién eres para que los dueños confíen en ti", com.udenar.petcare.domain.recomendaciones.PoseMichi.SALUDO,
+                )
+                Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                    TipoPrestador.entries.forEach { t ->
+                        com.udenar.petcare.ui.componentes.TarjetaOpcionGrande(
+                            if (t == TipoPrestador.PERSONA) "Soy una persona" else "Tengo un negocio", b.tipo == t,
+                            onClick = { viewModel.cambiar { it.copy(tipo = t) } },
+                            icono = if (t == TipoPrestador.PERSONA) com.udenar.petcare.domain.modelo.Icono.CORAZON else com.udenar.petcare.domain.modelo.Icono.TIENDA,
+                            color = Pc.SolClaro, modifier = Modifier.weight(1f),
                         )
                     }
                 }
+                com.udenar.petcare.ui.componentes.EditorFotoPerfil(
+                    b.foto, b.nombre, estado.subiendoFoto, onElegir = viewModel::elegirFotoPerfil, onQuitar = { viewModel.cambiar { it.copy(foto = null) } },
+                    fondo = Pc.SolClaro, color = Pc.Tinta,
+                )
+                CampoTexto(b.nombre, { v -> viewModel.cambiar { it.copy(nombre = v.take(100)) } }, if (b.tipo == TipoPrestador.NEGOCIO) "Nombre del negocio" else "Tu nombre", error = e["nombre"], modifier = Modifier.testTag("pres_nombre"))
+                VistaPreviaPerfil { com.udenar.petcare.ui.servicios.TarjetaPrestador(b.comoPerfil(""), estado.categorias, onClick = {}) }
             }
-            if (b.galeria.size < ValidadorPrestador.MAX_GALERIA) {
-                BotonSecundario(if (estado.subiendoFotos) "Subiendo…" else "Agregar fotos", onClick = {
-                    if (!estado.subiendoFotos) fotos.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
-                })
+            PasoPres.CATEGORIAS -> {
+                com.udenar.petcare.ui.componentes.PreguntaMichi("¿A qué te dedicas?", "Puedes elegir varias; la primera es la principal", com.udenar.petcare.domain.recomendaciones.PoseMichi.HIGIENE)
+                estado.categorias.chunked(2).forEach { fila ->
+                    Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                        fila.forEach { c ->
+                            val i = b.categorias.indexOf(c.id)
+                            com.udenar.petcare.ui.componentes.TarjetaOpcionGrande(
+                                c.nombre, i >= 0,
+                                onClick = { viewModel.cambiar { it.copy(categorias = if (c.id in it.categorias) it.categorias - c.id else it.categorias + c.id) } },
+                                subtitulo = if (i == 0) "Principal" else null,
+                                dibujo = dibujoCategoria(c.id), icono = c.icono3d, color = Pc.SolClaro,
+                                modifier = Modifier.weight(1f).testTag("pres_categoria_${c.id}"),
+                            )
+                        }
+                        if (fila.size == 1) Box(Modifier.weight(1f))
+                    }
+                }
+                e["categorias"]?.let { Text(it, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall) }
+            }
+            PasoPres.SERVICIOS -> {
+                com.udenar.petcare.ui.componentes.PreguntaMichi("Tus servicios y precios", "Precio fijo, \"desde\" o a cotizar; el pago lo acuerdas tú", com.udenar.petcare.domain.recomendaciones.PoseMichi.DOCUMENTOS)
+                if (b.servicios.isEmpty()) {
+                    Text("Aún no agregas servicios. Puedes hacerlo luego, pero con precios te escriben más.", style = MaterialTheme.typography.bodyMedium, color = Pc.TintaSuave)
+                }
+                b.servicios.forEach { sv ->
+                    val cat = estado.categorias.firstOrNull { it.id == sv.categoriaId }
+                    Row(
+                        Modifier.fillMaxWidth().clip(MaterialTheme.shapes.large).background(Pc.Blanco).clickable { servicioEditado = sv }.padding(14.dp).testTag("pres_servicio_${sv.nombre}"),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        com.udenar.petcare.ui.componentes.BaldosaIcono(cat?.icono3d ?: com.udenar.petcare.domain.modelo.Icono.HUELLAS, tam = 40.dp)
+                        Column(Modifier.weight(1f).padding(start = 12.dp)) {
+                            Text(sv.nombre, style = MaterialTheme.typography.titleSmall)
+                            Text(Precios.texto(sv), style = MaterialTheme.typography.bodySmall, color = Pc.TintaSuave)
+                        }
+                        Text("Editar", style = MaterialTheme.typography.labelMedium, color = Pc.Naranja)
+                    }
+                }
+                e["servicios"]?.let { Text(it, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall) }
+                BotonSecundario("Agregar servicio", icono = com.udenar.petcare.domain.modelo.Icono.MAS, onClick = {
+                    if (b.categorias.isEmpty()) avisar("Primero elige a qué te dedicas")
+                    else servicioEditado = ServicioPrestador(UUID.randomUUID().toString(), b.categorias.first(), "")
+                }, modifier = Modifier.testTag("pres_agregar_servicio"))
+            }
+            PasoPres.A_QUIEN -> {
+                com.udenar.petcare.ui.componentes.PreguntaMichi("¿A quiénes atiendes?", "Elige las especies y cómo trabajas", com.udenar.petcare.domain.recomendaciones.PoseMichi.AMIGOS)
+                ElegirEspecies(b.especies, { esp -> viewModel.cambiar { it.copy(especies = if (esp in it.especies) it.especies - esp else it.especies + esp) } }, "pres")
+                e["especies"]?.let { Text(it, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall) }
+                Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                    ModalidadPrestador.entries.forEach { m ->
+                        com.udenar.petcare.ui.componentes.TarjetaOpcionGrande(
+                            m.etiqueta, m in b.modalidades,
+                            onClick = { viewModel.cambiar { it.copy(modalidades = if (m in it.modalidades) it.modalidades - m else it.modalidades + m) } },
+                            icono = if (m == ModalidadPrestador.DOMICILIO) com.udenar.petcare.domain.modelo.Icono.CASA else com.udenar.petcare.domain.modelo.Icono.TIENDA,
+                            color = Pc.SolClaro, modifier = Modifier.weight(1f),
+                        )
+                    }
+                }
+                e["modalidades"]?.let { Text(it, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall) }
+            }
+            PasoPres.CONTACTO -> {
+                com.udenar.petcare.ui.componentes.PreguntaMichi("¿Cómo te contactan?", "Los dueños te llaman o te escriben desde tu perfil", com.udenar.petcare.domain.recomendaciones.PoseMichi.ALARMA)
+                CampoTexto(b.telefono, { v -> viewModel.cambiar { it.copy(telefono = v) } }, "Teléfono", teclado = KeyboardType.Phone, error = e["telefono"], modifier = Modifier.testTag("pres_telefono"))
+                if (b.telefono.isNotBlank()) {
+                    ChipOpcion("Mi WhatsApp es el mismo número", b.whatsapp == b.telefono, onClick = { viewModel.cambiar { it.copy(whatsapp = if (it.whatsapp == it.telefono) "" else it.telefono) } }, icono = com.udenar.petcare.domain.modelo.Icono.MENSAJE)
+                }
+                CampoTexto(b.whatsapp, { v -> viewModel.cambiar { it.copy(whatsapp = v) } }, "WhatsApp (opcional)", teclado = KeyboardType.Phone, error = e["whatsapp"])
+                CampoTexto(b.correo, { v -> viewModel.cambiar { it.copy(correo = v) } }, "Correo (opcional)", teclado = KeyboardType.Email, error = e["correo"])
+            }
+            PasoPres.DONDE -> {
+                com.udenar.petcare.ui.componentes.PreguntaMichi("¿Dónde trabajas?", "Tu zona o tu local; así te encuentran cerca", com.udenar.petcare.domain.recomendaciones.PoseMichi.LEYENDO)
+                CampoTexto(b.ciudad, { v -> viewModel.cambiar { it.copy(ciudad = v) } }, "Ciudad", error = e["ciudad"], modifier = Modifier.testTag("pres_ciudad"))
+                CampoTexto(b.zona, { v -> viewModel.cambiar { it.copy(zona = v.take(120)) } }, "Zona (barrios, sector…)", error = e["zona"], modifier = Modifier.testTag("pres_zona"))
+                if (ModalidadPrestador.ESTABLECIMIENTO in b.modalidades) {
+                    CampoTexto(b.direccion, { v -> viewModel.cambiar { it.copy(direccion = v.take(150)) } }, "Dirección del local")
+                }
+                Text("¿Hasta dónde te desplazas?", style = MaterialTheme.typography.titleSmall)
+                FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    listOf("", "2", "5", "10", "20").forEach { km ->
+                        ChipOpcion(if (km.isEmpty()) "Sin límite" else "$km km", b.radioKm == km, onClick = { viewModel.cambiar { it.copy(radioKm = km) } })
+                    }
+                }
+                TarjetaUbicacion(b.ubicacion != null, "ubicacion" in e && b.ubicacion == null, "Ubicado en el mapa ✓", onClick = { mapa = true }, tag = "pres_ubicar")
+            }
+            PasoPres.HORARIO -> {
+                com.udenar.petcare.ui.componentes.PreguntaMichi("¿Cuándo atiendes?", "Dos toques y listo; puedes ajustar cada día", com.udenar.petcare.domain.recomendaciones.PoseMichi.AGENDA)
+                TarjetaInterruptor(com.udenar.petcare.domain.modelo.Icono.CAMPANA, "Recibiendo solicitudes", "Apágalo cuando no puedas atender", b.recibiendo, { v -> viewModel.cambiar { it.copy(recibiendo = v) } })
+                EditorHorarioAmigable(b.horario) { h -> viewModel.cambiar { it.copy(horario = h) } }
+                Text("Días que no atiendes (vacaciones, festivos)", style = MaterialTheme.typography.titleSmall)
+                FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    b.noDisponible.sorted().forEach { f ->
+                        ChipOpcion("${f.format(FECHA_CORTA)} ✕", true, onClick = { viewModel.cambiar { it.copy(noDisponible = it.noDisponible - f) } })
+                    }
+                }
+                SelectorFecha("Agregar fecha", fechaNoDisp, { f ->
+                    if (f != null) viewModel.cambiar { it.copy(noDisponible = (it.noDisponible + f).distinct()) }
+                    fechaNoDisp = null
+                }, desde = viewModel.hoy, textoVacio = "Elegir")
+            }
+            PasoPres.SOBRE_TI -> {
+                com.udenar.petcare.ui.componentes.PreguntaMichi("Muéstrales tu trabajo", "Una descripción y fotos dan confianza", com.udenar.petcare.domain.recomendaciones.PoseMichi.LEYENDO)
+                CampoTexto(b.descripcion, { v -> viewModel.cambiar { it.copy(descripcion = v.take(1000)) } }, "Qué ofreces y cómo trabajas", error = e["descripcion"], lineas = 4, modifier = Modifier.testTag("pres_descripcion"))
+                Text("Fotos de tus trabajos (hasta ${ValidadorPrestador.MAX_GALERIA}, públicas)", style = MaterialTheme.typography.titleSmall)
+                Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    b.galeria.forEach { url ->
+                        Box {
+                            AsyncImage(url, contentDescription = "Foto de trabajo", contentScale = ContentScale.Crop, modifier = Modifier.size(96.dp).clip(MaterialTheme.shapes.medium))
+                            Icon(
+                                Icons.Rounded.Close, contentDescription = "Quitar foto", tint = Pc.SobreAcento,
+                                modifier = Modifier.align(Alignment.TopEnd).padding(4.dp).clip(MaterialTheme.shapes.small).background(Pc.Tinta.copy(alpha = 0.5f)).clickable { viewModel.quitarFoto(url) },
+                            )
+                        }
+                    }
+                    if (b.galeria.size < ValidadorPrestador.MAX_GALERIA) {
+                        Column(
+                            Modifier.size(96.dp).clip(MaterialTheme.shapes.medium).background(Pc.Blanco)
+                                .clickable { if (!estado.subiendoFotos) fotos.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)) },
+                            horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center,
+                        ) {
+                            com.udenar.petcare.ui.componentes.Simbolo(com.udenar.petcare.domain.modelo.Icono.GALERIA, tam = 30.dp)
+                            Text(if (estado.subiendoFotos) "Subiendo…" else "Agregar", style = MaterialTheme.typography.labelMedium, color = Pc.TintaSuave)
+                        }
+                    }
+                }
+            }
+            PasoPres.RESUMEN -> {
+                com.udenar.petcare.ui.componentes.PreguntaMichi(
+                    if (estado.existente) "Tu perfil" else "¡Listo para recibir solicitudes!",
+                    "Toca un dato para cambiarlo", com.udenar.petcare.domain.recomendaciones.PoseMichi.CELEBRA,
+                )
+                VistaPreviaPerfil { com.udenar.petcare.ui.servicios.TarjetaPrestador(b.comoPerfil(""), estado.categorias, onClick = {}) }
+                Column(Modifier.fillMaxWidth().clip(MaterialTheme.shapes.large).background(Pc.Blanco).padding(horizontal = 12.dp, vertical = 4.dp)) {
+                    com.udenar.petcare.ui.componentes.FilaResumen("Tú", "${b.nombre.ifBlank { "Sin nombre" }} · ${b.tipo.etiqueta}", onEditar = { ir(PasoPres.TU) })
+                    com.udenar.petcare.ui.componentes.FilaResumen("Te dedicas a", b.categorias.mapNotNull { id -> estado.categorias.firstOrNull { it.id == id }?.nombre }.joinToString().ifEmpty { "Sin elegir" }, onEditar = { ir(PasoPres.CATEGORIAS) })
+                    com.udenar.petcare.ui.componentes.FilaResumen("Servicios", if (b.servicios.isEmpty()) "Sin precios aún" else "${b.servicios.size} con precio", onEditar = { ir(PasoPres.SERVICIOS) })
+                    com.udenar.petcare.ui.componentes.FilaResumen("Atiendes", (b.especies.map { it.etiqueta } + b.modalidades.map { it.etiqueta.lowercase() }).joinToString().ifEmpty { "Sin elegir" }, onEditar = { ir(PasoPres.A_QUIEN) })
+                    com.udenar.petcare.ui.componentes.FilaResumen("Contacto", b.telefono.ifBlank { "Sin teléfono" }, onEditar = { ir(PasoPres.CONTACTO) })
+                    com.udenar.petcare.ui.componentes.FilaResumen("Dónde", listOf(b.zona, b.ciudad).filter { it.isNotBlank() }.joinToString(", ").ifEmpty { "Sin zona" } + if (b.ubicacion != null) " ✓" else "", onEditar = { ir(PasoPres.DONDE) })
+                    com.udenar.petcare.ui.componentes.FilaResumen("Horario", (if (b.recibiendo) "" else "En pausa · ") + resumenHorario(b.horario), onEditar = { ir(PasoPres.HORARIO) })
+                    com.udenar.petcare.ui.componentes.FilaResumen("Sobre ti", b.descripcion.take(60).ifBlank { "Sin descripción" } + if (b.galeria.isNotEmpty()) " · ${b.galeria.size} fotos" else "", onEditar = { ir(PasoPres.SOBRE_TI) })
+                }
+                Text("Los precios son orientativos: el pago se acuerda directamente contigo.", style = MaterialTheme.typography.bodySmall, color = Pc.TintaSuave)
             }
         }
-
-        BotonPrincipal(
-            if (estado.existente) "Guardar cambios" else "Activar perfil de prestador",
-            onClick = { viewModel.guardar(onGuardado) },
-            cargando = estado.guardando,
-            habilitado = !estado.subiendoFotos,
-            modifier = Modifier.testTag("pres_guardar"),
-        )
-    }
     }
 
     if (mapa) {
@@ -461,9 +523,9 @@ fun FormPrestadorScreen(onVolver: () -> Unit, onGuardado: (activado: Boolean) ->
             ayuda = "Pon el pin en tu establecimiento o en el centro de la zona donde trabajas.",
         )
     }
-    servicioEditado?.let { s ->
+    servicioEditado?.let { sv ->
         DialogoServicio(
-            inicial = s,
+            inicial = sv,
             categorias = estado.categorias.filter { it.id in b.categorias },
             especies = b.especies,
             onGuardar = { nuevo ->
@@ -471,7 +533,7 @@ fun FormPrestadorScreen(onVolver: () -> Unit, onGuardado: (activado: Boolean) ->
                 servicioEditado = null
             },
             onEliminar = {
-                viewModel.cambiar { br -> br.copy(servicios = br.servicios.filter { it.id != s.id }) }
+                viewModel.cambiar { br -> br.copy(servicios = br.servicios.filter { it.id != sv.id }) }
                 servicioEditado = null
             },
             onCerrar = { servicioEditado = null },

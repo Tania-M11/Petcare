@@ -63,10 +63,10 @@ class PrimerosPasosTest {
         compose.waitUntil(5_000) { compose.onAllNodesWithTagExists("primeros_pasos") }
         compose.onNodeWithTag("progreso_guia").assertTextEquals("0 de 2")
 
-        compose.onNodeWithTag("omitir_codigo_cuidar").performClick()
+        compose.onNodeWithTag("omitir_codigo_cuidar").performScrollTo().performClick()
         compose.onNodeWithTag("progreso_guia").assertTextEquals("1 de 2")
 
-        compose.onNodeWithTag("omitir_aprobacion").performClick()
+        compose.onNodeWithTag("omitir_aprobacion").performScrollTo().performClick()
         compose.waitUntil(5_000) { compose.onAllNodesWithTextExists("¡Todo listo!") }
         compose.onNodeWithText("¡Todo listo!").performClick()
         compose.waitUntil(5_000) { compose.onAllNodesWithTextExists("Agrega a tu primera mascota") }

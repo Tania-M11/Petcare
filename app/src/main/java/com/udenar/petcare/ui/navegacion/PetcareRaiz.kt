@@ -73,7 +73,7 @@ fun PetcareRaiz() {
         if (cola.isNotEmpty()) {
             nav.popBackStack(RutaIntenciones, inclusive = true)
             cola.reversed().forEach {
-                nav.navigate(if (it == com.udenar.petcare.domain.guia.Intencion.VETERINARIO) RutaFormVeterinario else RutaFormPrestador)
+                nav.navigate(if (it == com.udenar.petcare.domain.guia.Intencion.VETERINARIO) RutaFormVeterinario else RutaFormPrestador())
             }
             avisar("Completa tu perfil profesional. Si prefieres, termínalo luego desde Perfil")
         }
@@ -109,7 +109,7 @@ fun PetcareRaiz() {
                     onNuevoCuidado = { mascotaId, clase -> nav.navigate(RutaFormCuidado(mascotaId, clase)) },
                     onPasear = { mascotaId -> nav.navigate(RutaPaseo(mascotaId)) },
                     onPerfilVeterinario = { nav.navigate(RutaFormVeterinario) },
-                    onPerfilPrestador = { nav.navigate(RutaFormPrestador) },
+                    onPerfilPrestador = { nav.navigate(RutaFormPrestador()) },
                     onVeterinarios = { nav.navigate(RutaDirectorioVet) },
                     onEditarMascota = { nav.navigate(RutaFormMascota(it)) },
                     onCarne = { nav.navigate(RutaCarne(it)) },
@@ -237,7 +237,7 @@ fun PetcareRaiz() {
                 )
             }
             composable<RutaPerfil> {
-                PerfilScreen(avisar = avisar, irAIntenciones = { nav.navigate(RutaIntenciones) }, onPerfilVeterinario = { nav.navigate(RutaFormVeterinario) }, onPerfilPrestador = { nav.navigate(RutaFormPrestador) })
+                PerfilScreen(avisar = avisar, irAIntenciones = { nav.navigate(RutaIntenciones) }, onPerfilVeterinario = { nav.navigate(RutaFormVeterinario) }, onPerfilPrestador = { nav.navigate(RutaFormPrestador(it)) })
             }
             composable<RutaFormVeterinario> {
                 com.udenar.petcare.ui.profesional.FormVeterinarioScreen(

@@ -2,6 +2,11 @@ package com.udenar.petcare.ui.perfil
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -69,7 +74,7 @@ fun PerfilScreen(
     avisar: (String) -> Unit,
     irAIntenciones: () -> Unit,
     onPerfilVeterinario: () -> Unit,
-    onPerfilPrestador: () -> Unit,
+    onPerfilPrestador: (categoria: String?) -> Unit,
     modifier: Modifier = Modifier,
     viewModel: PerfilViewModel = hiltViewModel(),
 ) {
@@ -90,7 +95,6 @@ fun PerfilScreen(
         if (!ok) avisar("Actívalas en los ajustes del teléfono para recibir recordatorios")
     }
     var confirmarSalida by remember { mutableStateOf(false) }
-    var trabajar by remember { mutableStateOf(false) }
     var eliminar by remember { mutableStateOf(false) }
     val eliminando by viewModel.eliminando.collectAsStateWithLifecycle()
     val perfilVet by viewModel.perfilVet.collectAsStateWithLifecycle()
@@ -157,17 +161,13 @@ fun PerfilScreen(
                 modifier = Modifier.testTag("tarjeta_modo_vet"),
             )
         }
-        if (perfilVet?.activo != true || perfilPres?.activo != true) {
-            TarjetaIlustrada(
-                titulo = "Trabaja con PetCare",
-                texto = "¿Eres veterinario o cuidas mascotas? Activa tu perfil profesional.",
-                ilustracion = R.drawable.gato_leyendo,
-                degradado = listOf(Pc.Durazno, Pc.NaranjaClaro),
-                colorTexto = Pc.Tinta,
-                onClick = { trabajar = true },
-                modifier = Modifier.testTag("tarjeta_trabaja"),
-            )
-        }
+        // Perfiles para trabajar con mascotas: cada uno con su Michi y su estado
+        PerfilesProfesionales(
+            vetActivo = perfilVet?.activo == true,
+            categoriasPres = if (perfilPres?.activo == true) perfilPres?.categorias.orEmpty() else emptyList(),
+            onVeterinario = onPerfilVeterinario,
+            onPrestador = onPerfilPrestador,
+        )
 
         Column(
             Modifier
@@ -316,52 +316,6 @@ fun PerfilScreen(
         )
     }
 
-    if (trabajar) {
-        AlertDialog(
-            onDismissRequest = { trabajar = false },
-            containerColor = Pc.Crema,
-            title = { Text("¿Cómo quieres trabajar?", style = MaterialTheme.typography.headlineSmall) },
-            text = {
-                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                    Text("Sigues teniendo tus mascotas: el perfil profesional se suma a tu cuenta.", style = MaterialTheme.typography.bodySmall, color = Pc.TintaSuave)
-                    FilaOpcion(
-                        icono = Icons.Rounded.MedicalServices, icono3d = com.udenar.petcare.domain.modelo.Icono.VETERINARIO,
-                        titulo = when {
-                            perfilVet?.activo == true -> "Editar mi perfil de veterinario"
-                            perfilVet != null -> "Reactivar mi perfil de veterinario"
-                            else -> "Soy veterinario/a"
-                        },
-                        subtitulo = "Aparece en el directorio y recibe pacientes",
-                        fondoIcono = Pc.CieloClaro,
-                        colorIcono = Pc.CieloOscuro,
-                        onClick = {
-                            trabajar = false
-                            onPerfilVeterinario()
-                        },
-                        modifier = Modifier.testTag("trabajar_vet"),
-                    )
-                    FilaOpcion(
-                        icono = Icons.Rounded.ContentCut, icono3d = com.udenar.petcare.domain.modelo.Icono.TIJERAS,
-                        titulo = when {
-                            perfilPres?.activo == true -> "Editar mi perfil de servicios"
-                            perfilPres != null -> "Reactivar mi perfil de servicios"
-                            else -> "Ofrezco servicios"
-                        },
-                        subtitulo = "Paseo, baño y peluquería o cuidado temporal",
-                        fondoIcono = Pc.SolClaro,
-                        colorIcono = Pc.Naranja,
-                        onClick = {
-                            trabajar = false
-                            onPerfilPrestador()
-                        },
-                        modifier = Modifier.testTag("trabajar_pres"),
-                    )
-                }
-            },
-            confirmButton = { TextButton(onClick = { trabajar = false }) { Text("Ahora no") } },
-        )
-    }
-
     if (confirmarSalida) {
         AlertDialog(
             onDismissRequest = { confirmarSalida = false },
@@ -420,4 +374,75 @@ internal fun describirSync(e: EstadoSync?): String = when {
     e.porSubir > 1 -> "${e.porSubir} cambios por subir"
     e.ultima == null -> "Aún no sincroniza en este teléfono"
     else -> "Al día · " + HORA.format(e.ultima.atZone(ZoneId.systemDefault()))
+}
+
+private data class PerfilPro(
+    val tag: String,
+    val titulo: String,
+    val texto: String,
+    val dibujo: Int,
+    val fondo: androidx.compose.ui.graphics.Color,
+    val activo: Boolean,
+    val accion: String,
+    val onClick: () -> Unit,
+)
+
+/**
+ * "Trabaja con mascotas": veterinario, cuidador y paseador, y baño y peluquería. Cada tarjeta
+ * dice si ya está activa; tocarla crea el perfil o lo edita para que otros dueños te encuentren.
+ */
+@Composable
+private fun PerfilesProfesionales(vetActivo: Boolean, categoriasPres: List<String>, onVeterinario: () -> Unit, onPrestador: (String?) -> Unit) {
+    val hayPres = categoriasPres.isNotEmpty()
+    val cuidador = "PASEADOR" in categoriasPres || "CUIDADO_TEMPORAL" in categoriasPres
+    val peluqueria = "BANO_PELUQUERIA" in categoriasPres
+    val perfiles = listOf(
+        PerfilPro("perfil_pro_vet", "Veterinario/a", "Recibe pacientes y citas", R.drawable.gato_doctor, Pc.CieloClaro, vetActivo, if (vetActivo) "Editar perfil" else "Crear perfil", onVeterinario),
+        PerfilPro(
+            "perfil_pro_cuidador", "Cuidador y paseador", "Paseos y cuidado en casa", R.drawable.gato_amigos, Pc.SolClaro, cuidador,
+            when { cuidador -> "Editar perfil"; hayPres -> "Agregar a mi perfil"; else -> "Crear perfil" },
+        ) { onPrestador(if (cuidador) null else "PASEADOR") },
+        PerfilPro(
+            "perfil_pro_peluqueria", "Baño y peluquería", "Baños, cortes y uñas", R.drawable.gato_higiene, Pc.MentaClara, peluqueria,
+            when { peluqueria -> "Editar perfil"; hayPres -> "Agregar a mi perfil"; else -> "Crear perfil" },
+        ) { onPrestador(if (peluqueria) null else "BANO_PELUQUERIA") },
+    )
+    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+        Column {
+            Text("Trabaja con mascotas", style = MaterialTheme.typography.titleLarge)
+            Text("Crea tu perfil y los dueños te encontrarán en Servicios para escribirte.", style = MaterialTheme.typography.bodySmall, color = Pc.TintaSuave)
+        }
+        // Mismo alto para las tres tarjetas (el botón queda siempre abajo)
+        Row(Modifier.horizontalScroll(rememberScrollState()).height(androidx.compose.foundation.layout.IntrinsicSize.Max), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            perfiles.forEach { p ->
+                Column(
+                    Modifier
+                        .width(190.dp)
+                        .fillMaxHeight()
+                        .clip(RoundedCornerShape(28.dp))
+                        .background(androidx.compose.ui.graphics.Brush.verticalGradient(listOf(p.fondo, Pc.Blanco)))
+                        .clickable(onClick = p.onClick)
+                        .testTag(p.tag)
+                        .padding(14.dp),
+                    verticalArrangement = Arrangement.spacedBy(6.dp),
+                ) {
+                    Box(Modifier.fillMaxWidth()) {
+                        Image(painterResource(p.dibujo), contentDescription = null, modifier = Modifier.align(Alignment.Center).size(110.dp))
+                        if (p.activo) {
+                            Chip("Activo", fondo = Pc.Menta, color = Pc.Tinta, icono = com.udenar.petcare.domain.modelo.Icono.CHECK, modifier = Modifier.align(Alignment.TopEnd))
+                        }
+                    }
+                    Text(p.titulo, style = MaterialTheme.typography.titleMedium)
+                    Text(p.texto, style = MaterialTheme.typography.bodySmall, color = Pc.TintaSuave)
+                    androidx.compose.foundation.layout.Spacer(Modifier.weight(1f))
+                    Row(
+                        Modifier.padding(top = 4.dp).clip(RoundedCornerShape(50)).background(if (p.activo) Pc.Blanco else Pc.Tinta).padding(horizontal = 14.dp, vertical = 8.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Text(p.accion, style = MaterialTheme.typography.labelLarge, color = if (p.activo) Pc.Tinta else Pc.Crema)
+                    }
+                }
+            }
+        }
+    }
 }

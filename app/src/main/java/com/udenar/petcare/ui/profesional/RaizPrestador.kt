@@ -225,7 +225,7 @@ private fun PerfilPrestadorScreen(viewModel: ModoPrestadorViewModel, onEditar: (
                 if (p.servicios.isEmpty()) Text("Aún no agregas servicios con precio.", color = Pc.TintaSuave)
                 p.servicios.forEach { s ->
                     Row {
-                        Text(categorias.firstOrNull { it.id == s.categoriaId }?.icono ?: "•", modifier = Modifier.padding(end = 8.dp))
+                        com.udenar.petcare.ui.componentes.Simbolo(categorias.firstOrNull { it.id == s.categoriaId }?.icono3d ?: com.udenar.petcare.domain.modelo.Icono.HUELLAS, tam = 22.dp, modifier = Modifier.padding(end = 8.dp))
                         Text(s.nombre, style = MaterialTheme.typography.bodyMedium, modifier = Modifier.weight(1f))
                         Text(Precios.texto(s), style = MaterialTheme.typography.bodySmall, color = Pc.TintaSuave)
                     }

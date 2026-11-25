@@ -4,6 +4,8 @@ import android.Manifest
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -175,6 +177,13 @@ class FormVeterinarioViewModel @Inject constructor(
 
     fun mensajeVisto() = _estado.update { it.copy(mensaje = null) }
 
+    /** Revisa solo los datos de un paso; si falta algo lo marca y no deja avanzar. */
+    fun validarPaso(claves: Set<String>): Boolean {
+        val errores = ValidadorVeterinario.errores(_estado.value.borrador.comoPerfil("")).filterKeys { it in claves }
+        _estado.update { it.copy(errores = errores, mensaje = errores.values.firstOrNull()) }
+        return errores.isEmpty()
+    }
+
     /** Guarda; si era una activación, cambia al modo veterinario. */
     fun guardar(onListo: (activado: Boolean) -> Unit) {
         val s = _estado.value
@@ -200,7 +209,16 @@ class FormVeterinarioViewModel @Inject constructor(
 
 private val LOCALE = Locale.forLanguageTag("es-CO")
 
-/** Perfil de veterinario (RF-22): activación y edición. */
+private enum class PasoVet(val claves: Set<String> = emptySet()) {
+    TU(setOf("nombre")), ESPECIES(setOf("especies")), SERVICIOS, CONTACTO(setOf("telefono", "whatsapp", "correo")),
+    HORARIO, DONDE(setOf("ciudad", "direccion", "ubicacion")), SOBRE_TI, RESUMEN,
+}
+
+/**
+ * Perfil de veterinario (RF-22) por pasos (Fase 6): una pregunta por pantalla con Michi, la
+ * tarjeta del directorio que se va armando y un resumen final. Al editar se abre en el resumen
+ * y cada dato se cambia en su paso.
+ */
 @Composable
 fun FormVeterinarioScreen(onVolver: () -> Unit, onGuardado: (activado: Boolean) -> Unit, avisar: (String) -> Unit, viewModel: FormVeterinarioViewModel = hiltViewModel()) {
     val estado by viewModel.estado.collectAsStateWithLifecycle()
@@ -213,111 +231,124 @@ fun FormVeterinarioScreen(onVolver: () -> Unit, onGuardado: (activado: Boolean) 
             viewModel.mensajeVisto()
         }
     }
-
-    Column(Modifier.fillMaxSize().background(Pc.Crema).statusBarsPadding().navigationBarsPadding().imePadding()) {
-    Column(Modifier.padding(horizontal = 20.dp, vertical = 12.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            BotonCircular(Icons.AutoMirrored.Rounded.ArrowBack, "Volver", onClick = onVolver)
-            Text(if (estado.existente) "Mi perfil profesional" else "Perfil de veterinario", style = MaterialTheme.typography.headlineMedium, modifier = Modifier.padding(start = 16.dp))
+    if (estado.cargando) {
+        Box(Modifier.fillMaxSize().background(Pc.Crema), contentAlignment = Alignment.Center) {
+            androidx.compose.material3.CircularProgressIndicator(color = Pc.Naranja)
         }
-        // Vista previa fija arriba: cambia mientras se escribe
-        if (!estado.cargando) VistaPreviaPerfil { com.udenar.petcare.ui.servicios.TarjetaVeterinario(b.comoPerfil(""), onClick = {}) }
+        return
     }
-    Column(
-        Modifier
-            .weight(1f)
-            .verticalScroll(rememberScrollState())
-            .padding(horizontal = 20.dp)
-            .padding(bottom = 16.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp),
-    ) {
-        if (!estado.existente) {
-            Text(
-                "Así te verán los dueños en el directorio. Después podrás subir tu certificado para obtener la insignia Verificado.",
-                style = MaterialTheme.typography.bodyMedium, color = Pc.TintaSuave,
-            )
-        }
-        if (estado.cargando) {
-            Text("Cargando…", color = Pc.TintaSuave)
-            return@Column
-        }
+    val pasos = PasoVet.entries
+    // Editar = abrir en el resumen; activar = empezar por el primer paso
+    var paso by androidx.compose.runtime.saveable.rememberSaveable { androidx.compose.runtime.mutableIntStateOf(if (estado.existente) PasoVet.RESUMEN.ordinal else 0) }
+    var desdeResumen by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf(estado.existente) }
+    val actual = pasos[paso]
+    fun siguiente() {
+        if (!viewModel.validarPaso(actual.claves)) return
+        paso = if (desdeResumen) PasoVet.RESUMEN.ordinal else paso + 1
+    }
+    fun ir(p: PasoVet) {
+        desdeResumen = true
+        paso = p.ordinal
+    }
 
-        Seccion("Tú") {
-            com.udenar.petcare.ui.componentes.EditorFotoPerfil(b.foto, b.nombre, estado.subiendoFoto, onElegir = viewModel::elegirFoto, onQuitar = { viewModel.cambiar { it.copy(foto = null) } })
-            CampoTexto(b.nombre, { v -> viewModel.cambiar { it.copy(nombre = v) } }, "Nombre completo *", error = e["nombre"], modifier = Modifier.testTag("vet_nombre"))
-            CampoTexto(b.clinica, { v -> viewModel.cambiar { it.copy(clinica = v) } }, "Clínica o consultorio")
-            CampoTexto(b.especialidades, { v -> viewModel.cambiar { it.copy(especialidades = v) } }, "Especialidades (separadas por coma)")
-            CampoTexto(b.descripcion, { v -> viewModel.cambiar { it.copy(descripcion = v.take(1000)) } }, "Descripción", lineas = 3)
-        }
-
-        Seccion("Especies que atiendes *") {
-            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Especie.entries.forEach { esp ->
-                    ChipOpcion(esp.etiqueta, esp in b.especies, onClick = {
-                        viewModel.cambiar { it.copy(especies = if (esp in it.especies) it.especies - esp else it.especies + esp) }
-                    }, modifier = Modifier.testTag("vet_especie_${esp.name}"))
-                }
-            }
-            e["especies"]?.let { Text(it, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall) }
-        }
-
-        Seccion("Servicios") {
-            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                ServicioVet.entries.forEach { s ->
-                    ChipOpcion(s.etiqueta, s in b.servicios, onClick = {
-                        viewModel.cambiar { it.copy(servicios = if (s in it.servicios) it.servicios - s else it.servicios + s) }
-                    })
-                }
-            }
-            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                Text("Atiendo a domicilio", style = MaterialTheme.typography.titleSmall, modifier = Modifier.weight(1f))
-                Switch(
-                    b.domicilio, { v -> viewModel.cambiar { it.copy(domicilio = v) } },
-                    colors = SwitchDefaults.colors(checkedTrackColor = Pc.Naranja),
+    com.udenar.petcare.ui.componentes.AsistentePasos(
+        paso = paso, total = pasos.size,
+        onAtras = { if (desdeResumen && actual != PasoVet.RESUMEN) paso = PasoVet.RESUMEN.ordinal else if (paso == 0) onVolver() else paso-- },
+        onCerrar = onVolver,
+        onSaltar = if (actual == PasoVet.HORARIO || actual == PasoVet.SOBRE_TI) ({ siguiente() }) else null,
+        abajo = {
+            if (actual == PasoVet.RESUMEN) {
+                BotonPrincipal(
+                    if (estado.existente) "Guardar cambios" else "Activar perfil de veterinario",
+                    onClick = { viewModel.guardar(onGuardado) }, cargando = estado.guardando,
+                    modifier = Modifier.testTag("vet_guardar"),
                 )
+            } else {
+                BotonPrincipal(if (desdeResumen) "Listo" else "Continuar", onClick = ::siguiente, modifier = Modifier.testTag("continuar"))
             }
-            CampoTexto(b.tarifa, { v -> viewModel.cambiar { it.copy(tarifa = v.take(100)) } }, "Tarifa de consulta (referencial, opcional)")
-        }
-
-        Seccion("Contacto") {
-            CampoTexto(b.telefono, { v -> viewModel.cambiar { it.copy(telefono = v) } }, "Teléfono *", teclado = KeyboardType.Phone, error = e["telefono"], modifier = Modifier.testTag("vet_telefono"))
-            CampoTexto(b.whatsapp, { v -> viewModel.cambiar { it.copy(whatsapp = v) } }, "WhatsApp", teclado = KeyboardType.Phone, error = e["whatsapp"])
-            CampoTexto(b.correo, { v -> viewModel.cambiar { it.copy(correo = v) } }, "Correo", teclado = KeyboardType.Email, error = e["correo"])
-        }
-
-        Seccion("Horario") {
-            Text("Escribe los rangos de cada día, p. ej. 8:00-12:00, 14:00-18:00. Déjalo vacío si no atiendes.", style = MaterialTheme.typography.bodySmall, color = Pc.TintaSuave)
-            DayOfWeek.entries.forEach { dia ->
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(dia.getDisplayName(TextStyle.SHORT, LOCALE).replaceFirstChar { it.uppercase() }, style = MaterialTheme.typography.titleSmall, modifier = Modifier.width(52.dp))
-                    CampoTexto(
-                        b.horario[dia].orEmpty(),
-                        { v -> viewModel.cambiar { it.copy(horario = it.horario + (dia to v.take(60))) } },
-                        "Horario",
-                        modifier = Modifier.weight(1f),
+        },
+    ) { n ->
+        when (pasos[n]) {
+            PasoVet.TU -> {
+                com.udenar.petcare.ui.componentes.PreguntaMichi(
+                    if (estado.existente) "Tu perfil" else "¡Hola, colega!",
+                    "Así te presentarás a los dueños de mascotas", com.udenar.petcare.domain.recomendaciones.PoseMichi.DOCTOR,
+                )
+                com.udenar.petcare.ui.componentes.EditorFotoPerfil(b.foto, b.nombre, estado.subiendoFoto, onElegir = viewModel::elegirFoto, onQuitar = { viewModel.cambiar { it.copy(foto = null) } })
+                CampoTexto(b.nombre, { v -> viewModel.cambiar { it.copy(nombre = v) } }, "Nombre completo", error = e["nombre"], modifier = Modifier.testTag("vet_nombre"))
+                CampoTexto(b.clinica, { v -> viewModel.cambiar { it.copy(clinica = v) } }, "Clínica o consultorio (opcional)")
+                VistaPreviaPerfil { com.udenar.petcare.ui.servicios.TarjetaVeterinario(b.comoPerfil(""), onClick = {}) }
+            }
+            PasoVet.ESPECIES -> {
+                com.udenar.petcare.ui.componentes.PreguntaMichi("¿A quiénes atiendes?", "Elige todas las que quieras", com.udenar.petcare.domain.recomendaciones.PoseMichi.AMIGOS)
+                ElegirEspecies(b.especies, { esp -> viewModel.cambiar { it.copy(especies = if (esp in it.especies) it.especies - esp else it.especies + esp) } }, "vet")
+                e["especies"]?.let { Text(it, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall) }
+            }
+            PasoVet.SERVICIOS -> {
+                com.udenar.petcare.ui.componentes.PreguntaMichi("¿Qué ofreces?", "Toca los servicios de tu consulta", com.udenar.petcare.domain.recomendaciones.PoseMichi.SALUD)
+                ServicioVet.entries.chunked(2).forEach { fila ->
+                    Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                        fila.forEach { sv ->
+                            com.udenar.petcare.ui.componentes.TarjetaOpcionGrande(
+                                sv.etiqueta, sv in b.servicios,
+                                onClick = { viewModel.cambiar { it.copy(servicios = if (sv in it.servicios) it.servicios - sv else it.servicios + sv) } },
+                                icono = sv.icono(), color = Pc.CieloClaro, modifier = Modifier.weight(1f).testTag("vet_servicio_${sv.name}"),
+                            )
+                        }
+                        if (fila.size == 1) Box(Modifier.weight(1f))
+                    }
+                }
+                TarjetaInterruptor(com.udenar.petcare.domain.modelo.Icono.CASA, "Atiendo a domicilio", "Aparecerás en búsquedas de visitas a casa", b.domicilio, { v -> viewModel.cambiar { it.copy(domicilio = v) } })
+                CampoTexto(b.tarifa, { v -> viewModel.cambiar { it.copy(tarifa = v.take(100)) } }, "Tarifa de consulta (referencial, opcional)")
+                CampoTexto(b.especialidades, { v -> viewModel.cambiar { it.copy(especialidades = v) } }, "Especialidades (opcional, separadas por coma)")
+            }
+            PasoVet.CONTACTO -> {
+                com.udenar.petcare.ui.componentes.PreguntaMichi("¿Cómo te contactan?", "Los dueños te llaman o te escriben desde tu perfil", com.udenar.petcare.domain.recomendaciones.PoseMichi.ALARMA)
+                CampoTexto(b.telefono, { v -> viewModel.cambiar { it.copy(telefono = v) } }, "Teléfono", teclado = KeyboardType.Phone, error = e["telefono"], modifier = Modifier.testTag("vet_telefono"))
+                if (b.telefono.isNotBlank()) {
+                    ChipOpcion("Mi WhatsApp es el mismo número", b.whatsapp == b.telefono, onClick = { viewModel.cambiar { it.copy(whatsapp = if (it.whatsapp == it.telefono) "" else it.telefono) } }, icono = com.udenar.petcare.domain.modelo.Icono.MENSAJE)
+                }
+                CampoTexto(b.whatsapp, { v -> viewModel.cambiar { it.copy(whatsapp = v) } }, "WhatsApp (opcional)", teclado = KeyboardType.Phone, error = e["whatsapp"])
+                CampoTexto(b.correo, { v -> viewModel.cambiar { it.copy(correo = v) } }, "Correo (opcional)", teclado = KeyboardType.Email, error = e["correo"])
+            }
+            PasoVet.HORARIO -> {
+                com.udenar.petcare.ui.componentes.PreguntaMichi("¿Cuándo atiendes?", "Dos toques y listo; puedes ajustar cada día", com.udenar.petcare.domain.recomendaciones.PoseMichi.AGENDA)
+                EditorHorarioAmigable(b.horario) { h -> viewModel.cambiar { it.copy(horario = h) } }
+            }
+            PasoVet.DONDE -> {
+                com.udenar.petcare.ui.componentes.PreguntaMichi("¿Dónde atiendes?", "Te mostramos en el mapa del directorio", com.udenar.petcare.domain.recomendaciones.PoseMichi.LEYENDO)
+                CampoTexto(b.ciudad, { v -> viewModel.cambiar { it.copy(ciudad = v) } }, "Ciudad", error = e["ciudad"], modifier = Modifier.testTag("vet_ciudad"))
+                CampoTexto(b.direccion, { v -> viewModel.cambiar { it.copy(direccion = v) } }, "Dirección", error = e["direccion"], modifier = Modifier.testTag("vet_direccion"))
+                TarjetaUbicacion(b.ubicacion != null, "ubicacion" in e && b.ubicacion == null, "Consultorio ubicado en el mapa ✓", onClick = { mapa = true }, tag = "vet_ubicar")
+            }
+            PasoVet.SOBRE_TI -> {
+                com.udenar.petcare.ui.componentes.PreguntaMichi("Cuéntales de ti", "Tu experiencia, cómo trabajas, lo que te hace especial (opcional)", com.udenar.petcare.domain.recomendaciones.PoseMichi.LEYENDO)
+                CampoTexto(b.descripcion, { v -> viewModel.cambiar { it.copy(descripcion = v.take(1000)) } }, "Sobre mí", lineas = 5)
+                Text("${b.descripcion.length}/1000", style = MaterialTheme.typography.labelSmall, color = Pc.TintaSuave)
+            }
+            PasoVet.RESUMEN -> {
+                com.udenar.petcare.ui.componentes.PreguntaMichi(
+                    if (estado.existente) "Tu perfil" else "¡Listo para recibir pacientes!",
+                    "Toca un dato para cambiarlo", com.udenar.petcare.domain.recomendaciones.PoseMichi.CELEBRA,
+                )
+                VistaPreviaPerfil { com.udenar.petcare.ui.servicios.TarjetaVeterinario(b.comoPerfil(""), onClick = {}) }
+                Column(Modifier.fillMaxWidth().clip(MaterialTheme.shapes.large).background(Pc.Blanco).padding(horizontal = 12.dp, vertical = 4.dp)) {
+                    com.udenar.petcare.ui.componentes.FilaResumen("Tú", listOfNotNull(b.nombre.ifBlank { null }, b.clinica.ifBlank { null }).joinToString(" · ").ifEmpty { "Sin nombre" }, onEditar = { ir(PasoVet.TU) })
+                    com.udenar.petcare.ui.componentes.FilaResumen("Atiendes", b.especies.joinToString { it.etiqueta }.ifEmpty { "Sin especies" }, onEditar = { ir(PasoVet.ESPECIES) })
+                    com.udenar.petcare.ui.componentes.FilaResumen("Servicios", (b.servicios.map { it.etiqueta } + listOfNotNull("A domicilio".takeIf { b.domicilio })).joinToString().ifEmpty { "Sin servicios" }, onEditar = { ir(PasoVet.SERVICIOS) })
+                    com.udenar.petcare.ui.componentes.FilaResumen("Contacto", b.telefono.ifBlank { "Sin teléfono" }, onEditar = { ir(PasoVet.CONTACTO) })
+                    com.udenar.petcare.ui.componentes.FilaResumen("Horario", resumenHorario(b.horario), onEditar = { ir(PasoVet.HORARIO) })
+                    com.udenar.petcare.ui.componentes.FilaResumen("Dónde", listOf(b.direccion, b.ciudad).filter { it.isNotBlank() }.joinToString(", ").ifEmpty { "Sin dirección" } + if (b.ubicacion != null) " ✓" else "", onEditar = { ir(PasoVet.DONDE) })
+                    com.udenar.petcare.ui.componentes.FilaResumen("Sobre ti", b.descripcion.take(60).ifBlank { "Sin descripción" }, onEditar = { ir(PasoVet.SOBRE_TI) })
+                }
+                if (!estado.existente) {
+                    Text(
+                        "Después podrás subir tu certificado para obtener la insignia Verificado.",
+                        style = MaterialTheme.typography.bodySmall, color = Pc.TintaSuave,
                     )
                 }
             }
         }
-
-        Seccion("Dónde atiendes") {
-            CampoTexto(b.ciudad, { v -> viewModel.cambiar { it.copy(ciudad = v) } }, "Ciudad *", error = e["ciudad"], modifier = Modifier.testTag("vet_ciudad"))
-            CampoTexto(b.direccion, { v -> viewModel.cambiar { it.copy(direccion = v) } }, "Dirección *", error = e["direccion"], modifier = Modifier.testTag("vet_direccion"))
-            Text(
-                if (b.ubicacion != null) "Consultorio ubicado en el mapa ✓" else "Aún no has ubicado tu consultorio en el mapa *",
-                style = MaterialTheme.typography.bodyMedium,
-                color = if (b.ubicacion == null && "ubicacion" in e) MaterialTheme.colorScheme.error else Pc.Tinta,
-            )
-            BotonSecundario(if (b.ubicacion != null) "Cambiar ubicación" else "Ubicar en el mapa", onClick = { mapa = true }, modifier = Modifier.testTag("vet_ubicar"))
-        }
-
-        BotonPrincipal(
-            if (estado.existente) "Guardar cambios" else "Activar perfil de veterinario",
-            onClick = { viewModel.guardar(onGuardado) },
-            cargando = estado.guardando,
-            modifier = Modifier.testTag("vet_guardar"),
-        )
-    }
     }
 
     if (mapa) {
@@ -330,6 +361,37 @@ fun FormVeterinarioScreen(onVolver: () -> Unit, onGuardado: (activado: Boolean) 
             onCerrar = { mapa = false },
             avisar = avisar,
         )
+    }
+}
+
+/** Ícono de cada servicio veterinario. */
+fun ServicioVet.icono(): com.udenar.petcare.domain.modelo.Icono = when (this) {
+    ServicioVet.CONSULTA -> com.udenar.petcare.domain.modelo.Icono.ESTETOSCOPIO_VET
+    ServicioVet.VACUNACION -> com.udenar.petcare.domain.modelo.Icono.VACUNA
+    ServicioVet.DESPARASITACION -> com.udenar.petcare.domain.modelo.Icono.ESCUDO
+    ServicioVet.CIRUGIA -> com.udenar.petcare.domain.modelo.Icono.HOSPITAL
+    ServicioVet.OTROS -> com.udenar.petcare.domain.modelo.Icono.MAS
+}
+
+/** Tarjeta grande para ubicar el lugar en el mapa; se pinta de verde cuando ya está. */
+@Composable
+fun TarjetaUbicacion(ubicado: Boolean, conError: Boolean, textoListo: String, onClick: () -> Unit, tag: String) {
+    Row(
+        Modifier
+            .fillMaxWidth()
+            .clip(MaterialTheme.shapes.large)
+            .background(if (ubicado) Pc.MentaClara else Pc.Blanco)
+            .border(1.5.dp, if (conError) MaterialTheme.colorScheme.error else if (ubicado) Pc.Menta else Pc.Linea, MaterialTheme.shapes.large)
+            .clickable(onClick = onClick)
+            .padding(16.dp)
+            .testTag(tag),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        com.udenar.petcare.ui.componentes.BaldosaIcono(if (ubicado) com.udenar.petcare.domain.modelo.Icono.CHECK else com.udenar.petcare.domain.modelo.Icono.MAPA, tam = 46.dp)
+        Column(Modifier.weight(1f).padding(start = 12.dp)) {
+            Text(if (ubicado) textoListo else "Ubicar en el mapa", style = MaterialTheme.typography.titleSmall)
+            Text(if (ubicado) "Toca para cambiarlo" else "Mueve el mapa hasta el lugar exacto", style = MaterialTheme.typography.bodySmall, color = Pc.TintaSuave)
+        }
     }
 }
 

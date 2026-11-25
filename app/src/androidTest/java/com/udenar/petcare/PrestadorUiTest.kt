@@ -44,25 +44,46 @@ class PrestadorUiTest {
     @Test
     fun activarPerfilConUnServicioYPausarSolicitudes() {
         compose.onNodeWithTag("pestana_perfil").performClick()
-        compose.onNodeWithTag("tarjeta_trabaja").performClick()
-        compose.onNodeWithTag("trabajar_pres").performClick()
+        // Desde "Cuidador y paseador": la categoría llega ya elegida
+        compose.onNodeWithTag("perfil_pro_cuidador").performScrollTo().performClick()
+        compose.waitUntil(5_000) { compose.onAllNodesWithTagExists("pres_nombre") }
+        compose.onNodeWithTag("continuar").performClick()
         compose.waitUntil(5_000) { compose.onAllNodesWithTagExists("pres_categoria_PASEADOR") }
-        compose.onNodeWithTag("pres_descripcion").performScrollTo().performTextInput("Paseos tranquilos por el parque")
-        compose.onNodeWithTag("pres_categoria_PASEADOR").performScrollTo().performClick()
-        compose.onNodeWithTag("pres_agregar_servicio").performScrollTo().performClick()
+        compose.onNodeWithText("Principal").assertExists()
+        compose.onNodeWithTag("continuar").performClick()
+        // Servicios y precios
+        compose.waitUntil(5_000) { compose.onAllNodesWithTagExists("pres_agregar_servicio") }
+        compose.onNodeWithTag("pres_agregar_servicio").performClick()
         compose.onNodeWithTag("servicio_nombre").performTextInput("Paseo de 1 hora")
         compose.onNodeWithTag("modo_FIJO").performClick()
         compose.onNodeWithTag("servicio_monto").performTextInput("15000")
         compose.onNodeWithTag("servicio_guardar").performClick()
         compose.onNodeWithTag("pres_servicio_Paseo de 1 hora").assertExists()
-        compose.onNodeWithTag("pres_especie_PERRO").performScrollTo().performClick()
-        compose.onNodeWithTag("pres_telefono").performScrollTo().performTextInput("300 123 4567")
-        compose.onNodeWithTag("pres_ciudad").performScrollTo().performTextInput("Pasto")
-        compose.onNodeWithTag("pres_zona").performScrollTo().performTextInput("Centro")
+        compose.onNodeWithTag("continuar").performClick()
+        compose.waitUntil(5_000) { compose.onAllNodesWithTagExists("pres_especie_PERRO") }
+        compose.onNodeWithTag("pres_especie_PERRO").performClick()
+        compose.onNodeWithTag("continuar").performClick()
+        compose.waitUntil(5_000) { compose.onAllNodesWithTagExists("pres_telefono") }
+        compose.onNodeWithTag("pres_telefono").performTextInput("300 123 4567")
+        androidx.test.espresso.Espresso.closeSoftKeyboard()
+        compose.onNodeWithTag("continuar").performClick()
+        compose.waitUntil(5_000) { compose.onAllNodesWithTagExists("pres_ciudad") }
+        compose.onNodeWithTag("pres_ciudad").performTextInput("Pasto")
+        compose.onNodeWithTag("pres_zona").performTextInput("Centro")
+        androidx.test.espresso.Espresso.closeSoftKeyboard()
         compose.onNodeWithTag("pres_ubicar").performScrollTo().performClick()
         compose.waitUntil(5_000) { compose.onAllNodesWithTagExists("vet_usar_punto") }
         compose.onNodeWithTag("vet_usar_punto").performClick()
-        compose.onNodeWithTag("pres_guardar").performScrollTo().performClick()
+        compose.onNodeWithTag("continuar").performClick()
+        // Horario: se puede saltar
+        compose.waitUntil(5_000) { compose.onAllNodesWithTagExists("asistente_saltar") }
+        compose.onNodeWithTag("asistente_saltar").performClick()
+        compose.waitUntil(5_000) { compose.onAllNodesWithTagExists("pres_descripcion") }
+        compose.onNodeWithTag("pres_descripcion").performTextInput("Paseos tranquilos por el parque")
+        androidx.test.espresso.Espresso.closeSoftKeyboard()
+        compose.onNodeWithTag("continuar").performClick()
+        compose.waitUntil(5_000) { compose.onAllNodesWithTagExists("pres_guardar") }
+        compose.onNodeWithTag("pres_guardar").performClick()
 
         compose.waitUntil(5_000) { compose.onAllNodesWithTagExists("chip_modo_pres") }
         assertEquals(ModoUso.PRESTADOR, modo.modo.value)

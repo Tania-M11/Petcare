@@ -156,6 +156,14 @@ class CapturasTest {
         guardar("25_servicios")
         compose.onNodeWithTag("pestana_perfil").performClick()
         guardar("26_perfil")
+        compose.onNodeWithTag("perfil_pro_peluqueria").performScrollTo()
+        guardar("27_perfil_trabajo")
+        compose.onNodeWithTag("perfil_pro_peluqueria").performClick()
+        compose.waitUntil(5_000) { compose.onAllNodesWithTagExists("pres_nombre") }
+        guardar("28_pres_tu")
+        compose.onNodeWithTag("continuar").performClick()
+        compose.waitUntil(5_000) { compose.onAllNodesWithTagExists("pres_categoria_BANO_PELUQUERIA") }
+        guardar("29_pres_categorias")
     }
 }
 

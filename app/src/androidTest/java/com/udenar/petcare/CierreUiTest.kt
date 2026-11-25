@@ -146,7 +146,7 @@ class CierreUiTest {
         compose.onNodeWithText("Nombre").performTextInput("Leo")
         compose.onNodeWithText("Correo").performTextInput("leo@petcare.test")
         compose.onNodeWithText("Contraseña (mínimo 8)").performTextInput("clave1234")
-        compose.onNodeWithTag("casilla_privacidad").performClick()
+        compose.onNodeWithTag("casilla_privacidad").performScrollTo().performClick()
         compose.onNodeWithText("Crear cuenta").performScrollTo().performClick()
         compose.waitUntil(5_000) { compose.onAllNodesWithTagExists("aviso_acceso") }
         compose.onNodeWithText("Te enviamos un correo a leo@petcare.test. Ábrelo en este teléfono para confirmar tu cuenta.").assertExists()

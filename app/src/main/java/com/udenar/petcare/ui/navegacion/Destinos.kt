@@ -38,7 +38,7 @@ interface Pestana {
 @Serializable data object RutaDirectorioVet
 @Serializable data class RutaDetalleVet(val id: String)
 @Serializable data class RutaSolicitarVet(val id: String)
-@Serializable data object RutaFormPrestador
+@Serializable data class RutaFormPrestador(val categoria: String? = null)
 @Serializable data object RutaDirectorioPres
 @Serializable data class RutaDetallePrestador(val id: String)
 @Serializable data class RutaSolicitarPrestador(val id: String)

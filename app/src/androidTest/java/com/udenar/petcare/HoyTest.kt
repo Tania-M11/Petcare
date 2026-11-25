@@ -88,7 +88,7 @@ class HoyTest {
         compose.waitUntil(5_000) { compose.onAllNodesWithTextExists("Volver a hoy") }
         // Las tomas de mañana se ven pero no se pueden marcar todavía
         compose.onAllNodesWithTag("hecho_Gotas").fetchSemanticsNodes().let { assert(it.isEmpty()) }
-        compose.onNodeWithText("Volver a hoy").performClick()
+        compose.onNodeWithText("Volver a hoy").performScrollTo().performClick()
         compose.waitUntil(5_000) { compose.onAllNodesWithTagExists("hecho_Gotas") }
     }
 

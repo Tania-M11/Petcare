@@ -2,6 +2,7 @@ package com.udenar.petcare
 
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithTag
+import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextClearance
@@ -47,11 +48,11 @@ class AccesoTest {
         compose.onNodeWithText("Nombre").performTextInput("Tania")
         compose.onNodeWithText("Correo").performTextInput("tania@petcare.test")
         compose.onNodeWithText("Contraseña (mínimo 8)").performTextInput("clave1234")
-        compose.onNodeWithText("Crear cuenta").performClick()
+        compose.onNodeWithText("Crear cuenta").performScrollTo().performClick()
         compose.onNodeWithText("Debes aceptar la política de privacidad").assertExists()
 
-        compose.onNodeWithTag("casilla_privacidad").performClick()
-        compose.onNodeWithText("Crear cuenta").performClick()
+        compose.onNodeWithTag("casilla_privacidad").performScrollTo().performClick()
+        compose.onNodeWithText("Crear cuenta").performScrollTo().performClick()
         // Recién registrada: primero "¿Qué te trae a PetCare?"
         compose.waitUntil(5_000) { compose.onAllNodesWithTextExists("¿Qué te trae a PetCare?") }
         compose.onNodeWithText("Ahora no").performClick()
@@ -65,8 +66,8 @@ class AccesoTest {
         compose.onNodeWithText("Nombre").performTextInput("Otra Ana")
         compose.onNodeWithText("Correo").performTextInput("ana@petcare.test")
         compose.onNodeWithText("Contraseña (mínimo 8)").performTextInput("clave1234")
-        compose.onNodeWithTag("casilla_privacidad").performClick()
-        compose.onNodeWithText("Crear cuenta").performClick()
+        compose.onNodeWithTag("casilla_privacidad").performScrollTo().performClick()
+        compose.onNodeWithText("Crear cuenta").performScrollTo().performClick()
         compose.waitUntil(5_000) { compose.onAllNodesWithTagExists("error_general") }
         compose.onNodeWithText("Ya existe una cuenta con ese correo.").assertExists()
     }
@@ -76,19 +77,19 @@ class AccesoTest {
         compose.onNodeWithTag("ya_tengo_cuenta").performClick()
         compose.onNodeWithText("Correo").performTextInput("ana@petcare.test")
         compose.onNodeWithText("Contraseña").performTextInput("mala")
-        compose.onNodeWithText("Entrar").performClick()
+        compose.onNodeWithText("Entrar").performScrollTo().performClick()
         compose.waitUntil(5_000) { compose.onAllNodesWithTagExists("error_general") }
         compose.onNodeWithText("Correo o contraseña incorrectos.").assertExists()
 
         compose.onNodeWithText("Contraseña").performTextClearance()
         compose.onNodeWithText("Contraseña").performTextInput("clave1234")
-        compose.onNodeWithText("Entrar").performClick()
+        compose.onNodeWithText("Entrar").performScrollTo().performClick()
         compose.waitUntil(5_000) { compose.onAllNodesWithTagExists("pestana_hoy") }
         compose.onNodeWithText("Ana", substring = true).assertExists()
 
         compose.onNodeWithTag("pestana_perfil").performClick()
         compose.onNodeWithText("ana@petcare.test").assertExists()
-        compose.onNodeWithText("Cerrar sesión").performClick()
+        compose.onNodeWithText("Cerrar sesión").performScrollTo().performClick()
         compose.onNodeWithText("¿Cerrar sesión?").assertExists()
         compose.onAllNodesWithTextFirst("Cerrar sesión", 1).performClick()
         compose.waitUntil(5_000) { compose.onAllNodesWithTagExists("crear_cuenta") }
