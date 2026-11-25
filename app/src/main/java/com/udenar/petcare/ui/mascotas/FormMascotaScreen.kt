@@ -84,11 +84,13 @@ fun FormMascotaScreen(
 ) {
     val f by viewModel.form.collectAsStateWithLifecycle()
     var verCalendario by rememberSaveable { mutableStateOf(false) }
-    var verSalud by rememberSaveable { mutableStateOf(false) }
     val elegirFoto = rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
         if (uri != null) viewModel.elegirFoto(uri)
     }
     LaunchedEffect(f.guardada) { if (f.guardada) onGuardada(f.id) }
+    // Una sección abierta a la vez; las demás muestran su resumen
+    var abierta by rememberSaveable { mutableStateOf("Lo básico") }
+    fun alternar(t: String) { abierta = if (abierta == t) "" else t }
 
     Column(
         Modifier
@@ -101,14 +103,12 @@ fun FormMascotaScreen(
             .padding(horizontal = 20.dp, vertical = 12.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            BotonCircular(Icons.AutoMirrored.Rounded.ArrowBack, "Volver", onClick = onVolver)
-            Text(
-                if (f.esNueva) "Nueva mascota" else "Editar ficha",
-                style = MaterialTheme.typography.headlineMedium,
-                modifier = Modifier.padding(start = 16.dp),
-            )
-        }
+        com.udenar.petcare.ui.componentes.EncabezadoMichi(
+            if (f.esNueva) "Nueva mascota" else "Ficha de ${f.nombre.ifBlank { "tu mascota" }}",
+            "Toca una sección para cambiarla",
+            com.udenar.petcare.domain.recomendaciones.PoseMichi.LEYENDO,
+            onVolver,
+        )
 
         // Foto: el selector del sistema no pide permisos
         Box(
@@ -134,7 +134,11 @@ fun FormMascotaScreen(
             }
         }
 
-        Seccion("Lo básico") {
+        com.udenar.petcare.ui.componentes.SeccionPlegable(
+            "Lo básico",
+            listOfNotNull(f.nombre.ifBlank { null }, f.especie?.etiqueta, f.sexo.etiqueta).joinToString(" · "),
+            abierta == "Lo básico", { alternar("Lo básico") },
+        ) {
             CampoTexto(f.nombre, { v -> viewModel.editar(CampoMascota.NOMBRE) { it.copy(nombre = v) } }, "Nombre", error = f.errores[CampoMascota.NOMBRE])
             Text("Especie", style = MaterialTheme.typography.labelLarge, color = Pc.TintaSuave)
             FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -160,7 +164,15 @@ fun FormMascotaScreen(
             }
         }
 
-        Seccion("Edad y tamaño") {
+        com.udenar.petcare.ui.componentes.SeccionPlegable(
+            "Edad y tamaño",
+            listOfNotNull(
+                f.nacimiento?.let { FichaMascota.edad(it, f.aproximada, viewModel.hoy) },
+                f.pesoTexto.ifBlank { null }?.let { "$it ${if (f.unidad == UnidadPeso.KG) "kg" else "g"}" },
+                f.tamano?.etiqueta,
+            ).joinToString(" · ").ifEmpty { "Sin datos" },
+            abierta == "Edad y tamaño", { alternar("Edad y tamaño") },
+        ) {
             Row(
                 Modifier
                     .fillMaxWidth()
@@ -212,7 +224,11 @@ fun FormMascotaScreen(
             }
         }
 
-        Seccion("Más detalles") {
+        com.udenar.petcare.ui.componentes.SeccionPlegable(
+            "Más detalles",
+            listOf(f.raza, f.color).filter { it.isNotBlank() }.joinToString(" · ").ifEmpty { "Raza, color, esterilización y notas" },
+            abierta == "Más detalles", { alternar("Más detalles") },
+        ) {
             CampoTexto(f.raza, { v -> viewModel.editar { it.copy(raza = v) } }, "Raza (opcional)")
             CampoTexto(f.color, { v -> viewModel.editar { it.copy(color = v) } }, "Color (opcional)")
             Text("¿Está esterilizado/a?", style = MaterialTheme.typography.labelLarge, color = Pc.TintaSuave)
@@ -224,42 +240,27 @@ fun FormMascotaScreen(
             CampoTexto(f.notas, { v -> viewModel.editar { it.copy(notas = v) } }, "Notas (opcional)", lineas = 3)
         }
 
-        Column(
-            Modifier
-                .fillMaxWidth()
-                .clip(MaterialTheme.shapes.large)
-                .background(Pc.Blanco)
-                .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp),
+        com.udenar.petcare.ui.componentes.SeccionPlegable(
+            "Salud básica",
+            listOf(f.alergias, f.condiciones, f.medicamentos).filter { it.isNotBlank() }.joinToString(" · ").ifEmpty { "Alergias, condiciones y medicamentos actuales" },
+            abierta == "Salud básica", { alternar("Salud básica") },
         ) {
-            Row(
-                Modifier
-                    .fillMaxWidth()
-                    .clickable { verSalud = !verSalud },
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Column(Modifier.weight(1f)) {
-                    Text("Salud básica", style = MaterialTheme.typography.titleMedium)
-                    Text("Alergias, condiciones y medicamentos actuales", style = MaterialTheme.typography.bodySmall, color = Pc.TintaSuave)
-                }
-                Icon(if (verSalud) Icons.Rounded.ExpandLess else Icons.Rounded.ExpandMore, contentDescription = null, tint = Pc.TintaSuave)
-            }
-            AnimatedVisibility(verSalud) {
-                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                    Text(
-                        "Escribe lo que te haya indicado tu veterinario. PetCare solo lo guarda; no diagnostica ni recomienda.",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = Pc.TintaSuave,
-                    )
-                    CampoTexto(f.alergias, { v -> viewModel.editar { it.copy(alergias = v) } }, "Alergias", lineas = 2)
-                    CampoTexto(f.condiciones, { v -> viewModel.editar { it.copy(condiciones = v) } }, "Condiciones conocidas", lineas = 2)
-                    CampoTexto(f.medicamentos, { v -> viewModel.editar { it.copy(medicamentos = v) } }, "Medicamentos actuales", lineas = 2)
-                    CampoTexto(f.observaciones, { v -> viewModel.editar { it.copy(observaciones = v) } }, "Observaciones importantes", lineas = 2)
-                }
-            }
+            Text(
+                "Escribe lo que te haya indicado tu veterinario. PetCare solo lo guarda; no diagnostica ni recomienda.",
+                style = MaterialTheme.typography.bodySmall,
+                color = Pc.TintaSuave,
+            )
+            CampoTexto(f.alergias, { v -> viewModel.editar { it.copy(alergias = v) } }, "Alergias", lineas = 2)
+            CampoTexto(f.condiciones, { v -> viewModel.editar { it.copy(condiciones = v) } }, "Condiciones conocidas", lineas = 2)
+            CampoTexto(f.medicamentos, { v -> viewModel.editar { it.copy(medicamentos = v) } }, "Medicamentos actuales", lineas = 2)
+            CampoTexto(f.observaciones, { v -> viewModel.editar { it.copy(observaciones = v) } }, "Observaciones importantes", lineas = 2)
         }
 
-        Seccion("Veterinario de la mascota (opcional)") {
+        com.udenar.petcare.ui.componentes.SeccionPlegable(
+            "Su veterinario",
+            listOf(f.vet.nombre, f.vet.clinica).filter { it.isNotBlank() }.joinToString(" · ").ifEmpty { "Opcional: nombre, teléfono y clínica" },
+            abierta == "Su veterinario", { alternar("Su veterinario") },
+        ) {
             CampoTexto(f.vet.nombre, { v -> viewModel.editar { it.copy(vet = it.vet.copy(nombre = v)) } }, "Nombre del veterinario")
             CampoTexto(f.vet.telefono, { v -> viewModel.editar { it.copy(vet = it.vet.copy(telefono = v)) } }, "Teléfono", teclado = KeyboardType.Phone)
             CampoTexto(f.vet.clinica, { v -> viewModel.editar { it.copy(vet = it.vet.copy(clinica = v)) } }, "Clínica")

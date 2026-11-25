@@ -140,10 +140,10 @@ fun FormVisitaScreen(onListo: () -> Unit, viewModel: FormVisitaViewModel = hiltV
             .padding(horizontal = 20.dp, vertical = 12.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            BotonCircular(Icons.AutoMirrored.Rounded.ArrowBack, "Volver", onClick = onListo)
-            Text(if (e.esNueva) "Nueva visita" else "Editar visita", style = MaterialTheme.typography.headlineMedium, modifier = Modifier.padding(start = 16.dp))
-        }
+        com.udenar.petcare.ui.componentes.EncabezadoMichi(
+            if (e.esNueva) "Nueva visita" else "Editar visita", "Lo que pasó en la consulta",
+            com.udenar.petcare.domain.recomendaciones.PoseMichi.DOCTOR, onListo,
+        )
         Seccion("Consulta") {
             SelectorFecha("Fecha", e.fecha, { d -> d?.let { viewModel.editar { s -> s.copy(fecha = it) } } }, hasta = viewModel.hoy)
             CampoTexto(e.motivo, { v -> viewModel.editar { it.copy(motivo = v) } }, "Motivo", error = e.error)

@@ -86,6 +86,9 @@ class MascotasTest {
         compose.waitUntil(5_000) { compose.onAllNodesWithTextExists("Guardar cambios") }
         compose.onNodeWithText("Luna").performTextClearance()
         compose.onNodeWithText("Nombre").performTextInput("Luna Lunera")
+        // Las secciones se abren una a la vez: abrir "Edad y tamaño" para el peso
+        compose.onNodeWithTag("seccion_Edad y tamaño").performScrollTo().performClick()
+        compose.waitUntil(5_000) { compose.onAllNodesWithTextExists("Peso (opcional)") }
         compose.onNodeWithText("Peso (opcional)").performScrollTo().performTextInput("4,2")
         compose.onNodeWithText("Guardar cambios").performScrollTo().performClick()
         compose.waitUntil(5_000) { compose.onAllNodesWithTextExists("Luna Lunera") }

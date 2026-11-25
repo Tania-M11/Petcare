@@ -3,6 +3,7 @@ package com.udenar.petcare.ui.componentes
 import com.udenar.petcare.domain.modelo.Icono
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -10,6 +11,7 @@ import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.Role
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -190,5 +192,42 @@ fun Seccion(titulo: String, modifier: Modifier = Modifier, contenido: @Composabl
     ) {
         TituloConIcono(titulo)
         contenido()
+    }
+}
+
+/**
+ * Sección que se abre y se cierra (una a la vez): cerrada muestra su [resumen], así la ficha
+ * se lee de un vistazo y no es una lista infinita de campos.
+ */
+@Composable
+fun SeccionPlegable(
+    titulo: String,
+    resumen: String,
+    abierta: Boolean,
+    onAlternar: () -> Unit,
+    modifier: Modifier = Modifier,
+    contenido: @Composable ColumnScope.() -> Unit,
+) {
+    Column(
+        modifier
+            .fillMaxWidth()
+            .clip(MaterialTheme.shapes.large)
+            .background(Pc.Blanco)
+            .border(1.5.dp, if (abierta) Pc.Naranja.copy(alpha = 0.5f) else androidx.compose.ui.graphics.Color.Transparent, MaterialTheme.shapes.large),
+    ) {
+        androidx.compose.foundation.layout.Row(
+            Modifier.fillMaxWidth().clickable(onClick = onAlternar).padding(16.dp).testTag("seccion_$titulo"),
+            verticalAlignment = androidx.compose.ui.Alignment.CenterVertically,
+        ) {
+            iconoDeTitulo(titulo)?.let { BaldosaIcono(it, tam = 38.dp, modifier = Modifier.padding(end = 12.dp)) }
+            Column(Modifier.weight(1f)) {
+                Text(titulo, style = MaterialTheme.typography.titleMedium)
+                if (!abierta) Text(resumen, style = MaterialTheme.typography.bodySmall, color = Pc.TintaSuave, maxLines = 1, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis)
+            }
+            Text(if (abierta) "Listo" else "Editar", style = MaterialTheme.typography.labelLarge, color = Pc.Naranja)
+        }
+        androidx.compose.animation.AnimatedVisibility(abierta) {
+            Column(Modifier.padding(start = 16.dp, end = 16.dp, bottom = 16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) { contenido() }
+        }
     }
 }

@@ -118,6 +118,8 @@ fun TarjetaProgreso(nombre: String, p: ProgresoMascota, modifier: Modifier = Mod
                 maximo = 100f, textoValor = { "${it.toInt()}%" }, modifier = Modifier.testTag("grafica_cumplimiento"),
             )
         }
+        if (p.semanas.none { it.total > 0 }) VacioMichi(com.udenar.petcare.domain.recomendaciones.PoseMichi.AGENDA, "Marca sus cuidados y aquí verás qué tanto se cumplen cada semana.", tam = 52.dp)
+        if (p.paseos.none { it.cantidad > 0 }) VacioMichi(com.udenar.petcare.domain.recomendaciones.PoseMichi.CELEBRA, "Sin paseos aún. Sal con GPS y aquí verás los km de cada semana.", tam = 52.dp)
         if (p.paseos.any { it.cantidad > 0 }) {
             Text("Paseos por semana (km)", style = MaterialTheme.typography.labelLarge, color = Pc.TintaSuave)
             GraficaBarras(

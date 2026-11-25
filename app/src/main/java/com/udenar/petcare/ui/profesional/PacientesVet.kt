@@ -295,11 +295,11 @@ fun FichaPacienteScreen(miId: String?, onVolver: () -> Unit, avisar: (String) ->
             ChipOpcion("Documento", false, icono = Icono.DOCUMENTO, onClick = { dialogo = "documento" })
         }
         Seccion("Vacunas, desparasitación y medicamentos") {
-            if (f.cuidados.isEmpty()) Text("Sin registros.", color = Pc.TintaSuave)
+            if (f.cuidados.isEmpty()) com.udenar.petcare.ui.componentes.VacioMichi(com.udenar.petcare.domain.recomendaciones.PoseMichi.AGENDA, "Sin registros.", tam = 48.dp)
             f.cuidados.forEach { e -> FilaClinica(e.tipo.etiqueta + " · " + e.titulo, describir(e), e.creadoPor?.nombre, e.creadoPor.esVeterinario) }
         }
         Seccion("Visitas") {
-            if (f.visitas.isEmpty()) Text("Sin visitas registradas.", color = Pc.TintaSuave)
+            if (f.visitas.isEmpty()) com.udenar.petcare.ui.componentes.VacioMichi(com.udenar.petcare.domain.recomendaciones.PoseMichi.DOCTOR, "Sin visitas registradas.", tam = 48.dp)
             f.visitas.forEach { v ->
                 FilaClinica(
                     v.motivo, listOfNotNull(v.fecha.format(FECHA), v.tratamiento?.let { "Tratamiento: $it" }, v.medicamentos?.let { "Medicamentos: $it" }, v.notas).joinToString("\n"),
@@ -308,11 +308,11 @@ fun FichaPacienteScreen(miId: String?, onVolver: () -> Unit, avisar: (String) ->
             }
         }
         Seccion("Peso") {
-            if (f.pesos.isEmpty()) Text("Sin pesajes.", color = Pc.TintaSuave)
+            if (f.pesos.isEmpty()) com.udenar.petcare.ui.componentes.VacioMichi(com.udenar.petcare.domain.recomendaciones.PoseMichi.SALUD, "Sin pesajes.", tam = 48.dp)
             f.pesos.take(6).forEach { p -> FilaClinica(FichaMascota.peso(p.gramos), p.fecha.format(FECHA), p.registradoPor?.nombre, p.registradoPor.esVeterinario) }
         }
         Seccion("Documentos") {
-            if (f.documentos.isEmpty()) Text("Sin documentos.", color = Pc.TintaSuave)
+            if (f.documentos.isEmpty()) com.udenar.petcare.ui.componentes.VacioMichi(com.udenar.petcare.domain.recomendaciones.PoseMichi.DOCUMENTOS, "Sin documentos.", tam = 48.dp)
             f.documentos.forEach { d ->
                 Row(
                     Modifier

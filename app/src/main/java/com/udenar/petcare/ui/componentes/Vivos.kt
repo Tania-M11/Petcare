@@ -264,3 +264,23 @@ fun AvisoMichi(texto: String, modifier: Modifier = Modifier) {
         Text(texto, style = MaterialTheme.typography.bodyMedium, color = Pc.Tinta, modifier = Modifier.padding(vertical = 14.dp))
     }
 }
+
+/**
+ * Hueco con Michi: cuando una gráfica o una lista aún no tiene datos, Michi en la situación del
+ * tema y una frase de qué aparecerá ahí (en lugar de un texto gris suelto).
+ */
+@Composable
+fun VacioMichi(pose: PoseMichi, texto: String, modifier: Modifier = Modifier, fondo: Color = Pc.Crema, tam: Dp = 64.dp) {
+    Row(
+        modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(20.dp))
+            .background(fondo)
+            .padding(horizontal = 12.dp, vertical = 8.dp)
+            .testTag("vacio_${pose.name.lowercase()}"),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Image(painterResource(pose.dibujo()), contentDescription = null, modifier = Modifier.size(tam))
+        Text(texto, style = MaterialTheme.typography.bodyMedium, color = Pc.TintaSuave, modifier = Modifier.padding(start = 12.dp))
+    }
+}

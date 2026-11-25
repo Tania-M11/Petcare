@@ -108,10 +108,7 @@ fun SeccionCuidados(
             }
         }
         if (resumenes.isEmpty()) {
-            Text(
-                "Aún no hay cuidados. Agrega sus comidas, medicinas, vacunas o baños y PetCare te los recordará.",
-                style = MaterialTheme.typography.bodyMedium, color = Pc.TintaSuave,
-            )
+            com.udenar.petcare.ui.componentes.VacioMichi(com.udenar.petcare.domain.recomendaciones.PoseMichi.ALARMA, "Aún no hay cuidados. Agrega sus comidas, medicinas, vacunas o baños y te los recordaré.", fondo = Pc.Blanco)
         }
         // Los registros del veterinario que el dueño ocultó no suenan ni se listan (RF-27)
         var verOcultos by remember { mutableStateOf(false) }

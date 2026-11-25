@@ -195,3 +195,26 @@ fun FilaResumen(etiqueta: String, valor: String, onEditar: () -> Unit, modifier:
         Text("Cambiar", style = MaterialTheme.typography.labelMedium, color = Pc.Naranja)
     }
 }
+
+/**
+ * Cabecera de los formularios de edición: volver, Michi en la situación del tema y el título
+ * grande, en una franja de color (para que no se vea como un formulario plano).
+ */
+@Composable
+fun EncabezadoMichi(titulo: String, subtitulo: String?, pose: PoseMichi, onVolver: () -> Unit, modifier: Modifier = Modifier) {
+    Row(
+        modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(28.dp))
+            .background(Brush.linearGradient(listOf(Pc.LavandaClara, Pc.Durazno)))
+            .padding(start = 12.dp, top = 12.dp, end = 4.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Column(Modifier.weight(1f).padding(bottom = 12.dp)) {
+            BotonCircular(Icons.AutoMirrored.Rounded.ArrowBack, "Volver", onClick = onVolver)
+            Text(titulo, fontFamily = Kalnia, fontSize = 26.sp, lineHeight = 30.sp, color = Pc.Tinta, modifier = Modifier.padding(top = 10.dp, start = 4.dp))
+            subtitulo?.let { Text(it, style = MaterialTheme.typography.bodySmall, color = Pc.TintaSuave, modifier = Modifier.padding(start = 4.dp, top = 2.dp)) }
+        }
+        Image(painterResource(pose.dibujo()), contentDescription = null, modifier = Modifier.size(110.dp))
+    }
+}

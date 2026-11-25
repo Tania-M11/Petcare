@@ -65,13 +65,17 @@ fun FormCuidadoScreen(onListo: () -> Unit, viewModel: FormCuidadoViewModel = hil
             .padding(horizontal = 20.dp, vertical = 12.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            BotonCircular(Icons.AutoMirrored.Rounded.ArrowBack, "Volver", onClick = onListo)
-            Column(Modifier.padding(start = 16.dp)) {
-                com.udenar.petcare.ui.componentes.Chip(f.clase.titulo, icono = f.clase.icono)
-                Text(if (f.esNuevo) "Nuevo cuidado" else "Editar cuidado", style = MaterialTheme.typography.headlineMedium)
-            }
-        }
+        com.udenar.petcare.ui.componentes.EncabezadoMichi(
+            if (f.esNuevo) "Nuevo cuidado" else "Editar cuidado",
+            f.clase.titulo,
+            when (f.clase.name) {
+                "MEDICAMENTO", "TRATAMIENTO", "VACUNA", "DESPARASITACION" -> com.udenar.petcare.domain.recomendaciones.PoseMichi.SALUD
+                "HIGIENE" -> com.udenar.petcare.domain.recomendaciones.PoseMichi.HIGIENE
+                "ACTIVIDAD" -> com.udenar.petcare.domain.recomendaciones.PoseMichi.CELEBRA
+                else -> com.udenar.petcare.domain.recomendaciones.PoseMichi.ALARMA
+            },
+            onListo,
+        )
 
         when (f.clase) {
             ClaseCuidado.COMIDA -> {

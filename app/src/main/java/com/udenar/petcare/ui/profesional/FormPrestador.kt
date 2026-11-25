@@ -386,7 +386,7 @@ fun FormPrestadorScreen(onVolver: () -> Unit, onGuardado: (activado: Boolean) ->
             PasoPres.SERVICIOS -> {
                 com.udenar.petcare.ui.componentes.PreguntaMichi("Tus servicios y precios", "Precio fijo, \"desde\" o a cotizar; el pago lo acuerdas tú", com.udenar.petcare.domain.recomendaciones.PoseMichi.DOCUMENTOS)
                 if (b.servicios.isEmpty()) {
-                    Text("Aún no agregas servicios. Puedes hacerlo luego, pero con precios te escriben más.", style = MaterialTheme.typography.bodyMedium, color = Pc.TintaSuave)
+                    com.udenar.petcare.ui.componentes.VacioMichi(com.udenar.petcare.domain.recomendaciones.PoseMichi.DOCUMENTOS, "Aún no agregas servicios. Puedes hacerlo luego, pero con precios te escriben más.", fondo = Pc.Blanco)
                 }
                 b.servicios.forEach { sv ->
                     val cat = estado.categorias.firstOrNull { it.id == sv.categoriaId }

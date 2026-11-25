@@ -222,7 +222,7 @@ private fun PerfilPrestadorScreen(viewModel: ModoPrestadorViewModel, onEditar: (
                 Switch(p.recibiendo, { viewModel.recibiendo(it, avisar) }, colors = SwitchDefaults.colors(checkedTrackColor = Pc.Naranja), modifier = Modifier.testTag("interruptor_recibiendo"))
             }
             Seccion("Mis servicios") {
-                if (p.servicios.isEmpty()) Text("Aún no agregas servicios con precio.", color = Pc.TintaSuave)
+                if (p.servicios.isEmpty()) com.udenar.petcare.ui.componentes.VacioMichi(com.udenar.petcare.domain.recomendaciones.PoseMichi.DOCUMENTOS, "Aún no agregas servicios con precio.")
                 p.servicios.forEach { s ->
                     Row {
                         com.udenar.petcare.ui.componentes.Simbolo(categorias.firstOrNull { it.id == s.categoriaId }?.icono3d ?: com.udenar.petcare.domain.modelo.Icono.HUELLAS, tam = 22.dp, modifier = Modifier.padding(end = 8.dp))

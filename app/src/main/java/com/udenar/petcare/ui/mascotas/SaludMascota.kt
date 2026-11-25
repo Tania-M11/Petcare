@@ -132,13 +132,14 @@ fun TarjetaPeso(pesos: List<RegistroPeso>, hoy: LocalDate, onRegistrar: (LocalDa
     Tarjeta("Peso", accion = if (editable) ({ BotonAgregar("Registrar", "registrar_peso") { abierto = true } }) else null) {
         val ultimo = pesos.firstOrNull()
         if (ultimo == null) {
-            Text("Sin pesajes todavía.", style = MaterialTheme.typography.bodyMedium, color = Pc.TintaSuave)
+            com.udenar.petcare.ui.componentes.VacioMichi(com.udenar.petcare.domain.recomendaciones.PoseMichi.SALUD, "Aún no hay pesajes. Registra el primero y aquí verás cómo cambia.")
         } else {
             Row(verticalAlignment = Alignment.Bottom) {
                 Text(FichaMascota.peso(ultimo.gramos), fontFamily = Kalnia, fontSize = 30.sp, color = Pc.Tinta)
                 Text("  ${ultimo.fecha.format(CORTA)}", style = MaterialTheme.typography.bodySmall, color = Pc.TintaSuave)
             }
             if (pesos.size >= 2) GraficaPeso(pesos.sortedBy { it.fecha })
+            else com.udenar.petcare.ui.componentes.VacioMichi(com.udenar.petcare.domain.recomendaciones.PoseMichi.AGENDA, "Con un pesaje más aparece su gráfica.", tam = 52.dp)
             pesos.take(6).forEach { p ->
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Text(p.fecha.format(CORTA), style = MaterialTheme.typography.bodyMedium, modifier = Modifier.weight(1f))
@@ -288,7 +289,7 @@ fun TarjetaHistorial(items: List<ItemHistorial>) {
             CategoriaHistorial.entries.forEach { c -> ChipOpcion(c.titulo, filtro == c, onClick = { filtro = c }, modifier = Modifier.testTag("historial_${c.name}")) }
         }
         val visibles = items.filter { filtro == null || it.categoria == filtro }
-        if (visibles.isEmpty()) Text("Aún no hay registros.", style = MaterialTheme.typography.bodyMedium, color = Pc.TintaSuave)
+        if (visibles.isEmpty()) com.udenar.petcare.ui.componentes.VacioMichi(com.udenar.petcare.domain.recomendaciones.PoseMichi.LEYENDO, "Aún no hay registros.")
         var diaAnterior: LocalDate? = null
         visibles.take(100).forEach { i ->
             val dia = i.instante.toLocalDate()

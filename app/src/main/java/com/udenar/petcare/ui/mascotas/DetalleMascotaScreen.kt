@@ -220,6 +220,7 @@ fun DetalleMascotaScreen(
                         }
                     }
                     progreso?.takeIf { it.hayDatos }?.let { com.udenar.petcare.ui.componentes.TarjetaProgreso(mascota.nombre, it) }
+                        ?: com.udenar.petcare.ui.componentes.VacioMichi(com.udenar.petcare.domain.recomendaciones.PoseMichi.CELEBRA, "Cuando marques sus cuidados y paseos, aquí verás su racha y sus gráficas de la semana.", fondo = Pc.Blanco)
                     TarjetaEstadoCuidado(estadoCuidado)
                     com.udenar.petcare.ui.componentes.BotonSecundario("Carné y QR", onClick = { onCarne(mascota.id) }, modifier = Modifier.testTag("ver_carne"))
                     mascota.veterinario?.takeIf { !it.vacio }?.let { v -> TarjetaVeterinario(v, contexto) }
@@ -442,7 +443,7 @@ private fun SaludBasica(mascota: com.udenar.petcare.domain.modelo.Mascota) {
     )
     Seccion("Salud básica") {
         if (salud.isEmpty()) {
-            Text("Sin datos. Puedes agregarlos al editar la ficha.", style = MaterialTheme.typography.bodyMedium, color = Pc.TintaSuave)
+            com.udenar.petcare.ui.componentes.VacioMichi(com.udenar.petcare.domain.recomendaciones.PoseMichi.DOCUMENTOS, "Sin datos aún. Puedes agregarlos al editar la ficha.")
         } else {
             salud.forEach { (t, v) -> Dato(t, v) }
         }

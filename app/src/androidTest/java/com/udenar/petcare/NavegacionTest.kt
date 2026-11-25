@@ -3,6 +3,7 @@ package com.udenar.petcare
 import androidx.compose.ui.test.assertIsSelected
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithTag
+import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import dagger.hilt.android.testing.HiltAndroidRule
@@ -43,7 +44,7 @@ class NavegacionTest {
         compose.onNodeWithText("Veterinarios").assertExists()
 
         compose.onNodeWithTag("pestana_perfil").performClick()
-        compose.onNodeWithText("Trabaja con PetCare").assertExists()
+        compose.onNodeWithText("Trabaja con mascotas").performScrollTo().assertExists()
 
         compose.onNodeWithTag("pestana_hoy").performClick()
         compose.waitUntil(5_000) { compose.onAllNodesWithTextExists("Nada pendiente") }

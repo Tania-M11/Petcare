@@ -163,7 +163,7 @@ fun SeccionResenas(profesionalId: String, tipo: TipoResena, promedio: Double?, c
     LaunchedEffect(profesionalId) { vm.cargar(profesionalId, tipo) }
     Seccion("Reseñas") {
         if (promedio == null || cantidad == 0) {
-            Text("Aún sin reseñas", style = MaterialTheme.typography.bodyMedium, color = Pc.TintaSuave)
+            com.udenar.petcare.ui.componentes.VacioMichi(com.udenar.petcare.domain.recomendaciones.PoseMichi.LEYENDO, "Aún sin reseñas.", tam = 52.dp)
         } else {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(String.format(LOCALE, "%.1f", promedio), style = MaterialTheme.typography.headlineMedium, modifier = Modifier.padding(end = 8.dp).testTag("promedio_resenas"))
