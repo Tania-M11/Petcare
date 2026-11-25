@@ -20,6 +20,8 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.material.icons.rounded.Tune
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -77,6 +79,7 @@ import com.udenar.petcare.ui.mapas.PuntoMapa
 import com.udenar.petcare.ui.mapas.ubicacionActual
 import com.udenar.petcare.ui.navegacion.RutaDetalleVet
 import com.udenar.petcare.ui.theme.Pc
+import com.udenar.petcare.ui.profesional.icono
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -91,28 +94,93 @@ import javax.inject.Inject
 data class EstadoDirectorio(
     val filtro: FiltroVeterinarios = FiltroVeterinarios(),
     val ubicacion: Coordenada? = null,
+    val buscandoUbicacion: Boolean = false,
     val resultados: List<PerfilVeterinario> = emptyList(),
     /** Veterinarias de la ciudad que aún no usan PetCare (para llamar o llegar). */
     val lugares: List<com.udenar.petcare.domain.profesionales.LugarVeterinario> = emptyList(),
+    /** Coordenadas de los lugares (de la base o buscadas por dirección en el teléfono). */
+    val coordsLugares: Map<String, Coordenada> = emptyMap(),
+    val sugerencias: List<SugerenciaVet> = emptyList(),
+    /** Especies de mis mascotas (para marcar quién las atiende). */
+    val misEspecies: Set<Especie> = emptySet(),
     val cargando: Boolean = true,
     val error: String? = null,
 )
 
+/**
+ * Sugerencia según mis mascotas (organización, no salud): qué buscar y con qué filtros.
+ * Nunca recomienda tratamientos; solo ayuda a encontrar a quien atienda lo que ya está registrado.
+ */
+data class SugerenciaVet(val id: String, val titulo: String, val detalle: String, val icono: Icono, val especie: Especie?, val servicio: ServicioVet?)
+
 @HiltViewModel
-class DirectorioVetViewModel @Inject constructor(private val veterinarios: RepositorioVeterinarios) : ViewModel() {
+class DirectorioVetViewModel @Inject constructor(
+    private val veterinarios: RepositorioVeterinarios,
+    mascotasRepo: com.udenar.petcare.domain.mascotas.RepositorioMascotas,
+    cuidados: com.udenar.petcare.domain.cuidados.RepositorioCuidados,
+    private val geocodificador: com.udenar.petcare.data.profesionales.GeocodificadorLugares,
+    private val reloj: java.time.Clock,
+) : ViewModel() {
     private val _estado = MutableStateFlow(EstadoDirectorio())
     val estado = _estado.asStateFlow()
     private var busqueda: Job? = null
 
-    init { buscar() }
+    init {
+        buscar()
+        // Sugerencias con mis mascotas y lo que tienen por vencer
+        viewModelScope.launch {
+            kotlinx.coroutines.flow.combine(mascotasRepo.observar(), cuidados.observarEventos(), cuidados.observarRegistros()) { m, e, r -> Triple(m, e, r) }
+                .collect { (mascotas, eventos, registros) ->
+                    val propias = mascotas.filter { it.esPropietario }.ifEmpty { mascotas }
+                    _estado.update { it.copy(sugerencias = sugerir(propias, eventos, registros), misEspecies = propias.map { m -> m.especie }.toSet()) }
+                }
+        }
+    }
+
+    private fun sugerir(
+        mascotas: List<com.udenar.petcare.domain.modelo.Mascota>,
+        eventos: List<com.udenar.petcare.domain.cuidados.EventoCuidado>,
+        registros: List<com.udenar.petcare.domain.cuidados.RegistroCuidado>,
+    ): List<SugerenciaVet> {
+        val ahora = java.time.LocalDateTime.now(reloj)
+        val porId = mascotas.associateBy { it.id }
+        val fecha = java.time.format.DateTimeFormatter.ofPattern("d MMM", Locale.forLanguageTag("es-CO"))
+        val pendientes = eventos.filter { it.mascotaId in porId && !it.oculto }.mapNotNull { e ->
+            val r = com.udenar.petcare.domain.cuidados.resumir(e, registros, ahora, reloj.zone)
+            val m = porId.getValue(e.mascotaId)
+            val vence = r.vencimiento == com.udenar.petcare.domain.cuidados.Vencimiento.VENCIDO
+            val proxima = r.vencimiento == com.udenar.petcare.domain.cuidados.Vencimiento.PROXIMO ||
+                (e.ancla == com.udenar.petcare.domain.cuidados.Ancla.ULTIMA_VEZ && r.proxima?.let { !it.isAfter(ahora.toLocalDate().plusDays(14)) } == true)
+            if (!vence && !proxima) return@mapNotNull null
+            val cuando = r.proxima?.let { (if (vence) "venció el " else "toca el ") + it.format(fecha) }.orEmpty()
+            when (e.tipo) {
+                com.udenar.petcare.domain.cuidados.TipoCuidado.VACUNA ->
+                    SugerenciaVet("vac_${e.id}", "Vacuna de ${m.nombre}", "${e.titulo} · $cuando", Icono.VACUNA, m.especie, ServicioVet.VACUNACION)
+                com.udenar.petcare.domain.cuidados.TipoCuidado.DESPARASITACION_INTERNA, com.udenar.petcare.domain.cuidados.TipoCuidado.DESPARASITACION_EXTERNA ->
+                    SugerenciaVet("des_${e.id}", "Desparasitación de ${m.nombre}", "${e.titulo} · $cuando", Icono.ESCUDO, m.especie, ServicioVet.DESPARASITACION)
+                else -> null
+            }
+        }
+        val porMascota = mascotas.distinctBy { it.especie }.map { m ->
+            val mismas = mascotas.filter { it.especie == m.especie }.joinToString(" y ") { it.nombre }
+            SugerenciaVet("esp_${m.especie}", "Para $mismas", "Quienes atienden ${m.especie.etiqueta.lowercase()}", Icono.HUELLAS, m.especie, null)
+        }
+        return (pendientes + porMascota).take(6)
+    }
 
     fun filtrar(f: (FiltroVeterinarios) -> FiltroVeterinarios) {
         _estado.update { it.copy(filtro = f(it.filtro)) }
         buscar()
     }
 
+    fun aplicar(s: SugerenciaVet) = filtrar { it.copy(especie = s.especie, servicio = s.servicio) }
+
+    fun limpiarFiltros() = filtrar { FiltroVeterinarios(ciudad = it.ciudad) }
+
+    fun buscandoUbicacion(si: Boolean) = _estado.update { it.copy(buscandoUbicacion = si) }
+
     fun usarUbicacion(c: Coordenada?) {
-        _estado.update { it.copy(ubicacion = c) }
+        _estado.update { it.copy(ubicacion = c, buscandoUbicacion = false) }
         buscar()
     }
 
@@ -126,6 +194,9 @@ class DirectorioVetViewModel @Inject constructor(private val veterinarios: Repos
                 // Los lugares sin cuenta solo se filtran por ciudad (no tienen especies ni servicios cargados)
                 val l = runCatching { veterinarios.lugares(s.filtro.ciudad) }.getOrDefault(emptyList())
                 _estado.update { it.copy(resultados = r, lugares = l, cargando = false) }
+                // Ubicarlos en el mapa (con la dirección) sin frenar la lista
+                val coords = runCatching { geocodificador.coordenadas(l) }.getOrDefault(emptyMap())
+                _estado.update { it.copy(coordsLugares = coords) }
             } catch (e: ProfesionalException) {
                 _estado.update { it.copy(cargando = false, error = e.message) }
             }
@@ -133,17 +204,52 @@ class DirectorioVetViewModel @Inject constructor(private val veterinarios: Repos
     }
 }
 
-/** Directorio de veterinarios (RF-24): lista ↔ mapa, filtros y orden por distancia. */
+/** Cuántos filtros (sin contar la ciudad) están activos. */
+private fun FiltroVeterinarios.activos() = listOf(especie != null, servicio != null, domicilio, soloVerificados).count { it }
+
+/**
+ * Directorio de veterinarios (RF-24): búsqueda por ciudad, "Cerca de mí", filtros ordenados en
+ * un panel, sugerencias para mis mascotas y resultados en lista o mapa (con mi ubicación).
+ */
+@OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class, androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
 @Composable
 fun DirectorioVeterinariosScreen(onVolver: () -> Unit, onAbrir: (String) -> Unit, avisar: (String) -> Unit, viewModel: DirectorioVetViewModel = hiltViewModel()) {
     val estado by viewModel.estado.collectAsStateWithLifecycle()
     val f = estado.filtro
     val contexto = LocalContext.current
     var verMapa by remember { mutableStateOf(false) }
+    var verFiltros by remember { mutableStateOf(false) }
     var ciudad by remember { mutableStateOf(f.ciudad) }
+    var lugarElegido by remember { mutableStateOf<com.udenar.petcare.domain.profesionales.LugarVeterinario?>(null) }
+    fun leerUbicacion() {
+        if (!com.udenar.petcare.ui.mapas.ubicacionEncendida(contexto)) {
+            avisar("Enciende la ubicación del teléfono para buscar cerca de ti")
+            runCatching { contexto.startActivity(Intent(android.provider.Settings.ACTION_LOCATION_SOURCE_SETTINGS)) }
+            return
+        }
+        viewModel.buscandoUbicacion(true)
+        ubicacionActual(contexto) { c ->
+            if (c != null) viewModel.usarUbicacion(c) else { viewModel.buscandoUbicacion(false); avisar("No pudimos obtener tu ubicación; intenta de nuevo al aire libre") }
+        }
+    }
     val permiso = rememberLauncherForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { r ->
-        if (r.values.any { it }) ubicacionActual(contexto) { c -> if (c != null) viewModel.usarUbicacion(c) else avisar("No pudimos obtener tu ubicación") }
-        else avisar("Sin permiso de ubicación se ordena por ciudad y nombre")
+        if (r.values.any { it }) leerUbicacion() else avisar("Sin permiso de ubicación se ordena por ciudad y nombre")
+    }
+    fun cercaDeMi() {
+        if (estado.ubicacion != null) { viewModel.usarUbicacion(null); return }
+        val concedido = androidx.core.content.ContextCompat.checkSelfPermission(contexto, Manifest.permission.ACCESS_FINE_LOCATION) == android.content.pm.PackageManager.PERMISSION_GRANTED ||
+            androidx.core.content.ContextCompat.checkSelfPermission(contexto, Manifest.permission.ACCESS_COARSE_LOCATION) == android.content.pm.PackageManager.PERMISSION_GRANTED
+        if (concedido) leerUbicacion() else permiso.launch(arrayOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION))
+    }
+    // Lugares ordenados por cercanía cuando se conoce la ubicación
+    val lugares = estado.lugares.let { l ->
+        val yo = estado.ubicacion ?: return@let l
+        l.sortedBy { estado.coordsLugares[it.id]?.let { c -> com.udenar.petcare.domain.paseos.Geo.distanciaM(yo, c) } ?: Double.MAX_VALUE }
+    }
+    fun distancia(id: String): String? {
+        val yo = estado.ubicacion ?: return null
+        val c = estado.coordsLugares[id] ?: return null
+        return com.udenar.petcare.domain.paseos.textoDistancia(com.udenar.petcare.domain.paseos.Geo.distanciaM(yo, c).toInt())
     }
 
     Column(
@@ -155,33 +261,46 @@ fun DirectorioVeterinariosScreen(onVolver: () -> Unit, onAbrir: (String) -> Unit
             .padding(horizontal = 20.dp, vertical = 12.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
+        // Encabezado: volver, título y lista/mapa como selector segmentado
         Row(verticalAlignment = Alignment.CenterVertically) {
             BotonCircular(Icons.AutoMirrored.Rounded.ArrowBack, "Volver", onClick = onVolver)
-            Text("Veterinarios", style = MaterialTheme.typography.headlineMedium, modifier = Modifier.padding(start = 16.dp).weight(1f))
-            ChipOpcion(if (verMapa) "Lista" else "Mapa", false, onClick = { verMapa = !verMapa }, modifier = Modifier.testTag("alternar_mapa"))
-        }
-        CampoTexto(
-            ciudad, { ciudad = it }, "Ciudad", icono = Icons.Rounded.Search, accion = ImeAction.Search,
-            onAccion = { viewModel.filtrar { it.copy(ciudad = ciudad) } },
-            modifier = Modifier.testTag("filtro_ciudad"),
-        )
-        Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            ChipOpcion("Cerca de mí", estado.ubicacion != null, icono = Icono.PIN, onClick = {
-                if (estado.ubicacion != null) viewModel.usarUbicacion(null)
-                else permiso.launch(arrayOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION))
-            })
-            ChipOpcion("Solo verificados", f.soloVerificados, onClick = { viewModel.filtrar { it.copy(soloVerificados = !it.soloVerificados) } }, modifier = Modifier.testTag("filtro_verificados"))
-            ChipOpcion("A domicilio", f.domicilio, onClick = { viewModel.filtrar { it.copy(domicilio = !it.domicilio) } })
-        }
-        Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            Especie.entries.filter { it != Especie.OTRO }.forEach { e ->
-                ChipOpcion(e.etiqueta, f.especie == e, onClick = { viewModel.filtrar { it.copy(especie = if (it.especie == e) null else e) } })
+            Text("Veterinarios", style = MaterialTheme.typography.headlineSmall, maxLines = 1, modifier = Modifier.padding(start = 14.dp).weight(1f))
+            Row(Modifier.clip(androidx.compose.foundation.shape.RoundedCornerShape(50)).background(Pc.Blanco).padding(4.dp)) {
+                listOf(false to "Lista", true to "Mapa").forEach { (mapa, t) ->
+                    Text(
+                        t, style = MaterialTheme.typography.labelLarge, color = if (verMapa == mapa) Pc.SobreAcento else Pc.TintaSuave,
+                        modifier = Modifier.clip(androidx.compose.foundation.shape.RoundedCornerShape(50)).background(if (verMapa == mapa) Pc.Tinta else Pc.Blanco)
+                            .clickable { verMapa = mapa }.padding(horizontal = 14.dp, vertical = 8.dp).testTag(if (mapa) "alternar_mapa" else "ver_lista"),
+                    )
+                }
             }
         }
-        Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            ServicioVet.entries.forEach { s ->
-                ChipOpcion(s.etiqueta, f.servicio == s, onClick = { viewModel.filtrar { it.copy(servicio = if (it.servicio == s) null else s) } })
+        // Búsqueda por ciudad + botón de filtros con contador
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+            CampoTexto(
+                ciudad, { ciudad = it }, "Ciudad (p. ej. Ipiales)", icono = Icons.Rounded.Search, accion = ImeAction.Search,
+                onAccion = { viewModel.filtrar { it.copy(ciudad = ciudad) } },
+                modifier = Modifier.weight(1f).testTag("filtro_ciudad"),
+            )
+            Box {
+                BotonCircular(androidx.compose.material.icons.Icons.Rounded.Tune, "Filtros", onClick = { verFiltros = true }, modifier = Modifier.testTag("abrir_filtros"), fondo = if (f.activos() > 0) Pc.Tinta else Pc.Blanco, tinte = if (f.activos() > 0) Pc.SobreAcento else Pc.Tinta)
+                if (f.activos() > 0) {
+                    Box(Modifier.align(Alignment.TopEnd).size(20.dp).clip(CircleShape).background(Pc.Naranja), contentAlignment = Alignment.Center) {
+                        Text("${f.activos()}", style = MaterialTheme.typography.labelSmall, color = Pc.SobreAcento)
+                    }
+                }
             }
+        }
+        // Cerca de mí y filtros activos (cada uno se quita con un toque)
+        Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            ChipOpcion(
+                when { estado.buscandoUbicacion -> "Buscando…"; estado.ubicacion != null -> "Cerca de mí ✓"; else -> "Cerca de mí" },
+                estado.ubicacion != null, icono = Icono.PIN, onClick = ::cercaDeMi, modifier = Modifier.testTag("cerca_de_mi"),
+            )
+            f.especie?.let { e -> ChipOpcion("${e.etiqueta} ✕", true, onClick = { viewModel.filtrar { it.copy(especie = null) } }) }
+            f.servicio?.let { sv -> ChipOpcion("${sv.etiqueta} ✕", true, onClick = { viewModel.filtrar { it.copy(servicio = null) } }) }
+            if (f.domicilio) ChipOpcion("A domicilio ✕", true, onClick = { viewModel.filtrar { it.copy(domicilio = false) } })
+            if (f.soloVerificados) ChipOpcion("Verificados ✕", true, onClick = { viewModel.filtrar { it.copy(soloVerificados = false) } })
         }
 
         when {
@@ -189,45 +308,126 @@ fun DirectorioVeterinariosScreen(onVolver: () -> Unit, onAbrir: (String) -> Unit
                 Text(estado.error.orEmpty(), color = Pc.TintaSuave)
                 BotonSecundario("Reintentar", onClick = viewModel::buscar)
             }
-            estado.cargando && estado.resultados.isEmpty() -> Text("Buscando…", color = Pc.TintaSuave)
-            estado.resultados.isEmpty() && estado.lugares.isEmpty() -> EstadoVacio(
-                R.drawable.gato_doctor, "Aún no hay nadie aquí",
-                "No hay veterinarios con esos filtros. Prueba otra ciudad (por ejemplo, Ipiales) o quita algún filtro.", fondoBlob = listOf(Pc.CieloClaro, Pc.LavandaClara),
-            )
-            verMapa -> Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+            estado.cargando && estado.resultados.isEmpty() && estado.lugares.isEmpty() -> Text("Buscando…", color = Pc.TintaSuave)
+            verMapa -> Box(Modifier.weight(1f).fillMaxWidth()) {
+                val puntos = estado.resultados.map {
+                    PuntoMapa(it.id, Coordenada(it.lat, it.lon), it.verificacion.verificado, if (it.domicilio) Icono.CASA else Icono.VETERINARIO)
+                } + lugares.mapNotNull { l -> estado.coordsLugares[l.id]?.let { c -> PuntoMapa("lugar_${l.id}", c, false, Icono.HOSPITAL, color = 0xFFF08A4B.toInt()) } }
                 MapaMarcadores(
-                    estado.resultados.map { PuntoMapa(it.id, Coordenada(it.lat, it.lon), it.verificacion.verificado, if (it.domicilio) com.udenar.petcare.domain.modelo.Icono.CASA else com.udenar.petcare.domain.modelo.Icono.VETERINARIO) },
-                    onElegir = onAbrir,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .weight(1f)
-                        .clip(MaterialTheme.shapes.large)
-                        .testTag("mapa_veterinarios"),
+                    puntos,
+                    onElegir = { id -> if (id.startsWith("lugar_")) lugarElegido = estado.lugares.firstOrNull { "lugar_${it.id}" == id } else onAbrir(id) },
+                    miUbicacion = estado.ubicacion,
+                    modifier = Modifier.fillMaxSize().clip(MaterialTheme.shapes.large).testTag("mapa_veterinarios"),
                 )
-                Text("Azul: verificado · Lavanda: no verificado. $ATRIBUCION_MAPA", style = MaterialTheme.typography.labelSmall, color = Pc.TintaSuave)
+                Column(Modifier.align(Alignment.BottomCenter).padding(8.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                    lugarElegido?.let { l -> TarjetaLugar(l, distancia(l.id)) }
+                    Text(
+                        "Azul: PetCare verificado · Lavanda: PetCare · Naranja: aún sin PetCare" + if (estado.ubicacion != null) " · Punto azul: tú" else "",
+                        style = MaterialTheme.typography.labelSmall, color = Pc.Tinta,
+                        modifier = Modifier.clip(androidx.compose.foundation.shape.RoundedCornerShape(50)).background(Pc.Blanco.copy(alpha = 0.9f)).padding(horizontal = 10.dp, vertical = 4.dp),
+                    )
+                }
+                if (puntos.isEmpty()) {
+                    Text("Ubicando las veterinarias…", style = MaterialTheme.typography.labelLarge, modifier = Modifier.align(Alignment.Center).clip(androidx.compose.foundation.shape.RoundedCornerShape(50)).background(Pc.Blanco).padding(horizontal = 14.dp, vertical = 8.dp))
+                }
             }
             else -> LazyColumn(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                // Sugerencias para mis mascotas (solo si no hay filtros elegidos)
+                if (estado.sugerencias.isNotEmpty() && f.activos() == 0) {
+                    item {
+                        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                            Text("Para tus mascotas", style = MaterialTheme.typography.titleMedium)
+                            androidx.compose.foundation.lazy.LazyRow(horizontalArrangement = Arrangement.spacedBy(10.dp), modifier = Modifier.testTag("sugerencias_vet")) {
+                                items(estado.sugerencias, key = { it.id }) { s ->
+                                    Row(
+                                        Modifier.width(230.dp).clip(MaterialTheme.shapes.large).background(Pc.Blanco).clickable { viewModel.aplicar(s) }.padding(12.dp),
+                                        verticalAlignment = Alignment.CenterVertically,
+                                    ) {
+                                        com.udenar.petcare.ui.componentes.BaldosaIcono(s.icono, tam = 40.dp)
+                                        Column(Modifier.padding(start = 10.dp)) {
+                                            Text(s.titulo, style = MaterialTheme.typography.titleSmall, maxLines = 1)
+                                            Text(s.detalle, style = MaterialTheme.typography.bodySmall, color = Pc.TintaSuave, maxLines = 2)
+                                            Text("Buscar", style = MaterialTheme.typography.labelMedium, color = Pc.Naranja)
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+                item {
+                    Text(
+                        when (estado.resultados.size) { 0 -> "Sin veterinarios con perfil en PetCare"; 1 -> "1 veterinario en PetCare"; else -> "${estado.resultados.size} veterinarios en PetCare" },
+                        style = MaterialTheme.typography.labelLarge, color = Pc.TintaSuave,
+                    )
+                }
                 if (estado.resultados.isEmpty()) {
                     item {
                         com.udenar.petcare.ui.componentes.VacioMichi(
                             com.udenar.petcare.domain.recomendaciones.PoseMichi.DOCTOR,
-                            "Aún no hay veterinarios con perfil en PetCare aquí. Mientras tanto, puedes llamar a estas veterinarias.",
+                            if (estado.lugares.isEmpty()) "No hay veterinarios con estos filtros. Prueba otra ciudad (por ejemplo, Ipiales) o quita algún filtro."
+                            else "Aún no hay veterinarios con perfil en PetCare aquí. Mientras tanto, puedes llamar a estas veterinarias.",
                             fondo = Pc.Blanco,
                         )
                     }
                 }
-                items(estado.resultados, key = { it.id }) { v -> TarjetaVeterinario(v, onClick = { onAbrir(v.id) }) }
-                if (estado.lugares.isNotEmpty()) {
+                items(estado.resultados, key = { it.id }) { v ->
+                    Column {
+                        // Atiende a todas mis especies: se marca para que lo vea primero
+                        if (estado.misEspecies.isNotEmpty() && v.especies.containsAll(estado.misEspecies)) {
+                            Chip("Atiende a tus mascotas", fondo = Pc.MentaClara, icono = Icono.CHECK, modifier = Modifier.padding(bottom = 4.dp))
+                        }
+                        TarjetaVeterinario(v, onClick = { onAbrir(v.id) })
+                    }
+                }
+                if (lugares.isNotEmpty()) {
                     item {
                         Column(Modifier.padding(top = 8.dp)) {
-                            Text("Otras veterinarias cerca", style = MaterialTheme.typography.titleMedium)
+                            Text(if (estado.ubicacion != null) "Otras veterinarias, de la más cercana" else "Otras veterinarias cerca", style = MaterialTheme.typography.titleMedium)
                             Text(
                                 "Aún no usan PetCare: no reciben citas por la app. Datos de directorios públicos; confirma por teléfono.",
                                 style = MaterialTheme.typography.bodySmall, color = Pc.TintaSuave,
                             )
                         }
                     }
-                    items(estado.lugares, key = { "lugar_" + it.id }) { l -> TarjetaLugar(l) }
+                    items(lugares, key = { "lugar_" + it.id }) { l -> TarjetaLugar(l, distancia(l.id)) }
+                }
+            }
+        }
+    }
+
+    if (verFiltros) {
+        var borrador by remember { mutableStateOf(f) }
+        androidx.compose.material3.ModalBottomSheet(onDismissRequest = { verFiltros = false }, containerColor = Pc.Crema) {
+            Column(
+                Modifier.padding(horizontal = 20.dp).padding(bottom = 16.dp).verticalScroll(rememberScrollState()).navigationBarsPadding(),
+                verticalArrangement = Arrangement.spacedBy(14.dp),
+            ) {
+                Text("Filtros", style = MaterialTheme.typography.headlineSmall)
+                Text("¿Para quién?", style = MaterialTheme.typography.titleSmall)
+                androidx.compose.foundation.layout.FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Especie.entries.filter { it != Especie.OTRO }.forEach { e ->
+                        com.udenar.petcare.ui.componentes.ChipEspecie(e, borrador.especie == e, onClick = { borrador = borrador.copy(especie = if (borrador.especie == e) null else e) }, modifier = Modifier.testTag("filtro_especie_${e.name}"))
+                    }
+                }
+                Text("¿Qué necesitas?", style = MaterialTheme.typography.titleSmall)
+                ServicioVet.entries.chunked(3).forEach { fila ->
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        fila.forEach { sv ->
+                            com.udenar.petcare.ui.componentes.TarjetaOpcionGrande(
+                                sv.etiqueta, borrador.servicio == sv, onClick = { borrador = borrador.copy(servicio = if (borrador.servicio == sv) null else sv) },
+                                icono = sv.icono(), color = Pc.CieloClaro, modifier = Modifier.weight(1f).testTag("filtro_servicio_${sv.name}"),
+                            )
+                        }
+                        repeat(3 - fila.size) { Box(Modifier.weight(1f)) }
+                    }
+                }
+                Text("Atención", style = MaterialTheme.typography.titleSmall)
+                com.udenar.petcare.ui.profesional.TarjetaInterruptor(Icono.CASA, "A domicilio", "Que vaya a tu casa", borrador.domicilio, { borrador = borrador.copy(domicilio = it) })
+                com.udenar.petcare.ui.profesional.TarjetaInterruptor(Icono.ESCUDO, "Solo verificados", "Con certificado revisado por PetCare", borrador.soloVerificados, { borrador = borrador.copy(soloVerificados = it) }, modifier = Modifier.testTag("filtro_verificados"))
+                Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                    BotonSecundario("Limpiar", onClick = { borrador = FiltroVeterinarios(ciudad = f.ciudad) }, modifier = Modifier.weight(1f))
+                    BotonPrincipal("Ver resultados", onClick = { viewModel.filtrar { borrador.copy(ciudad = it.ciudad) }; verFiltros = false }, modifier = Modifier.weight(1f).testTag("aplicar_filtros"))
                 }
             }
         }
@@ -236,7 +436,7 @@ fun DirectorioVeterinariosScreen(onVolver: () -> Unit, onAbrir: (String) -> Unit
 
 /** Veterinaria sin cuenta en PetCare: nombre, dirección, horario y botones para llamar o llegar. */
 @Composable
-private fun TarjetaLugar(l: com.udenar.petcare.domain.profesionales.LugarVeterinario) {
+private fun TarjetaLugar(l: com.udenar.petcare.domain.profesionales.LugarVeterinario, distancia: String? = null) {
     val contexto = LocalContext.current
     fun abrir(uri: String, accion: String = Intent.ACTION_VIEW) {
         runCatching { contexto.startActivity(Intent(accion, android.net.Uri.parse(uri))) }
@@ -249,7 +449,7 @@ private fun TarjetaLugar(l: com.udenar.petcare.domain.profesionales.LugarVeterin
             com.udenar.petcare.ui.componentes.BaldosaIcono(com.udenar.petcare.domain.modelo.Icono.HOSPITAL, tam = 42.dp)
             Column(Modifier.weight(1f).padding(start = 12.dp)) {
                 Text(l.nombre, style = MaterialTheme.typography.titleSmall)
-                Text("${l.direccion}, ${l.ciudad}", style = MaterialTheme.typography.bodySmall, color = Pc.TintaSuave)
+                Text("${l.direccion}, ${l.ciudad}" + (distancia?.let { " · a $it" } ?: ""), style = MaterialTheme.typography.bodySmall, color = Pc.TintaSuave)
                 l.horario?.let { Text(it, style = MaterialTheme.typography.bodySmall, color = Pc.TintaSuave) }
             }
         }

@@ -119,7 +119,14 @@ fun MapaLibre(
  * Un punto del directorio: [destacado] = verificado o recibiendo (borde de color); [icono] = la
  * categoría, dibujada en blanco dentro de la burbuja del marcador (Fase 6.8).
  */
-data class PuntoMapa(val id: String, val posicion: Coordenada, val destacado: Boolean, val icono: com.udenar.petcare.domain.modelo.Icono = com.udenar.petcare.domain.modelo.Icono.HUELLAS)
+data class PuntoMapa(
+    val id: String,
+    val posicion: Coordenada,
+    val destacado: Boolean,
+    val icono: com.udenar.petcare.domain.modelo.Icono = com.udenar.petcare.domain.modelo.Icono.HUELLAS,
+    /** Color propio del marcador (p. ej. veterinarias sin cuenta); null = destacado/normal. */
+    val color: Int? = null,
+)
 
 /** Burbuja del color del lugar con borde blanco, el ícono en blanco y una punta hacia el lugar. */
 internal fun imagenMarcador(contexto: android.content.Context, icono: com.udenar.petcare.domain.modelo.Icono, borde: Int): android.graphics.Bitmap {
@@ -158,9 +165,10 @@ internal fun imagenMarcador(contexto: android.content.Context, icono: com.udenar
     return bmp
 }
 
-private fun claveMarcador(p: PuntoMapa) = "marcador_${p.icono.name}_${p.destacado}"
+private fun claveMarcador(p: PuntoMapa) = "marcador_${p.icono.name}_${p.destacado}_${p.color}"
 
 private const val FUENTE_PUNTOS = "puntos"
+private const val FUENTE_YO = "yo"
 
 /** Mapa con marcadores que se pueden tocar (directorios). Encuadra todos los puntos. */
 @Composable
@@ -170,20 +178,15 @@ fun MapaMarcadores(
     modifier: Modifier = Modifier,
     colorDestacado: Int = 0xFF5B89BA.toInt(),
     colorNormal: Int = 0xFFA98EE0.toInt(),
+    /** Dónde está la persona ("Cerca de mí"): punto azul y entra en el encuadre. */
+    miUbicacion: Coordenada? = null,
 ) {
     var listo by remember { mutableStateOf<Pair<MapLibreMap, Style>?>(null) }
     val elegir by rememberUpdatedState(onElegir)
     val contexto = LocalContext.current
     MapaLibre(modifier, centro = puntos.firstOrNull()?.posicion ?: CENTRO_INICIAL, zoom = 13.0) { m, s ->
         s.addSource(GeoJsonSource(FUENTE_PUNTOS))
-        // Punto de color debajo (respaldo si la imagen aún no carga) y la burbuja con el ícono encima
-        s.addLayer(
-            CircleLayer("capa_base", FUENTE_PUNTOS).withProperties(
-                circleRadius(6f),
-                circleColor(Expression.switchCase(Expression.get("destacado"), Expression.color(colorDestacado), Expression.color(colorNormal))),
-                circleStrokeColor("#FFFFFF"), circleStrokeWidth(2f),
-            ),
-        )
+        // La burbuja con el ícono (ya no hay punto de color debajo: se veía como una mancha)
         s.addLayer(
             org.maplibre.android.style.layers.SymbolLayer("capa_puntos", FUENTE_PUNTOS).withProperties(
                 org.maplibre.android.style.layers.PropertyFactory.iconImage("{imagen}"),
@@ -198,13 +201,24 @@ fun MapaMarcadores(
             if (id != null) elegir(id)
             id != null
         }
+        // Punto azul de "tú estás aquí"
+        s.addSource(GeoJsonSource(FUENTE_YO))
+        s.addLayer(
+            CircleLayer("capa_yo_halo", FUENTE_YO).withProperties(circleRadius(16f), circleColor("#5B89BA"), org.maplibre.android.style.layers.PropertyFactory.circleOpacity(0.25f)),
+        )
+        s.addLayer(
+            CircleLayer("capa_yo", FUENTE_YO).withProperties(circleRadius(7f), circleColor("#2F6FB5"), circleStrokeColor("#FFFFFF"), circleStrokeWidth(3f)),
+        )
         listo = m to s
     }
-    LaunchedEffect(listo, puntos) {
+    LaunchedEffect(listo, puntos, miUbicacion) {
         val (m, s) = listo ?: return@LaunchedEffect
+        (s.getSource(FUENTE_YO) as? GeoJsonSource)?.setGeoJson(
+            FeatureCollection.fromFeatures(listOfNotNull(miUbicacion?.let { Feature.fromGeometry(Point.fromLngLat(it.lon, it.lat)) })),
+        )
         // Una imagen por combinación de ícono y estado, antes de usarla en los puntos
         puntos.distinctBy(::claveMarcador).forEach { p ->
-            if (s.getImage(claveMarcador(p)) == null) s.addImage(claveMarcador(p), imagenMarcador(contexto, p.icono, if (p.destacado) colorDestacado else colorNormal))
+            if (s.getImage(claveMarcador(p)) == null) s.addImage(claveMarcador(p), imagenMarcador(contexto, p.icono, p.color ?: if (p.destacado) colorDestacado else colorNormal))
         }
         (s.getSource(FUENTE_PUNTOS) as? GeoJsonSource)?.setGeoJson(
             FeatureCollection.fromFeatures(
@@ -217,9 +231,11 @@ fun MapaMarcadores(
                 },
             ),
         )
+        // Encuadra los lugares y, si se conoce, la ubicación de la persona
+        val todos = puntos.map { it.posicion } + listOfNotNull(miUbicacion)
         when {
-            puntos.size > 1 -> m.moveCamera(CameraUpdateFactory.newLatLngBounds(LatLngBounds.Builder().includes(puntos.map { it.posicion.latLng() }).build(), 120))
-            puntos.size == 1 -> m.moveCamera(CameraUpdateFactory.newLatLngZoom(puntos[0].posicion.latLng(), 15.0))
+            todos.size > 1 -> m.moveCamera(CameraUpdateFactory.newLatLngBounds(LatLngBounds.Builder().includes(todos.map { it.latLng() }).build(), 120))
+            todos.size == 1 -> m.moveCamera(CameraUpdateFactory.newLatLngZoom(todos[0].latLng(), 15.0))
         }
     }
 }
@@ -249,11 +265,23 @@ fun SelectorUbicacion(inicial: Coordenada?, irA: Coordenada?, onCentro: (Coorden
     }
 }
 
-/** Ubicación actual aproximada (requiere permiso de ubicación ya concedido). */
-@SuppressLint("MissingPermission")
+/**
+ * Ubicación actual (requiere permiso concedido). Pide una lectura nueva con alta precisión y,
+ * si no llega, usa la última conocida. null = sin ubicación (p. ej. el GPS está apagado).
+ */
+@android.annotation.SuppressLint("MissingPermission")
 fun ubicacionActual(contexto: android.content.Context, alObtener: (Coordenada?) -> Unit) {
-    LocationServices.getFusedLocationProviderClient(contexto)
-        .getCurrentLocation(Priority.PRIORITY_BALANCED_POWER_ACCURACY, null)
-        .addOnSuccessListener { l -> alObtener(l?.let { Coordenada(it.latitude, it.longitude) }) }
+    val cliente = LocationServices.getFusedLocationProviderClient(contexto)
+    val token = com.google.android.gms.tasks.CancellationTokenSource()
+    cliente.getCurrentLocation(Priority.PRIORITY_HIGH_ACCURACY, token.token)
+        .addOnSuccessListener { l ->
+            if (l != null) alObtener(Coordenada(l.latitude, l.longitude))
+            else cliente.lastLocation.addOnSuccessListener { u -> alObtener(u?.let { Coordenada(it.latitude, it.longitude) }) }.addOnFailureListener { alObtener(null) }
+        }
         .addOnFailureListener { alObtener(null) }
 }
+
+/** ¿Está encendida la ubicación del teléfono? (sin ella no hay lectura aunque haya permiso). */
+fun ubicacionEncendida(contexto: android.content.Context): Boolean =
+    (contexto.getSystemService(android.content.Context.LOCATION_SERVICE) as? android.location.LocationManager)
+        ?.let { androidx.core.location.LocationManagerCompat.isLocationEnabled(it) } ?: false

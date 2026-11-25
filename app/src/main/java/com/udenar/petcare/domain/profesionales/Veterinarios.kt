@@ -104,6 +104,9 @@ data class LugarVeterinario(
     val telefono: String?,
     val horario: String?,
     val fuente: String,
+    /** Coordenadas si la base las tiene (si no, el teléfono las busca por la dirección). */
+    val lat: Double? = null,
+    val lon: Double? = null,
 )
 
 /** Modo activo (RF-30): se recuerda en el teléfono; nunca cambia la identidad. */

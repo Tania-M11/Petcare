@@ -177,7 +177,7 @@ class VeterinariosSupabase @Inject constructor(private val supabase: SupabaseCli
         supabase.from("lugares_veterinarios").select {
             ciudad?.trim()?.ifEmpty { null }?.let { c -> filter { ilike("ciudad", c) } }
             order("nombre", io.github.jan.supabase.postgrest.query.Order.ASCENDING)
-        }.decodeList<FilaLugar>().map { com.udenar.petcare.domain.profesionales.LugarVeterinario(it.id, it.nombre, it.direccion, it.ciudad, it.telefono, it.horario, it.fuente) }
+        }.decodeList<FilaLugar>().map { com.udenar.petcare.domain.profesionales.LugarVeterinario(it.id, it.nombre, it.direccion, it.ciudad, it.telefono, it.horario, it.fuente, it.lat, it.lon) }
     }
 
     private fun String?.limpio(): String? = this?.trim()?.ifEmpty { null }
@@ -226,4 +226,6 @@ private data class FilaLugar(
     val telefono: String? = null,
     val horario: String? = null,
     val fuente: String = "",
+    val lat: Double? = null,
+    val lon: Double? = null,
 )
