@@ -117,6 +117,8 @@ fun PetcareRaiz() {
                     avisar = avisar,
                 )
             }
+            composable<RutaCalendario> { com.udenar.petcare.ui.calendario.CalendarioScreen() }
+            composable<RutaHistorial> { com.udenar.petcare.ui.historial.HistorialScreen() }
             composable<RutaMascotas> {
                 MascotasScreen(
                     avisar = avisar,

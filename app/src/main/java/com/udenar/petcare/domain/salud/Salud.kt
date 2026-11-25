@@ -39,6 +39,9 @@ interface RepositorioSalud {
     fun observarPesos(mascotaId: String): Flow<List<RegistroPeso>>
     fun observarVisitas(mascotaId: String): Flow<List<Visita>>
 
+    /** Visitas de todas las mascotas (historial general). */
+    fun observarTodasVisitas(): Flow<List<Visita>> = kotlinx.coroutines.flow.flowOf(emptyList())
+
     /** Pesos de todas las mascotas (recomendaciones de Hoy). */
     fun observarTodosPesos(): Flow<List<RegistroPeso>>
 

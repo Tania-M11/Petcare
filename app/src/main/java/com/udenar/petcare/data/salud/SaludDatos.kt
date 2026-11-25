@@ -106,6 +106,9 @@ interface VisitaDao {
     @Query("SELECT * FROM visitas WHERE id = :id")
     suspend fun porId(id: String): VisitaEntidad?
 
+    @Query("SELECT * FROM visitas WHERE eliminado = 0 ORDER BY fecha DESC")
+    fun observarTodas(): Flow<List<VisitaEntidad>>
+
     @Upsert suspend fun guardar(v: VisitaEntidad)
 
     @Query("SELECT * FROM visitas WHERE pendiente = 1") suspend fun pendientes(): List<VisitaEntidad>

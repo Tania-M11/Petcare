@@ -42,6 +42,16 @@ class RepositorioSaludLocal @Inject constructor(
         l.map { RegistroPeso(it.id, it.mascotaId, LocalDate.parse(it.fecha), it.gramos, it.notas, Autor(it.registradoPor, it.registradoPorNombre, it.registradoPorRol), it.pendiente) }
     }
 
+    override fun observarTodasVisitas(): Flow<List<Visita>> = visitas.observarTodas().map { l ->
+        l.map {
+            Visita(
+                it.id, it.mascotaId, LocalDate.parse(it.fecha), it.motivo, it.veterinario, it.clinica, it.tratamiento,
+                it.medicamentos, it.notas, it.proximaCitaId, Autor(it.registradoPor, it.registradoPorNombre, it.registradoPorRol),
+                Instant.parse(it.registradoEn), it.pendiente,
+            )
+        }
+    }
+
     override fun observarVisitas(mascotaId: String): Flow<List<Visita>> = visitas.observarDe(mascotaId).map { l ->
         l.map {
             Visita(

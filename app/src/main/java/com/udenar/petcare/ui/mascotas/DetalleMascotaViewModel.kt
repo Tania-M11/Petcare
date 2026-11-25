@@ -220,40 +220,7 @@ class DetalleMascotaViewModel @Inject constructor(
         cuidados.observarEventos(), cuidados.observarRegistros(), pesos, visitas,
         combine(paseosRepo.observar(id), sintomasRepo.observar(id), ::Pair),
     ) { ev, reg, ps, vs, (pas, sin) ->
-        val porId = ev.associateBy { it.id }
-        val zona = reloj.zone
-        buildList {
-            reg.filter { it.mascotaId == id && it.estado != EstadoRegistro.POSPUESTA }.forEach { r ->
-                val e = porId[r.eventoId]
-                val quien = r.registradoPor?.nombre?.substringBefore(' ')
-                val verbo = if (r.estado == EstadoRegistro.OMITIDA) "Omitido" else "Hecho"
-                add(
-                    ItemHistorial(
-                        r.registradoEn.atZone(zona).toLocalDateTime(), CategoriaHistorial.CUIDADOS, e?.tipo?.icono ?: Icono.CHECK,
-                        e?.titulo ?: "Cuidado eliminado",
-                        "$verbo${quien?.let { " por $it" } ?: ""} · ${DescripcionCuidados.hora(r.registradoEn.atZone(zona).toLocalTime())}",
-                    ),
-                )
-            }
-            ps.forEach { p ->
-                add(ItemHistorial(p.fecha.atTime(12, 0), CategoriaHistorial.PESO, Icono.PESO, FichaMascota.peso(p.gramos), "Pesaje${p.registradoPor?.nombre?.let { " · ${it.substringBefore(' ')}" } ?: ""}"))
-            }
-            pas.forEach { p ->
-                add(
-                    ItemHistorial(
-                        p.inicio.atZone(zona).toLocalDateTime(), CategoriaHistorial.PASEOS, p.tipo.icono,
-                        listOfNotNull(p.distanciaM?.let { com.udenar.petcare.domain.paseos.textoDistancia(it) }, com.udenar.petcare.domain.paseos.textoDuracion(p.duracionS)).joinToString(" · "),
-                        "${p.tipo.etiqueta}${p.registradoPor?.nombre?.let { " · ${it.substringBefore(' ')}" } ?: ""}",
-                    ),
-                )
-            }
-            sin.forEach { s ->
-                add(ItemHistorial(s.fechaHora, CategoriaHistorial.SINTOMAS, s.tipo.icono, s.tipo.etiqueta, listOfNotNull(s.descripcion, s.registradoPor?.nombre?.substringBefore(' ')).joinToString(" · ").ifEmpty { "Síntoma anotado" }))
-            }
-            vs.forEach { v ->
-                add(ItemHistorial(v.fecha.atTime(12, 0), CategoriaHistorial.VISITAS, Icono.VETERINARIO, v.motivo, listOfNotNull("Visita veterinaria", v.veterinario, v.clinica).joinToString(" · ")))
-            }
-        }.sortedByDescending { it.instante }
+        construirHistorial(ev, reg.filter { it.mascotaId == id }, ps, vs, pas, sin, reloj.zone)
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
     fun registrarPeso(fecha: LocalDate, gramos: Int) = viewModelScope.launch { salud.registrarPeso(id, fecha, gramos) }

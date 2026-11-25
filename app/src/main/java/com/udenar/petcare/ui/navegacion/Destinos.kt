@@ -2,6 +2,8 @@ package com.udenar.petcare.ui.navegacion
 
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Person
+import androidx.compose.material.icons.rounded.CalendarMonth
+import androidx.compose.material.icons.rounded.History
 import androidx.compose.material.icons.rounded.Pets
 import androidx.compose.material.icons.rounded.Storefront
 import androidx.compose.material.icons.rounded.WbSunny
@@ -13,6 +15,8 @@ import kotlinx.serialization.Serializable
 @Serializable data object RutaMascotas
 @Serializable data object RutaServicios
 @Serializable data object RutaPerfil
+@Serializable data object RutaCalendario
+@Serializable data object RutaHistorial
 @Serializable data object RutaIntenciones
 @Serializable data class RutaCuidarCodigo(val codigo: String = "")
 @Serializable data class RutaCarne(val id: String)
@@ -44,10 +48,12 @@ interface Pestana {
 @Serializable data class RutaDetallePrestador(val id: String)
 @Serializable data class RutaSolicitarPrestador(val id: String)
 
-/** Las 4 pestañas del modo personal (plan, sección 3). El calendario vive dentro de Hoy. */
+/** Pestañas del modo personal: las 5 de la spec (Inicio, Mascotas, Calendario, Historial, Perfil) y Servicios. */
 enum class PestanaPersonal(override val ruta: Any, override val etiqueta: String, override val icono: ImageVector, override val etiquetaPrueba: String) : Pestana {
     HOY(RutaHoy, "Hoy", Icons.Rounded.WbSunny, "pestana_hoy"),
     MASCOTAS(RutaMascotas, "Mascotas", Icons.Rounded.Pets, "pestana_mascotas"),
+    CALENDARIO(RutaCalendario, "Calendario", Icons.Rounded.CalendarMonth, "pestana_calendario"),
+    HISTORIAL(RutaHistorial, "Historial", Icons.Rounded.History, "pestana_historial"),
     SERVICIOS(RutaServicios, "Servicios", Icons.Rounded.Storefront, "pestana_servicios"),
     PERFIL(RutaPerfil, "Perfil", Icons.Rounded.Person, "pestana_perfil"),
 }

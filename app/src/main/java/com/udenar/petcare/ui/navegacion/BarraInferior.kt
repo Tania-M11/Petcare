@@ -35,10 +35,12 @@ import com.udenar.petcare.ui.theme.Pc
 @Composable
 fun <T : Pestana> BarraInferior(pestanas: List<T>, actual: T?, onElegir: (T) -> Unit, modifier: Modifier = Modifier) {
     val forma = RoundedCornerShape(32.dp)
+    // Con más de 4 pestañas solo van los íconos (la activa en su píldora naranja) para que quepan
+    val compacta = pestanas.size > 4
     Row(
         modifier
             .navigationBarsPadding()
-            .padding(horizontal = 20.dp, vertical = 12.dp)
+            .padding(horizontal = if (compacta) 14.dp else 20.dp, vertical = 12.dp)
             .fillMaxWidth()
             .shadow(18.dp, forma, ambientColor = Pc.Tinta.suave(0.4f), spotColor = Pc.Tinta.suave(0.4f))
             .clip(forma)
@@ -57,11 +59,11 @@ fun <T : Pestana> BarraInferior(pestanas: List<T>, actual: T?, onElegir: (T) -> 
                     .background(fondo)
                     .selectable(selected = activa, role = Role.Tab, onClick = { onElegir(pestana) })
                     .testTag(pestana.etiquetaPrueba)
-                    .padding(horizontal = 14.dp, vertical = 10.dp),
+                    .padding(horizontal = if (compacta) 12.dp else 14.dp, vertical = 10.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Icon(pestana.icono, contentDescription = pestana.etiqueta, tint = tinte, modifier = Modifier.size(24.dp))
-                AnimatedVisibility(activa, enter = expandHorizontally(), exit = shrinkHorizontally()) {
+                AnimatedVisibility(activa && !compacta, enter = expandHorizontally(), exit = shrinkHorizontally()) {
                     Text(
                         pestana.etiqueta,
                         style = MaterialTheme.typography.labelLarge,
