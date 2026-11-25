@@ -60,6 +60,18 @@ fun PetcareRaiz() {
             avisos.showSnackbar(msj)
         }
     }
+    // Eligió "Soy veterinario/a" u "Ofrezco servicios": se abren sus formularios en ese orden
+    val formularios by aperturaVm.formulariosPendientes.collectAsStateWithLifecycle()
+    androidx.compose.runtime.LaunchedEffect(formularios) {
+        val cola = aperturaVm.tomarFormularios()
+        if (cola.isNotEmpty()) {
+            nav.popBackStack(RutaIntenciones, inclusive = true)
+            cola.reversed().forEach {
+                nav.navigate(if (it == com.udenar.petcare.domain.guia.Intencion.VETERINARIO) RutaFormVeterinario else RutaFormPrestador)
+            }
+            avisar("Completa tu perfil profesional. Si prefieres, termínalo luego desde Perfil")
+        }
+    }
 
     Scaffold(
         containerColor = Pc.Crema,
@@ -238,7 +250,11 @@ fun PetcareRaiz() {
                 )
             }
             composable<RutaIntenciones> {
-                IntencionesScreen(onListo = { nav.popBackStack() }, onVolver = { nav.popBackStack() })
+                IntencionesScreen(
+                    // Si se abrieron formularios profesionales, Intenciones ya salió de la pila
+                    onListo = { if (nav.currentDestination?.hasRoute(RutaIntenciones::class) == true) nav.popBackStack() },
+                    onVolver = { nav.popBackStack() },
+                )
             }
         }
     }

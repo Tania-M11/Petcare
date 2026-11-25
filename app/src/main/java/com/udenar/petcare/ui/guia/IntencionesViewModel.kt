@@ -21,7 +21,12 @@ data class EstadoIntenciones(
 )
 
 @HiltViewModel
-class IntencionesViewModel @Inject constructor(private val cuenta: RepositorioCuenta) : ViewModel() {
+class IntencionesViewModel @Inject constructor(
+    private val cuenta: RepositorioCuenta,
+    private val pendientes: com.udenar.petcare.domain.guia.FormulariosPendientes,
+    private val veterinarios: com.udenar.petcare.domain.profesionales.RepositorioVeterinarios,
+    private val prestadores: com.udenar.petcare.domain.profesionales.RepositorioPrestadores,
+) : ViewModel() {
 
     // Al volver desde Perfil, arranca con lo que ya había elegido
     private val _estado = MutableStateFlow(EstadoIntenciones(elegidas = cuenta.usuario.value?.intenciones.orEmpty()))
@@ -40,9 +45,16 @@ class IntencionesViewModel @Inject constructor(private val cuenta: RepositorioCu
         _estado.update { it.copy(guardando = true, error = null) }
         viewModelScope.launch {
             try {
+                // Perfiles profesionales elegidos que aún no existen: se abren sus formularios
+                val faltan = buildList {
+                    if (Intencion.VETERINARIO in intenciones && runCatching { veterinarios.cargarMiPerfil() }.getOrNull() == null) add(Intencion.VETERINARIO)
+                    if (Intencion.SERVICIOS in intenciones && runCatching { prestadores.cargarMiPerfil() }.getOrNull() == null) add(Intencion.SERVICIOS)
+                }
+                pendientes.pedir(faltan)
                 cuenta.guardarIntenciones(intenciones)
                 _estado.update { it.copy(listo = true) }
             } catch (e: CuentaException) {
+                pendientes.tomar()
                 _estado.update { it.copy(error = e.message) }
             } finally {
                 _estado.update { it.copy(guardando = false) }

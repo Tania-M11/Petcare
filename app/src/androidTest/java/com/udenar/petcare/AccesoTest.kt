@@ -36,14 +36,14 @@ class AccesoTest {
 
     @Test
     fun sinSesionMuestraBienvenida() {
-        compose.onNodeWithText("Cuidar juntos es más fácil").assertExists()
-        compose.onNodeWithText("Crear cuenta").assertExists()
-        compose.onNodeWithText("Ya tengo cuenta").assertExists()
+        compose.onNodeWithText("Cuidar juntos", substring = true).assertExists()
+        compose.onNodeWithTag("crear_cuenta").assertExists()
+        compose.onNodeWithTag("ya_tengo_cuenta").assertExists()
     }
 
     @Test
     fun registroExigeAceptarPrivacidad() {
-        compose.onNodeWithText("Crear cuenta").performClick()
+        compose.onNodeWithTag("crear_cuenta").performClick()
         compose.onNodeWithText("Nombre").performTextInput("Tania")
         compose.onNodeWithText("Correo").performTextInput("tania@petcare.test")
         compose.onNodeWithText("Contraseña (mínimo 8)").performTextInput("clave1234")
@@ -61,7 +61,7 @@ class AccesoTest {
 
     @Test
     fun correoExistenteMuestraError() {
-        compose.onNodeWithText("Crear cuenta").performClick()
+        compose.onNodeWithTag("crear_cuenta").performClick()
         compose.onNodeWithText("Nombre").performTextInput("Otra Ana")
         compose.onNodeWithText("Correo").performTextInput("ana@petcare.test")
         compose.onNodeWithText("Contraseña (mínimo 8)").performTextInput("clave1234")
@@ -73,7 +73,7 @@ class AccesoTest {
 
     @Test
     fun inicioDeSesionYCierre() {
-        compose.onNodeWithText("Ya tengo cuenta").performClick()
+        compose.onNodeWithTag("ya_tengo_cuenta").performClick()
         compose.onNodeWithText("Correo").performTextInput("ana@petcare.test")
         compose.onNodeWithText("Contraseña").performTextInput("mala")
         compose.onNodeWithText("Entrar").performClick()
@@ -91,6 +91,6 @@ class AccesoTest {
         compose.onNodeWithText("Cerrar sesión").performClick()
         compose.onNodeWithText("¿Cerrar sesión?").assertExists()
         compose.onAllNodesWithTextFirst("Cerrar sesión", 1).performClick()
-        compose.waitUntil(5_000) { compose.onAllNodesWithTextExists("Cuidar juntos es más fácil") }
+        compose.waitUntil(5_000) { compose.onAllNodesWithTagExists("crear_cuenta") }
     }
 }

@@ -118,8 +118,8 @@ class CierreUiTest {
     @Test
     fun recuperarContraseñaYCrearUnaNueva() {
         cuenta.sinSesion()
-        compose.waitUntil(5_000) { compose.onAllNodesWithTextExists("Ya tengo cuenta") }
-        compose.onNodeWithText("Ya tengo cuenta").performClick()
+        compose.waitUntil(5_000) { compose.onAllNodesWithTagExists("ya_tengo_cuenta") }
+        compose.onNodeWithTag("ya_tengo_cuenta").performClick()
         compose.onNodeWithTag("olvide_clave").performScrollTo().performClick()
         compose.onNodeWithTag("correo_recuperar").performTextInput("ana@petcare.test")
         compose.onNodeWithTag("enviar_enlace").performClick()
@@ -141,8 +141,8 @@ class CierreUiTest {
     fun registroConConfirmacionDeCorreo() {
         cuenta.sinSesion()
         cuenta.exigeConfirmacion = true
-        compose.waitUntil(5_000) { compose.onAllNodesWithTextExists("Crear cuenta") }
-        compose.onNodeWithText("Crear cuenta").performClick()
+        compose.waitUntil(5_000) { compose.onAllNodesWithTagExists("crear_cuenta") }
+        compose.onNodeWithTag("crear_cuenta").performClick()
         compose.onNodeWithText("Nombre").performTextInput("Leo")
         compose.onNodeWithText("Correo").performTextInput("leo@petcare.test")
         compose.onNodeWithText("Contraseña (mínimo 8)").performTextInput("clave1234")
@@ -160,6 +160,6 @@ class CierreUiTest {
         compose.onNodeWithTag("boton_eliminar_cuenta").performClick()
         compose.waitUntil(5_000) { cuenta.cuentaEliminada }
         assertTrue(cuenta.cuentaEliminada)
-        compose.waitUntil(5_000) { compose.onAllNodesWithTextExists("Ya tengo cuenta") }
+        compose.waitUntil(5_000) { compose.onAllNodesWithTagExists("ya_tengo_cuenta") }
     }
 }

@@ -106,6 +106,21 @@ fun IntencionesScreen(
             }
         }
 
+        // Quien trabaja con mascotas sigue directo a su perfil profesional
+        androidx.compose.animation.AnimatedVisibility(Intencion.VETERINARIO in estado.elegidas || Intencion.SERVICIOS in estado.elegidas) {
+            Row(
+                Modifier.fillMaxWidth().clip(MaterialTheme.shapes.medium).background(Pc.LavandaClara).padding(14.dp).testTag("aviso_perfil_profesional"),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                com.udenar.petcare.ui.componentes.BaldosaIcono(com.udenar.petcare.domain.modelo.Icono.MALETIN, fondo = Pc.Blanco, tam = 36.dp)
+                Text(
+                    "Al continuar llenas tu perfil profesional para recibir solicitudes.",
+                    style = MaterialTheme.typography.bodyMedium,
+                    modifier = Modifier.padding(start = 12.dp),
+                )
+            }
+        }
+
         estado.error?.let {
             Text(it, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.error)
         }

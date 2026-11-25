@@ -45,8 +45,12 @@ class PrimerosPasosTest {
         compose.onNodeWithText("Elige al menos una").assertIsNotEnabled()
         compose.onNodeWithTag("intencion_MASCOTAS").performClick()
         compose.onNodeWithTag("intencion_VETERINARIO").performClick()
+        compose.onNodeWithTag("aviso_perfil_profesional").assertExists()
         compose.onNodeWithText("Continuar").performScrollTo().assertIsEnabled().performClick()
 
+        // Eligió "Soy veterinario/a": pasa directo a llenar su perfil; puede volver y seguir luego
+        compose.waitUntil(5_000) { compose.onAllNodesWithTagExists("vista_previa") }
+        androidx.test.espresso.Espresso.pressBack()
         compose.waitUntil(5_000) { compose.onAllNodesWithTagExists("primeros_pasos") }
         assertEquals(setOf(Intencion.MASCOTAS, Intencion.VETERINARIO), cuenta.usuario.value?.intenciones)
         compose.onNodeWithText("Agrega a tu primera mascota").assertExists()
@@ -77,6 +81,9 @@ class PrimerosPasosTest {
         compose.onNodeWithText("¿Qué te trae a PetCare?").performClick()
         compose.onNodeWithTag("intencion_SERVICIOS").performClick()
         compose.onNodeWithText("Continuar").performScrollTo().performClick()
+        // Se abre el formulario de prestador; al volver, Perfil ya muestra la respuesta nueva
+        compose.waitUntil(5_000) { compose.onAllNodesWithTagExists("vista_previa") }
+        androidx.test.espresso.Espresso.pressBack()
         compose.waitUntil(5_000) { compose.onAllNodesWithTextExists("Tengo mascotas · Ofrezco servicios") }
     }
 }

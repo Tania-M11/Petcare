@@ -81,3 +81,20 @@ object Guia {
         },
     )
 }
+
+/**
+ * Perfiles profesionales por completar justo después de "¿Qué te trae a PetCare?": quien elige
+ * "Soy veterinario/a" u "Ofrezco servicios" pasa directo a su formulario (luego sigue en Perfil).
+ */
+@javax.inject.Singleton
+class FormulariosPendientes @javax.inject.Inject constructor() {
+    private val _cola = kotlinx.coroutines.flow.MutableStateFlow<List<Intencion>>(emptyList())
+    val cola: kotlinx.coroutines.flow.StateFlow<List<Intencion>> = _cola
+
+    fun pedir(intenciones: List<Intencion>) {
+        _cola.value = intenciones.filter { it == Intencion.VETERINARIO || it == Intencion.SERVICIOS }
+    }
+
+    /** Devuelve la cola y la vacía (cada formulario se abre una sola vez). */
+    fun tomar(): List<Intencion> = _cola.value.also { _cola.value = emptyList() }
+}

@@ -51,12 +51,17 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.udenar.petcare.R
 import com.udenar.petcare.domain.cuenta.Campo
 import com.udenar.petcare.ui.componentes.BlobDecorativo
+import com.udenar.petcare.ui.componentes.grano
+import com.udenar.petcare.ui.componentes.HuellasFlotantes
 import com.udenar.petcare.ui.componentes.BotonCircular
 import com.udenar.petcare.ui.componentes.BotonPrincipal
 import com.udenar.petcare.ui.componentes.CampoTexto
 import com.udenar.petcare.ui.theme.Pc
 
-/** Marco común: volver, título con Michi y contenido desplazable sobre el teclado. */
+/**
+ * Marco común de acceso: nube de color con el logo y Michi arriba, el título grande debajo y
+ * el formulario desplazable sobre el teclado.
+ */
 @Composable
 private fun MarcoFormulario(
     titulo: String,
@@ -69,29 +74,36 @@ private fun MarcoFormulario(
         Modifier
             .fillMaxSize()
             .background(Pc.Crema)
-            .statusBarsPadding()
             .navigationBarsPadding()
             .imePadding()
-            .verticalScroll(rememberScrollState())
-            .padding(horizontal = 24.dp, vertical = 12.dp),
-        verticalArrangement = Arrangement.spacedBy(14.dp),
+            .verticalScroll(rememberScrollState()),
     ) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            BotonCircular(Icons.AutoMirrored.Rounded.ArrowBack, "Volver", onClick = onVolver)
-            Column(
-                Modifier
-                    .weight(1f)
-                    .padding(start = 16.dp),
-            ) {
+        Box(
+            Modifier
+                .fillMaxWidth()
+                .height(250.dp)
+                .clip(com.udenar.petcare.ui.componentes.formaNube(ondas = 4, alto = 0.07f))
+                .background(androidx.compose.ui.graphics.Brush.verticalGradient(listOf(Pc.LavandaClara, Pc.Durazno)))
+                .grano(0.3f),
+        ) {
+            HuellasFlotantes()
+            Row(Modifier.statusBarsPadding().padding(horizontal = 20.dp, vertical = 10.dp), verticalAlignment = Alignment.CenterVertically) {
+                BotonCircular(Icons.AutoMirrored.Rounded.ArrowBack, "Volver", onClick = onVolver)
+                Image(painterResource(com.udenar.petcare.R.drawable.logo_petcare), contentDescription = "PetCare", modifier = Modifier.padding(start = 14.dp).height(28.dp))
+            }
+            Image(
+                painterResource(ilustracion),
+                contentDescription = null,
+                modifier = Modifier.align(Alignment.BottomCenter).padding(bottom = 22.dp).height(150.dp),
+            )
+        }
+        Column(Modifier.padding(horizontal = 24.dp, vertical = 8.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
+            Column {
                 Text(titulo, style = MaterialTheme.typography.headlineLarge)
                 Text(subtitulo, style = MaterialTheme.typography.bodyMedium, color = Pc.TintaSuave)
             }
-            Box(Modifier.size(96.dp), contentAlignment = Alignment.Center) {
-                BlobDecorativo(listOf(Pc.Durazno, Pc.LavandaClara), semilla = titulo.length, modifier = Modifier.fillMaxSize())
-                Image(painterResource(ilustracion), contentDescription = null, modifier = Modifier.height(88.dp))
-            }
+            contenido()
         }
-        contenido()
     }
 }
 
@@ -121,7 +133,7 @@ fun RegistroScreen(
     val f by viewModel.form.collectAsStateWithLifecycle()
     var verPolitica by remember { mutableStateOf(false) }
 
-    MarcoFormulario("Crea tu cuenta", "Una sola cuenta para todo", R.drawable.gato_agenda, onVolver) {
+    MarcoFormulario("Crea tu cuenta", "Una sola cuenta para todo", R.drawable.gato_dormido, onVolver) {
         CampoTexto(f.nombre, viewModel::nombre, "Nombre", icono = Icons.Rounded.Person, error = f.errores[Campo.NOMBRE], habilitado = !f.cargando)
         CampoTexto(
             f.correo, viewModel::correo, "Correo", icono = Icons.Rounded.Mail, error = f.errores[Campo.CORREO],
@@ -181,7 +193,7 @@ fun InicioSesionScreen(
 ) {
     val f by viewModel.form.collectAsStateWithLifecycle()
 
-    MarcoFormulario("Hola de nuevo", "Tus mascotas te esperan", R.drawable.gato_saludo, onVolver) {
+    MarcoFormulario("Hola de nuevo", "Tus mascotas te esperan", R.drawable.gato_dormido, onVolver) {
         CampoTexto(
             f.correo, viewModel::correo, "Correo", icono = Icons.Rounded.Mail, error = f.errores[Campo.CORREO],
             teclado = KeyboardType.Email, habilitado = !f.cargando,
