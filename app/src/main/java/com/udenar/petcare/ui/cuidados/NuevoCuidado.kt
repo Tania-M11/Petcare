@@ -123,6 +123,7 @@ fun NuevoCuidadoScreen(onListo: () -> Unit, onGuardado: () -> Unit = onListo, vi
                     Stepper(dias.toDouble(), { v -> viewModel.editar(CampoCuidado.FECHA_FIN) { it.copy(fechaFin = inicio.plusDays(v.toLong() - 1)) } }, paso = 1.0, unidad = if (dias == 1) "día" else "días", minimo = 1.0, maximo = 365.0, decimales = 0)
                     f.fechaFin?.let { Text("Último día: ${DescripcionCuidados.fecha(it)}", style = MaterialTheme.typography.bodyMedium, color = Pc.TintaSuave) }
                 }
+                CampoTexto(f.detalle["veterinario"].orEmpty(), { viewModel.detalle("veterinario", it.take(80)) }, "Veterinario que lo indicó (opcional)", modifier = Modifier.testTag("veterinario_medicamento"))
             },
             resumen(f, viewModel, nota = "indicaciones"),
         )
