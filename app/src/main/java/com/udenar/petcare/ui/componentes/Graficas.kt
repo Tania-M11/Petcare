@@ -127,6 +127,27 @@ fun TarjetaProgreso(nombre: String, p: ProgresoMascota, modifier: Modifier = Mod
                 textoValor = { "%.1f".format(Locale.forLanguageTag("es-CO"), it) }, alto = 100.dp, modifier = Modifier.testTag("grafica_paseos"),
             )
         }
+        // Cifras de los últimos 30 días
+        val e = p.estadisticas
+        if (e.hayDatos) {
+            Text("Últimos 30 días", style = MaterialTheme.typography.labelLarge, color = Pc.TintaSuave)
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Cifra(com.udenar.petcare.domain.modelo.Icono.RELOJ, "${e.actividadMin30} min", "de actividad", Modifier.weight(1f))
+                Cifra(com.udenar.petcare.domain.modelo.Icono.PASEO, e.duracionPromedioMin?.let { "$it min" } ?: "—", "por paseo", Modifier.weight(1f))
+            }
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Cifra(com.udenar.petcare.domain.modelo.Icono.BANO, "${e.banos30}", if (e.banos30 == 1) "baño" else "baños", Modifier.weight(1f))
+                Cifra(com.udenar.petcare.domain.modelo.Icono.MEDICAMENTO, "${e.medicamentos30}", "tomas dadas", Modifier.weight(1f))
+            }
+            if (e.paseosPorMes.any { it.second > 0 }) {
+                Text("Paseos por mes", style = MaterialTheme.typography.labelLarge, color = Pc.TintaSuave)
+                GraficaBarras(
+                    e.paseosPorMes.map { it.second.toFloat() },
+                    e.paseosPorMes.map { it.first.month.getDisplayName(java.time.format.TextStyle.SHORT, Locale.forLanguageTag("es-CO")) },
+                    Pc.Lavanda, textoValor = { it.toInt().toString() }, alto = 90.dp, modifier = Modifier.testTag("grafica_paseos_mes"),
+                )
+            }
+        }
         if (p.porPersona.isNotEmpty()) {
             Text("Quién ayudó este mes", style = MaterialTheme.typography.labelLarge, color = Pc.TintaSuave)
             val total = p.porPersona.values.sum().coerceAtLeast(1)
@@ -158,3 +179,18 @@ fun TarjetaProgreso(nombre: String, p: ProgresoMascota, modifier: Modifier = Mod
 
 @Composable
 fun PuntoColor(color: Color, tam: Dp = 10.dp) = Box(Modifier.size(tam).clip(RoundedCornerShape(50)).background(color))
+
+/** Una cifra en baldosa: ícono, valor grande y qué es. */
+@Composable
+private fun Cifra(icono: com.udenar.petcare.domain.modelo.Icono, valor: String, que: String, modifier: Modifier = Modifier) {
+    Row(
+        modifier.clip(RoundedCornerShape(18.dp)).background(Pc.Crema).padding(10.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        BaldosaIcono(icono, tam = 34.dp)
+        Column(Modifier.padding(start = 8.dp)) {
+            Text(valor, fontFamily = Kalnia, fontSize = 18.sp, color = Pc.Tinta)
+            Text(que, style = MaterialTheme.typography.labelSmall, color = Pc.TintaSuave)
+        }
+    }
+}

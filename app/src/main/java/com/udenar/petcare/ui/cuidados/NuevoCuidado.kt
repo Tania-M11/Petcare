@@ -197,35 +197,48 @@ fun NuevoCuidadoScreen(onListo: () -> Unit, onGuardado: () -> Unit = onListo, vi
             },
             resumen(f, viewModel, nota = "notas"),
         )
-        ClaseCuidado.PERSONALIZADO -> listOf(
-            Paso("nombre", { f.titulo.isNotBlank() }) {
+        ClaseCuidado.PERSONALIZADO -> buildList {
+            add(Paso("nombre", { f.titulo.isNotBlank() }) {
                 PreguntaMichi("¿Qué actividad quieres recordar?", null, PoseMichi.AGENDA)
-                OpcionesGrandes(listOf("Paseo" to Icono.PASEO, "Juego" to Icono.JUEGO, "Entrenamiento" to Icono.HUESO, "Cepillar dientes" to Icono.CEPILLO_DIENTES, "Socializar" to Icono.HUELLAS), f.titulo) { nombre ->
-                    // "Paseo" queda como recordatorio de paseo (su propio tipo); lo demás, actividad personalizada
-                    viewModel.editar(CampoCuidado.TITULO) { it.copy(titulo = nombre, tipo = if (nombre == "Paseo") com.udenar.petcare.domain.cuidados.TipoCuidado.PASEO else com.udenar.petcare.domain.cuidados.TipoCuidado.PERSONALIZADO) }
+                OpcionesGrandes(listOf("Paseo" to Icono.PASEO, "Pesaje" to Icono.PESO, "Cita veterinaria" to Icono.VETERINARIO, "Juego" to Icono.JUEGO, "Entrenamiento" to Icono.HUESO, "Socializar" to Icono.HUELLAS), f.titulo) { nombre ->
+                    // Paseo, pesaje y cita tienen su propio tipo (y su propio recordatorio); lo demás, actividad personalizada
+                    val tipo = when (nombre) {
+                        "Paseo" -> com.udenar.petcare.domain.cuidados.TipoCuidado.PASEO
+                        "Pesaje" -> com.udenar.petcare.domain.cuidados.TipoCuidado.PESAJE
+                        "Cita veterinaria" -> com.udenar.petcare.domain.cuidados.TipoCuidado.CITA_VET
+                        else -> com.udenar.petcare.domain.cuidados.TipoCuidado.PERSONALIZADO
+                    }
+                    viewModel.editar(CampoCuidado.TITULO) { it.copy(titulo = nombre, tipo = tipo, modo = if (tipo == com.udenar.petcare.domain.cuidados.TipoCuidado.CITA_VET) ModoFrecuencia.UNA_VEZ else it.modo) }
                     paso++
                 }
                 CampoTexto(f.titulo, { v -> viewModel.editar(CampoCuidado.TITULO) { it.copy(titulo = v.take(80)) } }, "U otro nombre", modifier = Modifier.testTag("titulo_cuidado"))
-            },
-            Paso("frecuencia", { !f.modo.usaN || (f.n.toIntOrNull() ?: 0) > 0 }) {
+            })
+            add(Paso("frecuencia", { !f.modo.usaN || (f.n.toIntOrNull() ?: 0) > 0 }) {
                 PreguntaMichi("¿Cada cuánto?", null, PoseMichi.AGENDA)
                 Frecuencias(f, viewModel, ModoFrecuencia.entries)
-            },
-            Paso("hora", saltable = true) {
+            })
+            add(Paso("hora", saltable = true) {
                 PreguntaMichi("¿A qué hora?", "Si no importa la hora, salta este paso", PoseMichi.AGENDA)
                 HorasRapidas(f.horas) { h -> viewModel.editar(CampoCuidado.HORAS) { it.copy(horas = h) } }
-            },
-            Paso("desde", { f.fecha != null }) {
+            })
+            add(Paso("desde", { f.fecha != null }) {
                 PreguntaMichi(if (f.modo == ModoFrecuencia.UNA_VEZ) "¿Qué día?" else "¿Desde cuándo?", null, PoseMichi.AGENDA)
                 FechaRapida("Fecha", f.fecha, hoy) { d -> viewModel.editar(CampoCuidado.FECHA) { it.copy(fecha = d) } }
-            },
-            Paso("detalles", saltable = true) {
+            })
+            if (f.tipo == com.udenar.petcare.domain.cuidados.TipoCuidado.CITA_VET) {
+                add(Paso("aviso") {
+                    PreguntaMichi("¿Cuántos días antes te aviso?", "Para que apartes el tiempo de la cita", PoseMichi.ALARMA)
+                    val aviso = f.avisoDias.toIntOrNull() ?: 1
+                    Stepper(aviso.toDouble(), { v -> viewModel.editar { it.copy(avisoDias = v.toInt().toString()) } }, paso = 1.0, unidad = if (aviso == 1) "día" else "días", minimo = 0.0, maximo = 30.0, decimales = 0)
+                })
+            }
+            add(Paso("detalles", saltable = true) {
                 PreguntaMichi("¿Cuánto dura?", "Duración y una foto si quieres (opcional)", PoseMichi.CELEBRA)
                 CampoTexto(f.detalle["duracionMin"].orEmpty(), { viewModel.detalle("duracionMin", it.filter(Char::isDigit).take(4)) }, "Duración en minutos", teclado = androidx.compose.ui.text.input.KeyboardType.Number, modifier = Modifier.testTag("duracion_actividad"))
                 com.udenar.petcare.ui.componentes.ElegirFoto(f.foto, { u -> viewModel.editar { it.copy(foto = u) } }, prefijoTag = "actividad_foto")
-            },
-            resumen(f, viewModel, nota = "observaciones"),
-        )
+            })
+            add(resumen(f, viewModel, nota = "observaciones"))
+        }
     }
     val actual = pasos[paso.coerceIn(0, pasos.lastIndex)]
     val ultimo = paso >= pasos.lastIndex

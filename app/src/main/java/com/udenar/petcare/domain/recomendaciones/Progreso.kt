@@ -4,6 +4,7 @@ import com.udenar.petcare.domain.modelo.Icono
 import com.udenar.petcare.domain.cuidados.EventoCuidado
 import com.udenar.petcare.domain.cuidados.MotorCuidados
 import com.udenar.petcare.domain.cuidados.RegistroCuidado
+import com.udenar.petcare.domain.cuidados.TipoCuidado
 import com.udenar.petcare.domain.paseos.Paseo
 import com.udenar.petcare.domain.salud.RegistroPeso
 import java.time.DayOfWeek
@@ -21,6 +22,21 @@ data class SemanaPaseos(val lunes: LocalDate, val km: Double, val minutos: Int, 
 
 data class Logro(val icono: Icono, val titulo: String, val descripcion: String, val conseguido: Boolean)
 
+/** Cifras de los últimos 30 días y paseos por mes (solo lo registrado). */
+data class Estadisticas(
+    /** Los últimos 6 meses, del más antiguo al actual. */
+    val paseosPorMes: List<Pair<java.time.YearMonth, Int>> = emptyList(),
+    val duracionPromedioMin: Int? = null,
+    /** Minutos de paseos y actividades con duración, últimos 30 días. */
+    val actividadMin30: Int = 0,
+    val banos30: Int = 0,
+    val banosTotal: Int = 0,
+    val medicamentos30: Int = 0,
+    val medicamentosTotal: Int = 0,
+) {
+    val hayDatos: Boolean get() = paseosPorMes.any { it.second > 0 } || banosTotal > 0 || medicamentosTotal > 0 || actividadMin30 > 0
+}
+
 data class ProgresoMascota(
     val semanas: List<SemanaProgreso>,
     /** Días seguidos (hasta hoy) con todo lo programado hecho. */
@@ -29,8 +45,9 @@ data class ProgresoMascota(
     /** Registros de los últimos 30 días por persona (nombre → cantidad). */
     val porPersona: Map<String, Int>,
     val logros: List<Logro>,
+    val estadisticas: Estadisticas = Estadisticas(),
 ) {
-    val hayDatos: Boolean get() = semanas.any { it.total > 0 } || paseos.any { it.cantidad > 0 }
+    val hayDatos: Boolean get() = semanas.any { it.total > 0 } || paseos.any { it.cantidad > 0 } || estadisticas.hayDatos
 }
 
 /**
@@ -89,7 +106,28 @@ object Progreso {
             Logro(Icono.EQUIPO, "Trabajo en equipo", "Dos o más personas ayudaron este mes", porPersona.size >= 2),
             Logro(Icono.PESO, "Peso al día", "Un peso registrado en el último mes", pesos.any { ChronoUnit.DAYS.between(it.fecha, hoy) <= 30 }),
         )
-        return ProgresoMascota(semanasProgreso, racha, paseosSemana, porPersona, logros)
+        // Estadísticas: solo cuentan lo que se registró
+        val tipoDe = eventos.associate { it.id to it.tipo }
+        val hechos = registros.filter { it.hecho }
+        val recientes = hechos.filter { !it.fechaProgramada.toLocalDate().isBefore(desde) }
+        val mesActual = java.time.YearMonth.from(hoy)
+        val paseosPorMes = (5 downTo 0).map { k ->
+            val mes = mesActual.minusMonths(k.toLong())
+            mes to paseos.count { java.time.YearMonth.from(it.inicio.atZone(zona)) == mes }
+        }
+        val paseos30 = paseos.filter { !it.inicio.atZone(zona).toLocalDate().isBefore(desde) }
+        val actividades30 = recientes.filter { tipoDe[it.eventoId] == TipoCuidado.PERSONALIZADO || tipoDe[it.eventoId] == TipoCuidado.PASEO }
+            .sumOf { r -> eventos.firstOrNull { it.id == r.eventoId }?.detalle?.get("duracionMin")?.toIntOrNull() ?: 0 }
+        val estadisticas = Estadisticas(
+            paseosPorMes = paseosPorMes,
+            duracionPromedioMin = paseos30.takeIf { it.isNotEmpty() }?.let { l -> l.sumOf { it.duracionS } / l.size / 60 },
+            actividadMin30 = paseos30.sumOf { it.duracionS } / 60 + actividades30,
+            banos30 = recientes.count { tipoDe[it.eventoId] == TipoCuidado.BANO },
+            banosTotal = hechos.count { tipoDe[it.eventoId] == TipoCuidado.BANO },
+            medicamentos30 = recientes.count { tipoDe[it.eventoId] == TipoCuidado.MEDICAMENTO },
+            medicamentosTotal = hechos.count { tipoDe[it.eventoId] == TipoCuidado.MEDICAMENTO },
+        )
+        return ProgresoMascota(semanasProgreso, racha, paseosSemana, porPersona, logros, estadisticas)
     }
 }
 

@@ -242,7 +242,8 @@ class FormCuidadoViewModel @Inject constructor(
         var ancla = Ancla.CALENDARIO
         var horas = f.horas
         var modo = f.modo
-        var aviso: Int? = null
+        // Cita veterinaria: aviso anticipado configurable (como las vacunas)
+        var aviso: Int? = if (f.tipo == TipoCuidado.CITA_VET) f.avisoDias.trim().toIntOrNull()?.coerceIn(0, 90) else null
         when (f.clase) {
             ClaseCuidado.VACUNA -> {
                 modo = ModoFrecuencia.UNA_VEZ
