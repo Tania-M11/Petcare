@@ -58,7 +58,7 @@ class ResumenSemanalTest {
     fun resumeLaSemanaDeTodasLasMascotas() {
         val (titulo, cuerpo) = com.udenar.petcare.domain.recomendaciones.ResumenSemanal.texto(listOf("Venus" to p(14, 14, 3, 4.25, 7), "Apolo" to p(6, 7)))!!
         org.junit.Assert.assertEquals("Tu semana con Venus y Apolo", titulo)
-        org.junit.Assert.assertEquals("Cuidados: 20 de 21 (95 %). Paseos: 3 · 4,3 km. Racha de Venus: 7 días. ¡Muy buena semana!", cuerpo)
+        org.junit.Assert.assertEquals("Cuidados: 20 de 21 (95 %). Paseos: 3 · 4,3 km. Racha de Venus: 7 días. Buen avance esta semana", cuerpo)
     }
 
     @org.junit.Test

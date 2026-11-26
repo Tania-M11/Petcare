@@ -82,7 +82,7 @@ fun IntencionesScreen(
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Column(Modifier.weight(1f)) {
-                Text("Michi quiere saber", style = MaterialTheme.typography.bodyLarge, color = Pc.TintaSuave)
+                Text("Personaliza tu experiencia", style = MaterialTheme.typography.bodyLarge, color = Pc.TintaSuave)
                 Text("¿Qué te trae a PetCare?", style = MaterialTheme.typography.headlineLarge)
             }
             Image(painterResource(R.drawable.gato_saludo), contentDescription = null, modifier = Modifier.height(92.dp))

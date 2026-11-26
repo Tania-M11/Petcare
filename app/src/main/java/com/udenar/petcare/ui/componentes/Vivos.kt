@@ -145,7 +145,7 @@ fun AnilloProgreso(hechos: Int, total: Int, modifier: Modifier = Modifier, tam: 
                 Simbolo(Icono.HOJA, tam = tam * 0.34f)
             } else {
                 Text("$hechos/$total", fontFamily = Kalnia, fontSize = (tam.value * 0.22f).sp, color = Pc.Tinta)
-                Text(if (completo) "¡listo!" else "hoy", style = MaterialTheme.typography.labelSmall, color = Pc.TintaSuave)
+                Text(if (completo) "completo" else "hoy", style = MaterialTheme.typography.labelSmall, color = Pc.TintaSuave)
             }
         }
     }
@@ -240,7 +240,7 @@ fun TarjetaRecomendacion(r: Recomendacion, onAccion: () -> Unit, onDescartar: ()
 @Composable
 fun AvisoMichi(texto: String, modifier: Modifier = Modifier) {
     val error = listOf("No se pudo", "No pudimos", "Sin conexión", "Sin permiso", "No tienes", "no está", "Escribe", "Elige").any { texto.contains(it, ignoreCase = true) }
-    val exito = !error && listOf("¡", "✓", "guard", "Listo", "enviad", "Gracias", "registrad", "actualizad").any { texto.contains(it, ignoreCase = true) }
+    val exito = !error && listOf("¡", "✓", "guard", "Listo", "enviad", "confirmad", "Gracias", "registrad", "actualizad").any { texto.contains(it, ignoreCase = true) }
     val pose = when {
         error -> PoseMichi.ALARMA
         exito -> PoseMichi.AMIGOS

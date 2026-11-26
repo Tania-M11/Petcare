@@ -193,7 +193,7 @@ fun InicioSesionScreen(
 ) {
     val f by viewModel.form.collectAsStateWithLifecycle()
 
-    MarcoFormulario("Hola de nuevo", "Tus mascotas te esperan", R.drawable.gato_dormido, onVolver) {
+    MarcoFormulario("Hola de nuevo", "Ingresa para ver a tus mascotas", R.drawable.gato_dormido, onVolver) {
         CampoTexto(
             f.correo, viewModel::correo, "Correo", icono = Icons.Rounded.Mail, error = f.errores[Campo.CORREO],
             teclado = KeyboardType.Email, habilitado = !f.cargando,

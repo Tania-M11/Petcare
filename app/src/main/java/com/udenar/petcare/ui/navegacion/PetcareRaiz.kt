@@ -134,10 +134,10 @@ fun PetcareRaiz() {
                     nav.popBackStack()
                     // Si era nueva (se abrió desde la lista), se muestra su ficha
                     if (nav.currentDestination?.hasRoute(RutaDetalleMascota::class) != true) {
-                        avisar("¡Bienvenida a la familia! Ahora crea su primer recordatorio")
+                        avisar("Mascota registrada. Ahora puedes crear su primer recordatorio")
                         nav.navigate(RutaDetalleMascota(id))
                     } else {
-                        avisar("¡Listo! La ficha quedó guardada")
+                        avisar("Ficha guardada")
                     }
                 }
                 // Nueva: recorrido guiado; editar: la ficha completa
@@ -179,7 +179,7 @@ fun PetcareRaiz() {
             composable<RutaFormCuidado> {
                 val nuevo = it.toRoute<RutaFormCuidado>().id == null
                 val listo = {
-                    avisar(if (nuevo) "¡Recordatorio listo! Te aviso a tiempo" else "¡Listo! Cuidados actualizados")
+                    avisar(if (nuevo) "Recordatorio guardado" else "Cuidados actualizados")
                     nav.popBackStack()
                     Unit
                 }
@@ -207,14 +207,14 @@ fun PetcareRaiz() {
                     com.udenar.petcare.ui.mascotas.NuevaVisitaScreen(
                         onCerrar = { nav.popBackStack() },
                         onGuardada = {
-                            avisar("¡Visita guardada en su historial!")
+                            avisar("Visita guardada en el historial")
                             nav.popBackStack()
                         },
                     )
                     return@composable
                 }
                 com.udenar.petcare.ui.mascotas.FormVisitaScreen(onListo = {
-                    avisar("¡Visita guardada en su historial!")
+                    avisar("Visita guardada en el historial")
                     nav.popBackStack()
                 })
             }

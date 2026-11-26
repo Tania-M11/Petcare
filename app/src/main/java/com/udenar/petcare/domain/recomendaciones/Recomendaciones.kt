@@ -269,7 +269,7 @@ object MotorRecomendaciones {
             faltan == 0L -> add(
                 Recomendacion(
                     "cumple_${m.id}_${hoy.year}", m.id, Tono.CELEBRACION, Icono.PASTEL,
-                    "¡Hoy ${m.nombre} cumple $anos ${if (anos == 1) "año" else "años"}!",
+                    "Hoy ${m.nombre} cumple $anos ${if (anos == 1) "año" else "años"}",
                     "Un día perfecto para su foto favorita y un paseo largo.",
                     "Hoy es su fecha de nacimiento${if (m.nacimientoAproximado) " (aproximada)" else ""}.",
                     AccionSugerida.VER_FICHA, "Ver su ficha",
@@ -310,11 +310,11 @@ object Michi {
         }
         val hechos = total - pendientes
         return when {
-            !hayMascotas -> CabeceraHoy(momento, "¡Empecemos! Soy Michi", PoseMichi.SALUDO, Icono.HUELLAS)
+            !hayMascotas -> CabeceraHoy(momento, "Registra tu primera mascota", PoseMichi.SALUDO, Icono.HUELLAS)
             total == 0 -> CabeceraHoy(momento, "Hoy no hay cuidados programados", PoseMichi.DORMIDO, Icono.HOJA)
-            pendientes == 0 -> CabeceraHoy(momento, "¡Todo listo por hoy!", PoseMichi.CELEBRA, Icono.FIESTA)
+            pendientes == 0 -> CabeceraHoy(momento, "Cuidados de hoy completos", PoseMichi.CELEBRA, Icono.FIESTA)
             pendientes == total -> CabeceraHoy(momento, "$total ${if (total == 1) "cuidado" else "cuidados"} para hoy", PoseMichi.ALARMA, Icono.CALENDARIO)
-            pendientes == 1 -> CabeceraHoy(momento, "¡Ya casi! Falta 1", PoseMichi.CELEBRA, Icono.FUEGO)
+            pendientes == 1 -> CabeceraHoy(momento, "Falta 1 cuidado por hoy", PoseMichi.CELEBRA, Icono.FUEGO)
             else -> CabeceraHoy(momento, "Llevas $hechos de $total", PoseMichi.AGENDA, Icono.ESTRELLA)
         }
     }
@@ -331,14 +331,14 @@ object Michi {
         Consejo(Icono.CARNE, "Su carné con código QR está en la ficha"),
         Consejo(Icono.EQUIPO, "Comparte su código y cuiden en equipo"),
         Consejo(Icono.MAPA, "Registra paseos con GPS y mira la ruta"),
-        Consejo(Icono.CALENDARIO, "Mira cómo vas en todo el mes"),
+        Consejo(Icono.CALENDARIO, "Consulta tu avance del mes"),
         Consejo(Icono.CAMARA, "Escanea la etiqueta de una vacuna"),
     )
 
     /** Mensaje corto al marcar una toma (entre procesos). */
     fun alMarcar(titulo: String, mascota: String, quedan: Int): String = when (quedan) {
-        0 -> "¡$titulo de $mascota listo! Terminaste todo lo de hoy."
-        1 -> "¡Bien! $titulo de $mascota hecho. Queda 1."
-        else -> "¡Bien! $titulo de $mascota hecho. Quedan $quedan."
+        0 -> "$titulo de $mascota registrado. Completaste los cuidados de hoy."
+        1 -> "$titulo de $mascota registrado. Queda 1 pendiente."
+        else -> "$titulo de $mascota registrado. Quedan $quedan pendientes."
     }
 }

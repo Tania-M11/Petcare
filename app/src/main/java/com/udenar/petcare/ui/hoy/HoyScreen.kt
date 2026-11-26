@@ -240,7 +240,7 @@ fun HoyScreen(
             val progreso = guia
             when {
                 progreso != null && progreso.completa -> TarjetaIlustrada(
-                    titulo = "¡Todo listo!",
+                    titulo = "Guía completada",
                     texto = "Ya conoces lo básico. Toca para cerrar esta guía.",
                     chip = "Primeros pasos",
                     ilustracion = R.drawable.gato_amigos,

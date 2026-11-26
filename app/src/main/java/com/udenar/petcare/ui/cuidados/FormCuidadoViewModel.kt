@@ -101,9 +101,9 @@ class FormCuidadoViewModel @Inject constructor(
                 val texto = lector.leer(uri)
                 val l = com.udenar.petcare.domain.escaneo.AnalizadorEtiqueta.analizar(texto, hoy)
                 lectura.value = l
-                if (l.nombres.isEmpty() && l.fechas.isEmpty() && l.lote == null) _form.update { it.copy(mensaje = "No pude leer la etiqueta. Prueba con más luz y de cerca.") }
+                if (l.nombres.isEmpty() && l.fechas.isEmpty() && l.lote == null) _form.update { it.copy(mensaje = "No se pudo leer la etiqueta. Intenta con más luz y más cerca.") }
             } catch (_: Exception) {
-                _form.update { it.copy(mensaje = "No pude leer la etiqueta. Prueba con más luz y de cerca.") }
+                _form.update { it.copy(mensaje = "No se pudo leer la etiqueta. Intenta con más luz y más cerca.") }
             } finally {
                 leyendo.value = false
             }

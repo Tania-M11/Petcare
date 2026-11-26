@@ -182,7 +182,7 @@ fun NuevoSintomaScreen(onCerrar: () -> Unit, onGuardado: () -> Unit, viewModel: 
                 ElegirFoto(f.foto, { u -> viewModel.editar { it.copy(foto = u) } }, prefijoTag = "sintoma_foto")
             }
             PasoSintoma.RESUMEN -> {
-                PreguntaMichi("¿Todo bien?", "Toca un dato para cambiarlo", PoseMichi.LEYENDO)
+                PreguntaMichi("Confirma los datos", "Toca un dato para cambiarlo", PoseMichi.LEYENDO)
                 FilaResumen("Qué", f.tipo?.etiqueta ?: "—", onEditar = { paso = PasoSintoma.QUE.ordinal })
                 FilaResumen("Cuándo", f.fechaHora.format(FECHA_HORA), onEditar = { paso = PasoSintoma.CUANDO.ordinal })
                 FilaResumen("Detalle", listOfNotNull(f.descripcion.take(60).ifBlank { null }, "Con foto".takeIf { f.foto != null }).joinToString(" · ").ifEmpty { "Sin detalle" }, onEditar = { paso = PasoSintoma.DETALLE.ordinal })

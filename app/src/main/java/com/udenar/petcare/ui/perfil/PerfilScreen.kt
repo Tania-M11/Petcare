@@ -188,7 +188,7 @@ fun PerfilScreen(
             FilaOpcion(
                 icono = Icons.Rounded.Explore, icono3d = com.udenar.petcare.domain.modelo.Icono.RELOJ,
                 titulo = "Historial de tus mascotas",
-                subtitulo = "Todo lo registrado, de todas o de una",
+                subtitulo = "Registros de todas tus mascotas o de una",
                 fondoIcono = Pc.LavandaClara,
                 colorIcono = Pc.LavandaOscura,
                 onClick = onHistorial,

@@ -67,7 +67,7 @@ fun NuevoCuidadoScreen(onListo: () -> Unit, onGuardado: () -> Unit = onListo, vi
     val pasos: List<Paso> = when (f.clase) {
         ClaseCuidado.COMIDA -> listOf(
             Paso("cual", { f.titulo.isNotBlank() }) {
-                PreguntaMichi("¿Qué comida es?", "Solo te recuerdo la hora; las porciones las decides tú", PoseMichi.CELEBRA)
+                PreguntaMichi("¿Qué comida es?", "PetCare solo recuerda la hora; la porción la defines con tu veterinario", PoseMichi.CELEBRA)
                 OpcionesGrandes(
                     listOf("Desayuno" to Icono.AMANECER, "Almuerzo" to Icono.SOL, "Merienda" to Icono.GALLETA, "Cena" to Icono.LUNA), f.titulo,
                 ) { nombre ->
@@ -138,9 +138,9 @@ fun NuevoCuidadoScreen(onListo: () -> Unit, onGuardado: () -> Unit = onListo, vi
                 FechaRapida("Se aplicó", f.fechaAnterior, hoy, permitirNinguna = true, pasado = true) { d -> viewModel.editar { it.copy(fechaAnterior = d) } }
             },
             Paso("proxima", { f.fecha != null }) {
-                PreguntaMichi("¿Cuándo es la próxima dosis?", "Te aviso antes para que apartes la cita", PoseMichi.AGENDA)
+                PreguntaMichi("¿Cuándo es la próxima dosis?", "Recibirás un aviso previo para agendar la cita", PoseMichi.AGENDA)
                 SelectorFecha("Próxima dosis", f.fecha, { d -> viewModel.editar(CampoCuidado.FECHA) { it.copy(fecha = d) } }, textoVacio = "Elige la fecha", desde = hoy)
-                Text("¿Cuántos días antes te aviso?", style = MaterialTheme.typography.titleSmall)
+                Text("¿Con cuántos días de anticipación quieres el aviso?", style = MaterialTheme.typography.titleSmall)
                 val aviso = f.avisoDias.toIntOrNull() ?: 7
                 Stepper(aviso.toDouble(), { v -> viewModel.editar { it.copy(avisoDias = v.toInt().toString()) } }, paso = 1.0, unidad = if (aviso == 1) "día" else "días", minimo = 0.0, maximo = 90.0, decimales = 0)
             },
@@ -166,7 +166,7 @@ fun NuevoCuidadoScreen(onListo: () -> Unit, onGuardado: () -> Unit = onListo, vi
                 Escanear(viewModel, f)
             },
             Paso("ultima", saltable = true) {
-                PreguntaMichi("¿Cuándo fue la última vez?", "Desde ese día cuento la próxima", PoseMichi.AGENDA)
+                PreguntaMichi("¿Cuándo fue la última vez?", "La próxima fecha se calcula desde ese día", PoseMichi.AGENDA)
                 FechaRapida("Última aplicación", f.fechaAnterior, hoy, permitirNinguna = true, pasado = true) { d -> viewModel.editar { it.copy(fechaAnterior = d) } }
             },
             Paso("frecuencia", { (f.n.toIntOrNull() ?: 0) > 0 }) {
@@ -189,7 +189,7 @@ fun NuevoCuidadoScreen(onListo: () -> Unit, onGuardado: () -> Unit = onListo, vi
                 }
             },
             Paso("frecuencia", { (f.n.toIntOrNull() ?: 0) > 0 }) {
-                PreguntaMichi("¿Cada cuánto lo hacen?", "Al marcarlo como hecho, cuento desde ese día", PoseMichi.HIGIENE)
+                PreguntaMichi("¿Cada cuánto lo hacen?", "Al marcarlo como hecho, la próxima fecha se calcula desde ese día", PoseMichi.HIGIENE)
                 Frecuencias(f, viewModel, ModoFrecuencia.INTERVALOS)
             },
             Paso("proxima", { f.fecha != null }) {
@@ -228,13 +228,13 @@ fun NuevoCuidadoScreen(onListo: () -> Unit, onGuardado: () -> Unit = onListo, vi
             })
             if (f.tipo == com.udenar.petcare.domain.cuidados.TipoCuidado.CITA_VET) {
                 add(Paso("aviso") {
-                    PreguntaMichi("¿Cuántos días antes te aviso?", "Para que apartes el tiempo de la cita", PoseMichi.ALARMA)
+                    PreguntaMichi("¿Con cuántos días de anticipación quieres el aviso?", "Para que apartes el tiempo de la cita", PoseMichi.ALARMA)
                     val aviso = f.avisoDias.toIntOrNull() ?: 1
                     Stepper(aviso.toDouble(), { v -> viewModel.editar { it.copy(avisoDias = v.toInt().toString()) } }, paso = 1.0, unidad = if (aviso == 1) "día" else "días", minimo = 0.0, maximo = 30.0, decimales = 0)
                 })
             }
             add(Paso("detalles", saltable = true) {
-                PreguntaMichi("¿Cuánto dura?", "Duración y una foto si quieres (opcional)", PoseMichi.CELEBRA)
+                PreguntaMichi("¿Cuánto dura?", "Duración y una foto (opcional)", PoseMichi.CELEBRA)
                 CampoTexto(f.detalle["duracionMin"].orEmpty(), { viewModel.detalle("duracionMin", it.filter(Char::isDigit).take(4)) }, "Duración en minutos", teclado = androidx.compose.ui.text.input.KeyboardType.Number, modifier = Modifier.testTag("duracion_actividad"))
                 com.udenar.petcare.ui.componentes.ElegirFoto(f.foto, { u -> viewModel.editar { it.copy(foto = u) } }, prefijoTag = "actividad_foto")
             })
@@ -273,7 +273,7 @@ private val ICONO_HIGIENE = mapOf(
 /** Último paso: el cuidado contado en una frase, con una nota opcional. */
 private fun resumen(f: FormCuidado, viewModel: FormCuidadoViewModel, nota: String) = Paso("resumen", { viewModel.erroresActuales().isEmpty() }) {
     val e = runCatching { viewModel.vistaPrevia() }.getOrNull()
-    PreguntaMichi("¡Así quedará!", "Revisa y guarda. Puedes volver atrás para cambiar algo", PoseMichi.AMIGOS)
+    PreguntaMichi("Resumen", "Revisa los datos antes de guardar; puedes volver para corregirlos", PoseMichi.AMIGOS)
     Column(
         Modifier.fillMaxWidth().clip(MaterialTheme.shapes.large).background(Pc.Blanco).padding(18.dp).testTag("resumen_cuidado"),
         verticalArrangement = Arrangement.spacedBy(6.dp),

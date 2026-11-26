@@ -82,7 +82,7 @@ class RecomendacionesTest {
     @Test
     fun cumpleanos() {
         val r = MotorRecomendaciones.generar(ctx(mascotas = listOf(max.copy(fechaNacimiento = hoy.minusYears(3)))))
-        assertEquals("¡Hoy Max cumple 3 años!", r.single { it.tono == Tono.CELEBRACION }.titulo)
+        assertEquals("Hoy Max cumple 3 años", r.single { it.tono == Tono.CELEBRACION }.titulo)
     }
 
     @Test
@@ -104,7 +104,7 @@ class RecomendacionesTest {
         // Los trucos son cortos (caben en una línea) y rotan desde uno distinto cada día
         assertTrue(Michi.consejos(hoy).all { it.texto.length <= 45 })
         assertTrue(Michi.consejos(hoy).first() != Michi.consejos(hoy.plusDays(1)).first())
-        assertEquals("¡Bien! Cena de Max hecho. Quedan 2.", Michi.alMarcar("Cena", "Max", 2))
+        assertEquals("Cena de Max registrado. Quedan 2 pendientes.", Michi.alMarcar("Cena", "Max", 2))
     }
 }
 

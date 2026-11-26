@@ -148,7 +148,7 @@ class MisSolicitudesViewModel @Inject constructor(
     val misResenas = MutableStateFlow<Map<String, com.udenar.petcare.domain.profesionales.Resena>>(emptyMap())
 
     fun calificar(solicitudId: String, tipo: com.udenar.petcare.domain.profesionales.TipoResena, estrellas: Int, comentario: String, avisar: (String) -> Unit) =
-        accionPres(avisar, "¡Gracias por tu reseña!") { resenas.guardar(solicitudId, tipo, estrellas, comentario) }
+        accionPres(avisar, "Gracias por tu reseña") { resenas.guardar(solicitudId, tipo, estrellas, comentario) }
 
     fun eliminarResena(solicitudId: String, avisar: (String) -> Unit) = accionPres(avisar, "Reseña eliminada") { resenas.eliminar(solicitudId) }
     val solicitudes = MutableStateFlow<List<SolicitudVet>>(emptyList())
@@ -165,7 +165,7 @@ class MisSolicitudesViewModel @Inject constructor(
         cargar()
     }
 
-    fun confirmarPres(id: String, avisar: (String) -> Unit) = accionPres(avisar, "¡Listo! El servicio quedó acordado y te lo recordaremos") { cotizaciones.confirmar(id) }
+    fun confirmarPres(id: String, avisar: (String) -> Unit) = accionPres(avisar, "Servicio confirmado. Recibirás un recordatorio") { cotizaciones.confirmar(id) }
     fun cancelarPres(id: String, avisar: (String) -> Unit) = accionPres(avisar, "Solicitud cancelada") { cotizaciones.cancelar(id, null) }
     fun dejarDeCompartir(id: String, avisar: (String) -> Unit) = accionPres(avisar, "El prestador ya no ve tus datos compartidos") { cotizaciones.dejarDeCompartir(id) }
 

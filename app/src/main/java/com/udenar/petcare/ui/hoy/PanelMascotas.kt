@@ -186,7 +186,7 @@ private fun TarjetaMascotaHoy(r: ResumenMascotaHoy, onAnimo: (Animo) -> Unit, on
                         Icono.CHECK,
                         when {
                             r.total == 0 -> "Sin cuidados hoy"
-                            r.hechos == r.total -> "¡Todo listo hoy!"
+                            r.hechos == r.total -> "Cuidados de hoy completos"
                             else -> "${r.hechos} de ${r.total} ${if (r.total == 1) "cuidado" else "cuidados"}"
                         },
                     )

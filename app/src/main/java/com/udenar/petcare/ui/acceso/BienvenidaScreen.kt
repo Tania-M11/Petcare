@@ -62,10 +62,10 @@ import kotlinx.coroutines.delay
 private data class Ventaja(val icono: Icono, val texto: String)
 
 private val VENTAJAS = listOf(
-    Ventaja(Icono.ALARMA, "Recordatorios que sí suenan"),
+    Ventaja(Icono.ALARMA, "Recordatorios incluso sin conexión"),
     Ventaja(Icono.PASEO, "Paseos con mapa y distancia"),
-    Ventaja(Icono.EQUIPO, "Cuida en equipo con tu familia"),
-    Ventaja(Icono.VETERINARIO, "Veterinarios y servicios cerca"),
+    Ventaja(Icono.EQUIPO, "Cuidado compartido con tu familia"),
+    Ventaja(Icono.VETERINARIO, "Veterinarios y servicios cercanos"),
 )
 
 /**

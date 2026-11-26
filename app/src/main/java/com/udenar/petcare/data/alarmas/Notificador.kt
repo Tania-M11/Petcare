@@ -78,7 +78,7 @@ class Notificador @Inject constructor(@ApplicationContext private val contexto: 
 
     fun mostrarPrueba() = publicar(
         "prueba",
-        base("¡Los recordatorios funcionan!", "Así te avisará PetCare aunque la app esté cerrada y sin internet.").build(),
+        base("Notificación de prueba", "Así verás tus recordatorios, incluso con la app cerrada y sin conexión.").build(),
     )
 
     fun retirar(etiqueta: String) = gestor.cancel(etiqueta, ID)

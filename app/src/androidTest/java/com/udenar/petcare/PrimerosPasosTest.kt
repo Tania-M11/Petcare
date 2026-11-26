@@ -67,8 +67,8 @@ class PrimerosPasosTest {
         compose.onNodeWithTag("progreso_guia").assertTextEquals("1 de 2")
 
         compose.onNodeWithTag("omitir_aprobacion").performScrollTo().performClick()
-        compose.waitUntil(5_000) { compose.onAllNodesWithTextExists("¡Todo listo!") }
-        compose.onNodeWithText("¡Todo listo!").performClick()
+        compose.waitUntil(5_000) { compose.onAllNodesWithTextExists("Guía completada") }
+        compose.onNodeWithText("Guía completada").performClick()
         compose.waitUntil(5_000) { compose.onAllNodesWithTextExists("Agrega a tu primera mascota") }
         assert(Guia.CERRADA in cuenta.usuario.value!!.pasosOmitidos)
     }

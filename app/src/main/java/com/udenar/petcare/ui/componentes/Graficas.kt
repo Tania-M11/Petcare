@@ -96,7 +96,7 @@ fun TarjetaProgreso(nombre: String, p: ProgresoMascota, modifier: Modifier = Mod
                 Text("Progreso de $nombre", style = MaterialTheme.typography.titleMedium)
                 Text(
                     when {
-                        p.racha >= 7 -> "¡Una racha increíble! Sigue así."
+                        p.racha >= 7 -> "Llevas una racha de ${p.racha} días."
                         p.racha > 0 -> "Cada día completo suma a la racha."
                         else -> "Completa todo lo de un día para empezar una racha."
                     },

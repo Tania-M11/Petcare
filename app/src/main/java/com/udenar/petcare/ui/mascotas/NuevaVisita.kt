@@ -100,14 +100,14 @@ fun NuevaVisitaScreen(onCerrar: () -> Unit, onGuardada: () -> Unit, viewModel: F
                 CampoTexto(e.clinica, { v -> viewModel.editar { it.copy(clinica = v) } }, "Clínica (opcional)")
             }
             PasoVisita.INDICACIONES -> {
-                PreguntaMichi("¿Qué te indicó?", "Escríbelo tal como te lo dijeron; es opcional", PoseMichi.DOCTOR)
+                PreguntaMichi("¿Qué indicó el veterinario?", "Escríbelo tal como lo indicó (opcional)", PoseMichi.DOCTOR)
                 CampoTexto(e.tratamiento, { v -> viewModel.editar { it.copy(tratamiento = v) } }, "Tratamiento", lineas = 3)
                 CampoTexto(e.medicamentos, { v -> viewModel.editar { it.copy(medicamentos = v) } }, "Medicamentos", lineas = 2)
                 CampoTexto(e.notas, { v -> viewModel.editar { it.copy(notas = v) } }, "Notas", lineas = 2)
                 Text("Para que te recuerde un medicamento, créalo en Cuidados con la dosis que te indicaron.", style = MaterialTheme.typography.bodySmall, color = Pc.TintaSuave)
             }
             PasoVisita.PROXIMA -> {
-                PreguntaMichi("¿Te dio otra cita?", "Te aviso el día anterior y a la hora", PoseMichi.AGENDA)
+                PreguntaMichi("¿Hay una próxima cita?", "Recibirás un aviso el día anterior y a la hora de la cita", PoseMichi.AGENDA)
                 Text("Toca cuándo te dijo que volvieras", style = MaterialTheme.typography.titleSmall)
                 FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     listOf("En 15 días" to e.fecha.plusDays(15), "En 1 mes" to e.fecha.plusMonths(1), "En 3 meses" to e.fecha.plusMonths(3), "En 6 meses" to e.fecha.plusMonths(6), "En 1 año" to e.fecha.plusYears(1))
@@ -118,7 +118,7 @@ fun NuevaVisitaScreen(onCerrar: () -> Unit, onGuardada: () -> Unit, viewModel: F
                 if (e.proximaFecha != null) EditorHoras(e.proximaHora, { h -> viewModel.editar { it.copy(proximaHora = h.takeLast(1)) } }, horaSugerida = LocalTime.of(9, 0))
             }
             PasoVisita.RESUMEN -> {
-                PreguntaMichi("¿Todo bien?", "Toca un dato para cambiarlo", PoseMichi.LEYENDO)
+                PreguntaMichi("Confirma los datos", "Toca un dato para cambiarlo", PoseMichi.LEYENDO)
                 FilaResumen("Motivo", e.motivo, onEditar = { paso = PasoVisita.MOTIVO.ordinal })
                 FilaResumen("Fecha", fechaLarga(e.fecha, hoy) + listOfNotNull(e.veterinario.ifBlank { null }, e.clinica.ifBlank { null }).joinToString("") { " · $it" }, onEditar = { paso = PasoVisita.CUANDO.ordinal })
                 FilaResumen(

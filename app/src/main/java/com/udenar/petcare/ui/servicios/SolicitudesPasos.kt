@@ -213,7 +213,7 @@ fun SolicitarVetScreen(onVolver: () -> Unit, onEnviada: () -> Unit, avisar: (Str
                 "¿Algo que deba saber?", "Cuéntale qué notas; es opcional", texto, { texto = it.take(500) }, "Mensaje para el veterinario", fotos, { fotos = it },
             )
             PasoCita.RESUMEN -> {
-                PreguntaMichi("¿Todo bien?", "Toca un dato para cambiarlo", PoseMichi.LEYENDO)
+                PreguntaMichi("Confirma los datos", "Toca un dato para cambiarlo", PoseMichi.LEYENDO)
                 FilaResumen("Para", elegida?.nombre.orEmpty(), onEditar = { paso = PasoCita.MASCOTA.ordinal })
                 FilaResumen("Servicio", listOfNotNull(servicio?.etiqueta, modalidad.etiqueta.takeIf { v.domicilio }).joinToString(" · "), onEditar = { paso = PasoCita.SERVICIO.ordinal })
                 FilaResumen("Cuándo", "${fechaCorta(fecha, viewModel.hoy)} · ${hora(horaCita)}", onEditar = { paso = PasoCita.CUANDO.ordinal })
@@ -378,7 +378,7 @@ fun SolicitarPrestadorScreen(onVolver: () -> Unit, onEnviada: () -> Unit, avisar
                 CampoTexto(texto, { texto = it.take(500) }, "Mensaje adicional (opcional)", lineas = 2)
             }
             PasoCotizacion.RESUMEN -> {
-                PreguntaMichi("¿Todo bien?", "Toca un dato para cambiarlo", PoseMichi.LEYENDO)
+                PreguntaMichi("Confirma los datos", "Toca un dato para cambiarlo", PoseMichi.LEYENDO)
                 FilaResumen("Para", elegida?.nombre.orEmpty(), onEditar = { paso = PasoCotizacion.MASCOTA.ordinal })
                 val nombreCategoria = categorias.firstOrNull { it.id == categoria }?.nombre ?: categoria.orEmpty()
                 val nombreServicio = pr.servicios.firstOrNull { it.id == servicio }?.nombre

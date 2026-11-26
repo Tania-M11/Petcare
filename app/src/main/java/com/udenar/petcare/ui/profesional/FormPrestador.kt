@@ -344,7 +344,7 @@ fun FormPrestadorScreen(onVolver: () -> Unit, onGuardado: (activado: Boolean) ->
         when (pasos[n]) {
             PasoPres.TU -> {
                 com.udenar.petcare.ui.componentes.PreguntaMichi(
-                    if (estado.existente) "Tu perfil" else "¡Qué bueno tenerte!",
+                    if (estado.existente) "Tu perfil" else "Crea tu perfil de servicios",
                     "Cuéntanos quién eres para que los dueños confíen en ti", com.udenar.petcare.domain.recomendaciones.PoseMichi.SALUDO,
                 )
                 Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
@@ -449,7 +449,7 @@ fun FormPrestadorScreen(onVolver: () -> Unit, onGuardado: (activado: Boolean) ->
                 TarjetaUbicacion(b.ubicacion != null, "ubicacion" in e && b.ubicacion == null, "Ubicado en el mapa ✓", onClick = { mapa = true }, tag = "pres_ubicar")
             }
             PasoPres.HORARIO -> {
-                com.udenar.petcare.ui.componentes.PreguntaMichi("¿Cuándo atiendes?", "Dos toques y listo; puedes ajustar cada día", com.udenar.petcare.domain.recomendaciones.PoseMichi.AGENDA)
+                com.udenar.petcare.ui.componentes.PreguntaMichi("¿Cuándo atiendes?", "Elige los días y el horario; puedes ajustar cada día", com.udenar.petcare.domain.recomendaciones.PoseMichi.AGENDA)
                 TarjetaInterruptor(com.udenar.petcare.domain.modelo.Icono.CAMPANA, "Recibiendo solicitudes", "Apágalo cuando no puedas atender", b.recibiendo, { v -> viewModel.cambiar { it.copy(recibiendo = v) } })
                 EditorHorarioAmigable(b.horario) { h -> viewModel.cambiar { it.copy(horario = h) } }
                 Text("Días que no atiendes (vacaciones, festivos)", style = MaterialTheme.typography.titleSmall)
@@ -464,7 +464,7 @@ fun FormPrestadorScreen(onVolver: () -> Unit, onGuardado: (activado: Boolean) ->
                 }, desde = viewModel.hoy, textoVacio = "Elegir")
             }
             PasoPres.SOBRE_TI -> {
-                com.udenar.petcare.ui.componentes.PreguntaMichi("Muéstrales tu trabajo", "Una descripción y fotos dan confianza", com.udenar.petcare.domain.recomendaciones.PoseMichi.LEYENDO)
+                com.udenar.petcare.ui.componentes.PreguntaMichi("Presenta tu trabajo", "Una descripción y fotos dan confianza", com.udenar.petcare.domain.recomendaciones.PoseMichi.LEYENDO)
                 CampoTexto(b.descripcion, { v -> viewModel.cambiar { it.copy(descripcion = v.take(1000)) } }, "Qué ofreces y cómo trabajas", error = e["descripcion"], lineas = 4, modifier = Modifier.testTag("pres_descripcion"))
                 Text("Fotos de tus trabajos (hasta ${ValidadorPrestador.MAX_GALERIA}, públicas)", style = MaterialTheme.typography.titleSmall)
                 Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -491,7 +491,7 @@ fun FormPrestadorScreen(onVolver: () -> Unit, onGuardado: (activado: Boolean) ->
             }
             PasoPres.RESUMEN -> {
                 com.udenar.petcare.ui.componentes.PreguntaMichi(
-                    if (estado.existente) "Tu perfil" else "¡Listo para recibir solicitudes!",
+                    if (estado.existente) "Tu perfil" else "Revisa tu perfil antes de publicarlo",
                     "Toca un dato para cambiarlo", com.udenar.petcare.domain.recomendaciones.PoseMichi.CELEBRA,
                 )
                 VistaPreviaPerfil { com.udenar.petcare.ui.servicios.TarjetaPrestador(b.comoPerfil(""), estado.categorias, onClick = {}) }

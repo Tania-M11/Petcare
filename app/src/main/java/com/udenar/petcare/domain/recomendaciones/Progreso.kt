@@ -152,8 +152,8 @@ object ResumenSemanal {
             mejor?.let { add("Racha de ${it.first}: ${it.second.racha} días") }
         }
         val cierre = when {
-            total > 0 && hechas == total -> "¡Semana perfecta!"
-            total > 0 && hechas * 10 >= total * 8 -> "¡Muy buena semana!"
+            total > 0 && hechas == total -> "Semana completa"
+            total > 0 && hechas * 10 >= total * 8 -> "Buen avance esta semana"
             else -> "La próxima semana va a ir aún mejor."
         }
         return "Tu semana con $quien" to (partes.joinToString(". ") + ". " + cierre)

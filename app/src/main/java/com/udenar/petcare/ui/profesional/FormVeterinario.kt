@@ -271,7 +271,7 @@ fun FormVeterinarioScreen(onVolver: () -> Unit, onGuardado: (activado: Boolean) 
         when (pasos[n]) {
             PasoVet.TU -> {
                 com.udenar.petcare.ui.componentes.PreguntaMichi(
-                    if (estado.existente) "Tu perfil" else "¡Hola, colega!",
+                    if (estado.existente) "Tu perfil" else "Crea tu perfil profesional",
                     "Así te presentarás a los dueños de mascotas", com.udenar.petcare.domain.recomendaciones.PoseMichi.DOCTOR,
                 )
                 com.udenar.petcare.ui.componentes.EditorFotoPerfil(b.foto, b.nombre, estado.subiendoFoto, onElegir = viewModel::elegirFoto, onQuitar = { viewModel.cambiar { it.copy(foto = null) } })
@@ -312,23 +312,23 @@ fun FormVeterinarioScreen(onVolver: () -> Unit, onGuardado: (activado: Boolean) 
                 CampoTexto(b.correo, { v -> viewModel.cambiar { it.copy(correo = v) } }, "Correo (opcional)", teclado = KeyboardType.Email, error = e["correo"])
             }
             PasoVet.HORARIO -> {
-                com.udenar.petcare.ui.componentes.PreguntaMichi("¿Cuándo atiendes?", "Dos toques y listo; puedes ajustar cada día", com.udenar.petcare.domain.recomendaciones.PoseMichi.AGENDA)
+                com.udenar.petcare.ui.componentes.PreguntaMichi("¿Cuándo atiendes?", "Elige los días y el horario; puedes ajustar cada día", com.udenar.petcare.domain.recomendaciones.PoseMichi.AGENDA)
                 EditorHorarioAmigable(b.horario) { h -> viewModel.cambiar { it.copy(horario = h) } }
             }
             PasoVet.DONDE -> {
-                com.udenar.petcare.ui.componentes.PreguntaMichi("¿Dónde atiendes?", "Te mostramos en el mapa del directorio", com.udenar.petcare.domain.recomendaciones.PoseMichi.LEYENDO)
+                com.udenar.petcare.ui.componentes.PreguntaMichi("¿Dónde atiendes?", "Tu ubicación aparecerá en el mapa del directorio", com.udenar.petcare.domain.recomendaciones.PoseMichi.LEYENDO)
                 CampoTexto(b.ciudad, { v -> viewModel.cambiar { it.copy(ciudad = v) } }, "Ciudad", error = e["ciudad"], modifier = Modifier.testTag("vet_ciudad"))
                 CampoTexto(b.direccion, { v -> viewModel.cambiar { it.copy(direccion = v) } }, "Dirección", error = e["direccion"], modifier = Modifier.testTag("vet_direccion"))
                 TarjetaUbicacion(b.ubicacion != null, "ubicacion" in e && b.ubicacion == null, "Consultorio ubicado en el mapa ✓", onClick = { mapa = true }, tag = "vet_ubicar")
             }
             PasoVet.SOBRE_TI -> {
-                com.udenar.petcare.ui.componentes.PreguntaMichi("Cuéntales de ti", "Tu experiencia, cómo trabajas, lo que te hace especial (opcional)", com.udenar.petcare.domain.recomendaciones.PoseMichi.LEYENDO)
+                com.udenar.petcare.ui.componentes.PreguntaMichi("Sobre ti", "Experiencia, formación y forma de trabajo (opcional)", com.udenar.petcare.domain.recomendaciones.PoseMichi.LEYENDO)
                 CampoTexto(b.descripcion, { v -> viewModel.cambiar { it.copy(descripcion = v.take(1000)) } }, "Sobre mí", lineas = 5)
                 Text("${b.descripcion.length}/1000", style = MaterialTheme.typography.labelSmall, color = Pc.TintaSuave)
             }
             PasoVet.RESUMEN -> {
                 com.udenar.petcare.ui.componentes.PreguntaMichi(
-                    if (estado.existente) "Tu perfil" else "¡Listo para recibir pacientes!",
+                    if (estado.existente) "Tu perfil" else "Revisa tu perfil antes de publicarlo",
                     "Toca un dato para cambiarlo", com.udenar.petcare.domain.recomendaciones.PoseMichi.CELEBRA,
                 )
                 VistaPreviaPerfil { com.udenar.petcare.ui.servicios.TarjetaVeterinario(b.comoPerfil(""), onClick = {}) }

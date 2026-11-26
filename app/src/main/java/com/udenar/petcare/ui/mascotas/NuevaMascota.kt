@@ -112,7 +112,7 @@ fun NuevaMascotaScreen(onVolver: () -> Unit, onGuardada: (String) -> Unit, viewM
     ) { p ->
         when (pasos[p]) {
             PasoMascota.ESPECIE -> {
-                PreguntaMichi("¿Quién llega a la familia?", "Elige su especie", PoseMichi.SALUDO)
+                PreguntaMichi("¿Qué mascota vas a registrar?", "Elige su especie", PoseMichi.SALUDO)
                 Especie.entries.chunked(3).forEach { fila ->
                     Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                         fila.forEach { e ->
@@ -155,7 +155,7 @@ fun NuevaMascotaScreen(onVolver: () -> Unit, onGuardada: (String) -> Unit, viewM
             )
             PasoMascota.EDAD -> PasoEdad(nombre, f, viewModel)
             PasoMascota.DETALLES -> {
-                PreguntaMichi("Cuéntame de $nombre", "Sexo, tamaño y peso; todo se puede cambiar después", PoseMichi.AGENDA)
+                PreguntaMichi("Datos de $nombre", "Sexo, tamaño y peso; todo se puede cambiar después", PoseMichi.AGENDA)
                 Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                     listOf(Sexo.MACHO to Icono.MACHO, Sexo.HEMBRA to Icono.HEMBRA, Sexo.DESCONOCIDO to Icono.PREGUNTA).forEach { (s, e) ->
                         TarjetaOpcionGrande(s.etiqueta, f.sexo == s, onClick = { viewModel.editar { it.copy(sexo = s) } }, icono = e, modifier = Modifier.weight(1f))
@@ -181,7 +181,7 @@ fun NuevaMascotaScreen(onVolver: () -> Unit, onGuardada: (String) -> Unit, viewM
             PasoMascota.SALUD -> PasoSalud(nombre, f, viewModel)
             PasoMascota.RESUMEN -> {
                 val rebote by animateFloatAsState(1f, spring(dampingRatio = Spring.DampingRatioHighBouncy), label = "foto")
-                PreguntaMichi("¡Todo listo!", "Revisa y toca lo que quieras cambiar", PoseMichi.AMIGOS)
+                PreguntaMichi("Resumen", "Revisa los datos y toca el que quieras cambiar", PoseMichi.AMIGOS)
                 Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
                     AvatarMascota(f.especie ?: Especie.OTRO, f.foto, tam = 140.dp, modifier = Modifier.scale(rebote))
                 }
@@ -208,12 +208,12 @@ private fun androidx.compose.foundation.layout.ColumnScope.PasoFoto(
     onCamara: () -> Unit, onGaleria: () -> Unit, onUsar: (String) -> Unit,
 ) {
     PreguntaMichi(
-        if (foto == null) "¡Muéstrame a $nombre!" else if (procesando) "Un momento…" else "¡Qué buena foto!",
+        if (foto == null) "Agrega una foto de $nombre" else if (procesando) "Un momento…" else "Foto agregada",
         when {
             foto == null -> "Una foto de frente y con buena luz queda mejor"
             procesando -> "Estoy recortando a $nombre del fondo…"
             pegatina != null -> "La convertí en pegatina. Puedes usar la foto completa si prefieres"
-            sinRecorte -> "No pude recortarla del fondo, pero la foto completa también se ve muy bien"
+            sinRecorte -> "No fue posible quitar el fondo; se usará la foto completa"
             else -> null
         },
         if (foto == null) PoseMichi.SALUDO else PoseMichi.AMIGOS,
