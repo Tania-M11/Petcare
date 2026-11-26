@@ -161,10 +161,17 @@ fun TarjetaPeso(pesos: List<RegistroPeso>, hoy: LocalDate, onRegistrar: (LocalDa
             title = { Text("Registrar peso", style = MaterialTheme.typography.headlineSmall) },
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    // Un solo campo: en kg se escribe el número o se ajusta con − / +; en g, solo se escribe
                     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        CampoTexto(texto, { texto = it; error = null }, "Peso medido", teclado = KeyboardType.Decimal, error = error, modifier = Modifier.weight(1f))
-                        ChipOpcion("kg", unidad == UnidadPeso.KG, onClick = { unidad = UnidadPeso.KG })
-                        ChipOpcion("g", unidad == UnidadPeso.G, onClick = { unidad = UnidadPeso.G })
+                        Text("Unidad", style = MaterialTheme.typography.labelLarge, color = Pc.TintaSuave, modifier = Modifier.weight(1f))
+                        ChipOpcion("kg", unidad == UnidadPeso.KG, onClick = {
+                            FichaMascota.gramos(texto, unidad)?.let { g -> texto = "%.1f".format(java.util.Locale.forLanguageTag("es-CO"), g / 1000.0) }
+                            unidad = UnidadPeso.KG
+                        })
+                        ChipOpcion("g", unidad == UnidadPeso.G, onClick = {
+                            FichaMascota.gramos(texto, unidad)?.let { g -> texto = g.toString() }
+                            unidad = UnidadPeso.G
+                        })
                     }
                     val actual = FichaMascota.gramos(texto, unidad)
                     if (unidad == UnidadPeso.KG) {
@@ -173,7 +180,10 @@ fun TarjetaPeso(pesos: List<RegistroPeso>, hoy: LocalDate, onRegistrar: (LocalDa
                             { v -> texto = "%.1f".format(java.util.Locale.forLanguageTag("es-CO"), v); error = null },
                             paso = 0.1, unidad = "kg",
                         )
+                    } else {
+                        CampoTexto(texto, { texto = it.filter(Char::isDigit); error = null }, "Peso en gramos", teclado = KeyboardType.Number)
                     }
+                    error?.let { Text(it, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall) }
                     val anterior = pesos.firstOrNull()
                     if (anterior != null && actual != null && actual > 0 && actual != anterior.gramos) {
                         val dif = actual - anterior.gramos

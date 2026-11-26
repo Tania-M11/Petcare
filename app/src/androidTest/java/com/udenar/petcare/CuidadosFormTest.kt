@@ -74,6 +74,7 @@ class CuidadosFormTest {
         compose.onNodeWithTag("opcion_Desayuno").performClick() // avanza solo y propone las 7:00
         continuar() // hora
         continuar() // días: todos
+        continuar() // qué le das: opcional
         compose.waitUntil(5_000) { compose.onAllNodesWithTagExists("resumen_cuidado") }
         compose.waitUntil(5_000) { compose.onAllNodesWithTextExists("Todos los días · 7:00 a. m.") }
         guardar()

@@ -44,6 +44,24 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.layout.IntrinsicSize
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -170,15 +188,44 @@ fun TarjetaOpcionGrande(
     }
 }
 
-/** Selector de número con botones grandes − / + (peso, cantidades). */
+/**
+ * Número con − / + para ajustes pequeños; el valor del centro se puede tocar y escribir directamente
+ * (nadie debería pulsar + treinta veces para llegar a su peso).
+ */
 @Composable
 fun Stepper(valor: Double, onCambio: (Double) -> Unit, paso: Double, unidad: String, minimo: Double = 0.0, maximo: Double = 200.0, decimales: Int = 1) {
+    val local = java.util.Locale.forLanguageTag("es-CO")
+    fun formato(v: Double) = if (decimales == 0) v.toLong().toString() else "%.${decimales}f".format(local, v)
+    var texto by remember { mutableStateOf(formato(valor)) }
+    var enfocado by remember { mutableStateOf(false) }
+    // Si el valor cambia desde fuera (− / +, otro campo), el texto lo sigue; mientras se escribe, no se pisa
+    LaunchedEffect(valor) {
+        val escrito = texto.replace(',', '.').toDoubleOrNull()
+        if (!(enfocado && escrito == null) && escrito != valor) texto = formato(valor)
+    }
     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.CenterVertically) {
         BotonCircular(Icons.Rounded.Remove, "Menos", onClick = { onCambio((valor - paso).coerceAtLeast(minimo)) }, modifier = Modifier.testTag("stepper_menos"))
-        Text(
-            "%.${decimales}f %s".format(java.util.Locale.forLanguageTag("es-CO"), valor, unidad),
-            fontFamily = Kalnia, fontSize = 34.sp, color = Pc.Tinta, modifier = Modifier.padding(horizontal = 20.dp).testTag("stepper_valor"),
-        )
+        Row(Modifier.padding(horizontal = 14.dp), verticalAlignment = Alignment.Bottom) {
+            BasicTextField(
+                texto,
+                onValueChange = { nuevo ->
+                    val limpio = nuevo.filter { it.isDigit() || (decimales > 0 && (it == ',' || it == '.')) }.take(7)
+                    if (limpio.count { it == ',' || it == '.' } > 1) return@BasicTextField
+                    texto = limpio
+                    limpio.replace(',', '.').toDoubleOrNull()?.let { onCambio(it.coerceIn(minimo, maximo)) }
+                },
+                singleLine = true,
+                textStyle = TextStyle(fontFamily = Kalnia, fontSize = 34.sp, color = Pc.Tinta, textAlign = TextAlign.End),
+                keyboardOptions = KeyboardOptions(keyboardType = if (decimales > 0) KeyboardType.Decimal else KeyboardType.Number, imeAction = ImeAction.Done),
+                cursorBrush = SolidColor(Pc.Naranja),
+                modifier = Modifier.width(IntrinsicSize.Min).widthIn(min = 36.dp)
+                    .onFocusChanged { e -> enfocado = e.isFocused; if (!e.isFocused) texto = formato(valor) }
+                    .drawBehind { drawLine(Pc.Naranja.copy(alpha = 0.5f), Offset(0f, size.height), Offset(size.width, size.height), strokeWidth = 2.dp.toPx()) }
+                    .semantics { contentDescription = "Valor en $unidad. Toca para escribirlo" }
+                    .testTag("stepper_valor"),
+            )
+            Text(" $unidad", style = MaterialTheme.typography.titleMedium, color = Pc.TintaSuave, modifier = Modifier.padding(bottom = 8.dp))
+        }
         BotonCircular(Icons.Rounded.Add, "Más", onClick = { onCambio((valor + paso).coerceAtMost(maximo)) }, modifier = Modifier.testTag("stepper_mas"))
     }
 }
