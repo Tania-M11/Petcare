@@ -79,7 +79,14 @@ fun NuevoCuidadoScreen(onListo: () -> Unit, onGuardado: () -> Unit = onListo, vi
                 CampoTexto(f.titulo, { v -> viewModel.editar(CampoCuidado.TITULO) { it.copy(titulo = v.take(80)) } }, "U otro nombre", modifier = Modifier.testTag("titulo_cuidado"))
             },
             Paso("hora", { f.horas.isNotEmpty() }) {
-                PreguntaMichi("¿A qué hora?", "Puedes agregar varias", PoseMichi.ALARMA)
+                PreguntaMichi("¿Cuántas comidas al día?", "Se proponen horarios; ajústalos tocando las horas", PoseMichi.ALARMA)
+                // Número de comidas con un toque: llena horarios habituales que luego se pueden cambiar
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    COMIDAS_AL_DIA.forEach { (n, horas) ->
+                        ChipOpcion("$n", f.horas.size == n, onClick = { viewModel.editar(CampoCuidado.HORAS) { it.copy(horas = horas) } }, modifier = Modifier.testTag("comidas_$n"))
+                    }
+                }
+                Text("Horas", style = MaterialTheme.typography.titleSmall)
                 HorasRapidas(f.horas) { h -> viewModel.editar(CampoCuidado.HORAS) { it.copy(horas = h) } }
             },
             Paso("dias", { f.dias.isNotEmpty() }) {
@@ -260,6 +267,11 @@ fun NuevoCuidadoScreen(onListo: () -> Unit, onGuardado: () -> Unit = onListo, vi
         },
     ) { p -> pasos[p.coerceIn(0, pasos.lastIndex)].contenido(this) }
 }
+
+/** Horarios propuestos según el número de comidas (todos están entre las horas rápidas para poder quitarlos). */
+private val COMIDAS_AL_DIA = listOf(
+    1 to listOf(8), 2 to listOf(7, 19), 3 to listOf(7, 12, 19), 4 to listOf(6, 12, 18, 22),
+).map { (n, h) -> n to h.map { LocalTime.of(it, 0) } }
 
 private val HORA_COMIDA = mapOf(
     "Desayuno" to LocalTime.of(7, 0), "Almuerzo" to LocalTime.of(12, 0), "Merienda" to LocalTime.of(16, 0), "Cena" to LocalTime.of(19, 0),
